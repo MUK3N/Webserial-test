@@ -76,7 +76,7 @@
     font:inherit; cursor:pointer; border-radius:4px; padding:11px 19px; font-size:14px; font-weight:700;
     border:1px solid var(--border-input-strong); background:var(--bg-card); color:var(--ink);
   }
-  button.secondary{background:var(--bg-chip); border-color:var(--border-soft); color:var(--disabled-text);}
+  button.secondary{background:var(--bg-chip); border-color:var(--border-soft); color:var(--ink-soft);}
   button.primary{background:var(--primary); border-color:var(--primary); color:var(--primary-text);}
   button.primary:hover{opacity:.92;}
   button:disabled{opacity:.5; cursor:not-allowed;}
@@ -904,9 +904,13 @@
     $('btn-read-creds').disabled = true;
     credTimer = setInterval(() => sendRaw('@', { withTerminator: false }), 50);
 
+    // We're now actually waiting on the physical magnet restart, so step 2
+    // goes active as soon as the "@" spam starts — not after the user clicks
+    // through it, by which point the waiting is already over.
+    setPStep(2, 'active');
+
     setBtn('I restarted it with the magnet — continue', () => {
       clearInterval(credTimer); credTimer = null;
-      setPStep(2, 'active');
       setOpStatus('Enter "3" when you can see the mode-select menu in the raw log.', 'idle');
       setBtn('Send "3" (enter debug mode)', async () => {
         $('btn-read-creds').disabled = true;
