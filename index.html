@@ -900,19 +900,22 @@
     setPStep(2, 'active');
     await sendRaw('3');
     // Cross-checked against a known-good capture from a different serial
-    // terminal: the device keeps re-printing "Please Select Mode…" several
-    // times — it does NOT go quiet right after "3" — and only switches once
-    // it prints a line containing "Remap Uart3 BaudRate: 9600". Waiting for
-    // *silence* (the previous approach) could time out and reopen our side
-    // while the device was still mid-menu at 115200, which is exactly what
-    // produced the garbled, badly-delayed replies. Wait for that actual
-    // marker line instead; fall back to a quiet-period guess only if the
-    // wording ever differs.
-    const remapLine = await waitForLine((line) => /remap/i.test(line) ? true : null, 8000);
+    // terminal: the device keeps re-printing "Please Select Mode…" roughly
+    // once a second for about 7-8 seconds — it does NOT go quiet right after
+    // "3" — and only switches once it prints a line containing "Remap Uart3
+    // BaudRate: 9600". A live test against the real device confirmed this
+    // exact rhythm (8 reprints, ~1s apart) and showed our previous 8s cap was
+    // cutting it off right as the real Remap line was about to appear,
+    // forcing a reopen while the device was still mid-menu at 115200 — which
+    // is exactly what produced the garbled, badly-delayed replies. Give it
+    // real headroom past that observed ~8s preamble; fall back to a
+    // quiet-period guess only if the wording ever differs or it genuinely
+    // never shows up.
+    const remapLine = await waitForLine((line) => /remap/i.test(line) ? true : null, 20000);
     if (remapLine) {
       log('Saw the baud-remap line — device is switching now.', 'sys');
     } else {
-      log('Never saw a "Remap…" line — falling back to a quiet-period guess.', 'muted');
+      log('Never saw a "Remap…" line in 20s — falling back to a quiet-period guess.', 'muted');
       await waitForQuiet(500, 3000);
     }
     try {
