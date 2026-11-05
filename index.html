@@ -232,14 +232,15 @@
           <div class="kv"><div class="k">AppEui</div><div class="v" id="cred-appeui">—</div></div>
           <div class="kv"><div class="k">AppKey</div><div class="v">Not readable over serial</div></div>
         </div>
+        <p class="sub" id="appkey-hint" style="margin:8px 0 0; display:none;">Write-only, by design — the module never echoes back a stored key. Set a new one under <b>Application key</b> on the right while you're still in debug mode.</p>
 
         <button class="linklike" id="btn-cred-reset" style="margin-top:8px;">Reset flow</button>
       </div>
 
-      <!-- Reporting / detection interval -->
+      <!-- Device configuration -->
       <div class="card">
-        <h2>Reporting &amp; detection interval</h2>
-        <p class="sub" style="margin-bottom:14px;">Sent as the downlink-format command over the normal 115200 connection — no debug mode needed. Command 0x01 / 0x08, DF555 Protocol V3.2 §2.2.1 &amp; §2.2.6.</p>
+        <h2>Device configuration</h2>
+        <p class="sub" style="margin-bottom:14px;">Normal 115200 connection, no debug mode — except Application key, which needs the debug-mode flow on the left.</p>
 
         <div class="section-title">Upload (reporting) interval</div>
         <div class="row" style="margin-bottom:16px;">
@@ -260,6 +261,96 @@
           <button id="btn-set-detect" style="align-self:flex-end;">Set detection interval</button>
         </div>
         <div class="reply-box" id="detect-reply"></div>
+
+        <div class="section-title" style="margin-top:18px;">Alarm thresholds</div>
+        <div class="row" style="margin-bottom:10px;">
+          <div class="field">
+            <label for="alarm-full">Full alarm, cm (15–255)</label>
+            <input type="number" id="alarm-full" min="15" max="255" value="30" />
+          </div>
+          <button id="btn-set-full" style="align-self:flex-end;">Set</button>
+        </div>
+        <div class="reply-box" id="full-reply" style="margin-bottom:10px;"></div>
+
+        <div class="row" style="margin-bottom:10px;">
+          <div class="field">
+            <label for="alarm-fire">Fire alarm, °C (1–255)</label>
+            <input type="number" id="alarm-fire" min="1" max="255" value="75" />
+          </div>
+          <button id="btn-set-fire" style="align-self:flex-end;">Set</button>
+        </div>
+        <div class="reply-box" id="fire-reply" style="margin-bottom:10px;"></div>
+
+        <div class="row" style="margin-bottom:10px;">
+          <div class="field">
+            <label for="alarm-fall">Fall alarm, ° (15–90)</label>
+            <input type="number" id="alarm-fall" min="15" max="90" value="20" />
+          </div>
+          <button id="btn-set-fall" style="align-self:flex-end;">Set</button>
+        </div>
+        <div class="reply-box" id="fall-reply" style="margin-bottom:10px;"></div>
+
+        <div class="row" style="margin-bottom:10px;">
+          <div class="field">
+            <label for="alarm-batt">Battery alarm, % (5–99)</label>
+            <input type="number" id="alarm-batt" min="5" max="99" value="30" />
+          </div>
+          <button id="btn-set-batt" style="align-self:flex-end;">Set</button>
+        </div>
+        <div class="reply-box" id="batt-reply"></div>
+
+        <div class="section-title" style="margin-top:18px;">Functions</div>
+        <div class="row" style="margin-bottom:6px;">
+          <label style="margin:0; min-width:110px;">Work mode</label>
+          <select id="work-mode">
+            <option value="05">Normal</option>
+            <option value="06">Detection off</option>
+            <option value="0E">Demo</option>
+          </select>
+          <button id="btn-set-workmode">Set</button>
+        </div>
+        <div class="reply-box" id="workmode-reply" style="margin-bottom:10px;"></div>
+
+        <div class="row between" style="margin-bottom:6px;">
+          <label style="margin:0;">Tilt (fall) detection</label>
+          <div class="row" style="gap:6px;">
+            <button id="btn-fall-on">Turn on</button>
+            <button id="btn-fall-off">Turn off</button>
+          </div>
+        </div>
+        <div class="reply-box" id="fallfn-reply" style="margin-bottom:10px;"></div>
+
+        <div class="row between" style="margin-bottom:6px;">
+          <label style="margin:0;">GPS in uplink</label>
+          <div class="row" style="gap:6px;">
+            <button id="btn-gps-on">Turn on</button>
+            <button id="btn-gps-off">Turn off</button>
+          </div>
+        </div>
+        <div class="reply-box" id="gps-reply" style="margin-bottom:10px;"></div>
+
+        <div class="row between" style="margin-bottom:6px;">
+          <label style="margin:0;">Serial echo</label>
+          <div class="row" style="gap:6px;">
+            <button id="btn-echo-on">Turn on</button>
+            <button id="btn-echo-off">Turn off</button>
+          </div>
+        </div>
+        <div class="reply-box" id="echo-reply"></div>
+
+        <div class="section-title" style="margin-top:18px;">Device actions</div>
+        <div class="row" style="margin-bottom:10px;">
+          <button id="btn-restart-sensor">Restart sensor</button>
+        </div>
+        <div class="reply-box" id="restart-reply" style="margin-bottom:10px;"></div>
+
+        <div class="section-title" style="margin-top:18px;">Application key <span style="font-weight:400; text-transform:none; letter-spacing:0;">(write-only)</span></div>
+        <p class="sub" id="appkey-status" style="margin:0 0 10px;">Requires debug mode — run steps 1–4 on the left first.</p>
+        <div class="row" style="margin-bottom:10px;">
+          <input type="text" id="appkey-input" placeholder="32 hex characters, UPPERCASE" maxlength="32" style="font-family:'Roboto Mono',Consolas,monospace; text-transform:uppercase;" disabled />
+          <button id="btn-set-appkey" disabled>Write AppKey</button>
+        </div>
+        <div class="reply-box" id="appkey-reply"></div>
       </div>
     </div>
 
@@ -429,6 +520,7 @@
     port = null;
     setConnected(false);
     log('Disconnected', 'sys');
+    if (inDebugMode) { inDebugMode = false; updateAppKeyUI(); }
   });
 
   $('btn-clear-log').addEventListener('click', () => { $('log').innerHTML = ''; });
@@ -475,8 +567,94 @@
     await sendRaw(cmd, { withTerminator: false });
   });
 
+  // ---------- generic downlink-command wiring (alarm thresholds, functions) ----------
+  function wireDownlinkButton(btnId, replyId, cmdByte, getContent, matchReply){
+    $(btnId).addEventListener('click', async () => {
+      const content = getContent();
+      if (content == null) return; // getContent already set an error into the reply box
+      const cmd = buildDownlinkCommand(cmdByte, content);
+      $(replyId).textContent = `Sent ${cmd} — waiting for reply…`;
+      const onLine = (line) => {
+        if (matchReply(line)) { $(replyId).textContent = line; lineListeners.delete(onLine); }
+      };
+      lineListeners.add(onLine);
+      await sendRaw(cmd, { withTerminator: false });
+    });
+  }
+  function numberGetter(inputId, replyId, min, max){
+    return () => {
+      const v = parseInt($(inputId).value, 10);
+      if (!(v >= min && v <= max)) { $(replyId).textContent = `Enter ${min}–${max}`; return null; }
+      return v;
+    };
+  }
+
+  wireDownlinkButton('btn-set-full', 'full-reply', 0x02, numberGetter('alarm-full','full-reply',15,255), (l) => /full/i.test(l));
+  wireDownlinkButton('btn-set-fire', 'fire-reply', 0x03, numberGetter('alarm-fire','fire-reply',1,255), (l) => /fire|temp/i.test(l));
+  wireDownlinkButton('btn-set-fall', 'fall-reply', 0x04, numberGetter('alarm-fall','fall-reply',15,90), (l) => /fall|angle/i.test(l));
+  wireDownlinkButton('btn-set-batt', 'batt-reply', 0x05, numberGetter('alarm-batt','batt-reply',5,99), (l) => /batt/i.test(l));
+
+  // ---------- 0x09 switch-function commands ----------
+  async function sendSwitchFunction(contentByte, replyId, label){
+    const cmd = buildDownlinkCommand(0x09, contentByte);
+    $(replyId).textContent = `Sent ${cmd} (${label}) — waiting for reply…`;
+    const onLine = (line) => { $(replyId).textContent = line; lineListeners.delete(onLine); };
+    lineListeners.add(onLine);
+    await sendRaw(cmd, { withTerminator: false });
+  }
+  $('btn-set-workmode').addEventListener('click', () => {
+    const v = parseInt($('work-mode').value, 16);
+    const label = $('work-mode').selectedOptions[0].textContent;
+    sendSwitchFunction(v, 'workmode-reply', label);
+  });
+  $('btn-fall-on').addEventListener('click', () => sendSwitchFunction(0x0A, 'fallfn-reply', 'fall detection on'));
+  $('btn-fall-off').addEventListener('click', () => sendSwitchFunction(0x09, 'fallfn-reply', 'fall detection off'));
+  $('btn-gps-on').addEventListener('click', () => sendSwitchFunction(0x01, 'gps-reply', 'GPS on'));
+  $('btn-gps-off').addEventListener('click', () => sendSwitchFunction(0x00, 'gps-reply', 'GPS off'));
+  $('btn-echo-on').addEventListener('click', () => sendSwitchFunction(0x0B, 'echo-reply', 'serial echo on'));
+  $('btn-echo-off').addEventListener('click', () => sendSwitchFunction(0x0C, 'echo-reply', 'serial echo off'));
+  $('btn-restart-sensor').addEventListener('click', () => {
+    if (!confirm('Restart the sensor now? It will reboot and send one uplink right after.')) return;
+    sendSwitchFunction(0x02, 'restart-reply', 'restart sensor');
+  });
+
   // ---------- Credential read flow (guided, per Configuration Manual §3) ----------
   let credTimer = null;
+  let inDebugMode = false;
+  function updateAppKeyUI(){
+    $('appkey-input').disabled = !inDebugMode;
+    $('btn-set-appkey').disabled = !inDebugMode || !isValidAppKey($('appkey-input').value);
+    $('appkey-status').textContent = inDebugMode
+      ? 'Debug mode active — this will be sent at 9600 baud.'
+      : 'Requires debug mode — run steps 1–4 on the left first.';
+    $('appkey-hint').style.display = inDebugMode ? 'block' : 'none';
+    if (!inDebugMode) { $('appkey-input').value = ''; }
+  }
+  function isValidAppKey(v){ return /^[0-9A-F]{32}$/.test(v); }
+  $('appkey-input').addEventListener('input', () => {
+    $('appkey-input').value = $('appkey-input').value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 32);
+    $('btn-set-appkey').disabled = !inDebugMode || !isValidAppKey($('appkey-input').value);
+  });
+  $('btn-set-appkey').addEventListener('click', async () => {
+    const key = $('appkey-input').value;
+    if (!isValidAppKey(key)) return;
+    $('appkey-input').value = ''; // cleared immediately on send — never lingers in the UI
+    $('appkey-reply').textContent = 'Writing key — waiting for reply…';
+    const onLine = (line) => {
+      const m = line.match(/\+KEY:\s*APPKEY\s+([0-9A-Fa-f]+)/i);
+      if (m) {
+        const echoed = m[1].toUpperCase();
+        $('appkey-reply').textContent = (echoed === key)
+          ? 'Written — device echoed back a match.'
+          : `Device echoed ${echoed}, which doesn't match what was sent. Check the raw log.`;
+        lineListeners.delete(onLine);
+      }
+    };
+    lineListeners.add(onLine);
+    await sendRaw(`AT+KEY=APPKEY, "${key}"`);
+  });
+  updateAppKeyUI();
+
   const steps = [1,2,3,4,5].map(n => $('cred-step-' + n));
   function setStep(n, state){ // state: 'active' | 'done' | ''
     steps.forEach((el, i) => {
@@ -506,6 +684,8 @@
         $('cred-next-4').addEventListener('click', async () => {
           try {
             await reopenAtBaud(9600);
+            inDebugMode = true;
+            updateAppKeyUI();
             setStep(4, 'done');
             setStep(5, 'active');
             renderCredActions(`<button class="primary" id="cred-send-id">Send AT+ID</button>`);
@@ -544,6 +724,8 @@
     if (credTimer) { clearInterval(credTimer); credTimer = null; }
     setStep(0);
     $('creds-result').style.display = 'none';
+    inDebugMode = false;
+    updateAppKeyUI();
     renderCredActions(`<button class="primary" id="cred-begin">Start credential read</button>`);
     $('cred-begin').addEventListener('click', credStart);
   });
