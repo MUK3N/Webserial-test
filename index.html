@@ -569,11 +569,14 @@
   async function reopenAtBaud(baud){
     await stopReadLoop();
     await port.close();
+    lineBuffer = ''; // drop any partial/garbled bytes left over from the old baud rate
     await port.open({ baudRate: baud, dataBits: 8, stopBits: 1, parity: 'none' });
     currentBaud = baud;
     startReadLoop();
     log(`Reopened at ${baud} baud`, 'sys');
   }
+
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
   async function stopReadLoop(){
     if (reader) {
@@ -874,8 +877,15 @@
 
     setPStep(2, 'active');
     await sendRaw('3');
+    // Give the device time to finish printing its still-115200-baud
+    // "switching baud rate" message and actually switch over before we
+    // yank the host side to 9600 — reopening immediately caught the tail
+    // of that message at the wrong speed and produced garbage.
+    await sleep(600);
     try {
       await reopenAtBaud(9600);
+      // let the device's own UART settle to 9600 before we address it
+      await sleep(400);
     } catch (e) {
       log('Reopen at 9600 failed: ' + e.message, 'muted');
       setOpStatus('Could not reopen at 9600 baud: ' + e.message, 'err');
@@ -895,7 +905,7 @@
         if (got.devaddr && got.deveui && got.appeui) { lineListeners.delete(onLine); resolve(true); }
       };
       lineListeners.add(onLine);
-      setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, 4000);
+      setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, 6000);
     });
     await sendRaw('AT+ID');
     const okRead = await idPromise;
