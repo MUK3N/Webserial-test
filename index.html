@@ -874,101 +874,92 @@
   }
 
   // Single onclick-based state machine for this button — never addEventListener
-  // alongside onclick here, or the "continue after magnet" click fires both the
-  // original listener (which silently restarts the whole flow from step 1) and
-  // the step-2 handler at once. That bug looked like "spams @ forever, magnet
-  // tap does nothing" — the first click handler was re-triggering step 1.
-  async function startCredFlow(){
+  // alongside onclick here, or a later click fires both the original listener
+  // and the new stage's handler at once (that bug looked like "spams @
+  // forever, magnet tap does nothing" — the first click handler was
+  // re-triggering step 1).
+  //
+  // Every automated attempt to time the 115200→9600 switch (fixed delays,
+  // "wait until quiet", waiting for a specific "Remap…" line) still produced
+  // garbled AT+ID replies on real hardware. The original test build never
+  // timed anything — it put a button in front of every step and a human only
+  // clicked "continue" once they'd actually seen the thing on screen that the
+  // next step depends on. That's the version that reliably worked, including
+  // against a second, unrelated serial terminal. So this restores that exact
+  // shape: one click to confirm the magnet restart, one click to send "3",
+  // one click to reopen at 9600 (only once you can see the device prompting
+  // for it), one click to send AT+ID (only once 9600 has visibly settled).
+  // Nothing here is timed — each step waits for a person, not a clock.
+  function setBtn(text, onclick){
+    $('btn-read-creds').textContent = text;
+    $('btn-read-creds').onclick = onclick;
+    $('btn-read-creds').disabled = false;
+  }
+
+  function startCredFlow(){
     if (!port) { setOpStatus('Connect the device first.', 'err'); return; }
-    $('btn-read-creds').disabled = true;
     setPStep(1, 'active');
     setOpStatus('Requesting debug mode…', 'idle');
     log('Requesting debug mode: sending "@" every 50ms…', 'sys');
+    $('btn-read-creds').disabled = true;
     credTimer = setInterval(() => sendRaw('@', { withTerminator: false }), 50);
 
-    await new Promise((resolve) => {
-      $('btn-read-creds').textContent = 'I restarted it with the magnet — continue';
-      $('btn-read-creds').disabled = false;
-      $('btn-read-creds').onclick = () => {
-        clearInterval(credTimer); credTimer = null;
+    setBtn('I restarted it with the magnet — continue', () => {
+      clearInterval(credTimer); credTimer = null;
+      setPStep(2, 'active');
+      setOpStatus('Enter "3" when you can see the mode-select menu in the raw log.', 'idle');
+      setBtn('Send "3" (enter debug mode)', async () => {
         $('btn-read-creds').disabled = true;
-        $('btn-read-creds').textContent = 'Read Credentials';
-        resolve();
-      };
+        await sendRaw('3');
+        setOpStatus('Watch the raw log — click below once it’s prompting for a baud switch.', 'idle');
+        setBtn('Sensor is prompting a baud switch — reopen at 9600', async () => {
+          $('btn-read-creds').disabled = true;
+          try {
+            await reopenAtBaud(9600);
+          } catch (e) {
+            log('Reopen at 9600 failed: ' + e.message, 'muted');
+            setOpStatus('Could not reopen at 9600 baud: ' + e.message, 'err');
+            setBtn('Read Credentials', startCredFlow);
+            return;
+          }
+          inDebugMode = true;
+          setOpStatus('Reopened at 9600. Give it a moment to settle, then read the credentials.', 'idle');
+
+          const sendIdOnce = async () => {
+            $('btn-read-creds').disabled = true;
+            lineBuffer = ''; // drop anything that trickled in while the button sat waiting for this click
+            const got = { devaddr:null, deveui:null, appeui:null };
+            const idPromise = new Promise((resolve) => {
+              const onLine = (line) => {
+                let m;
+                if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
+                if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
+                if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
+                if (got.devaddr && got.deveui && got.appeui) { lineListeners.delete(onLine); resolve(true); }
+              };
+              lineListeners.add(onLine);
+              setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, 8000);
+            });
+            await sendRaw('AT+ID');
+            const okRead = await idPromise;
+
+            if (okRead) {
+              $('v-devaddr').textContent = got.devaddr;
+              $('v-deveui').textContent = got.deveui;
+              $('v-appeui').textContent = got.appeui;
+              setPStep(3, 'done');
+              setOpStatus(`Credentials read from device. DevEUI ${got.deveui}.`, 'ok');
+              setBtn('Read Credentials', startCredFlow); // restored so the flow can be run again
+            } else {
+              setPStep(2, 'done');
+              setOpStatus('AT+ID sent, but no complete reply seen within 8s. Check the raw log, then press "Send AT+ID" again.', 'err');
+              setBtn('Send AT+ID', sendIdOnce); // retry this step alone, without restarting the whole flow
+            }
+          };
+          setBtn('Send AT+ID', sendIdOnce);
+        });
+      });
     });
-
-    setPStep(2, 'active');
-    await sendRaw('3');
-    // Cross-checked against a known-good capture from a different serial
-    // terminal: the device keeps re-printing "Please Select Mode…" roughly
-    // once a second for about 7-8 seconds — it does NOT go quiet right after
-    // "3" — and only switches once it prints a line containing "Remap Uart3
-    // BaudRate: 9600". A live test against the real device confirmed this
-    // exact rhythm (8 reprints, ~1s apart) and showed our previous 8s cap was
-    // cutting it off right as the real Remap line was about to appear,
-    // forcing a reopen while the device was still mid-menu at 115200 — which
-    // is exactly what produced the garbled, badly-delayed replies. Give it
-    // real headroom past that observed ~8s preamble; fall back to a
-    // quiet-period guess only if the wording ever differs or it genuinely
-    // never shows up.
-    const remapLine = await waitForLine((line) => /remap/i.test(line) ? true : null, 20000);
-    if (remapLine) {
-      log('Saw the baud-remap line — device is switching now.', 'sys');
-    } else {
-      log('Never saw a "Remap…" line in 20s — falling back to a quiet-period guess.', 'muted');
-      await waitForQuiet(500, 3000);
-    }
-    try {
-      await reopenAtBaud(9600);
-    } catch (e) {
-      log('Reopen at 9600 failed: ' + e.message, 'muted');
-      setOpStatus('Could not reopen at 9600 baud: ' + e.message, 'err');
-      $('btn-read-creds').onclick = startCredFlow;
-      $('btn-read-creds').disabled = false;
-      return;
-    }
-    // Let the transition noise clear, then drop whatever trickled in so it
-    // can't glue onto the real reply.
-    await waitForQuiet(300, 1500);
-    lineBuffer = '';
-    inDebugMode = true;
-
-    // Same known-good capture shows the device announcing "+LOWPOWER: WAKEUP"
-    // then "+ID: DevAddr/DevEui/AppEui" on its own, repeatedly, without ever
-    // being asked — AT+ID isn't strictly required. So we send it once as a
-    // nudge (matches the documented procedure) but the listener below is
-    // passive: it catches the ID lines whether they're a reply to AT+ID or
-    // just the device announcing itself, and we deliberately do NOT resend —
-    // a second AT+ID landing while the device is mid-transmission is a likely
-    // cause of the corrupted, glued-together replies seen before.
-    const got = { devaddr:null, deveui:null, appeui:null };
-    const idPromise = new Promise((resolve) => {
-      const onLine = (line) => {
-        let m;
-        if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
-        if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
-        if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
-        if (got.devaddr && got.deveui && got.appeui) { lineListeners.delete(onLine); resolve(true); }
-      };
-      lineListeners.add(onLine);
-      setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, 12000);
-    });
-    await sendRaw('AT+ID');
-    const okRead = await idPromise;
-
-    $('btn-read-creds').onclick = startCredFlow; // restored so the flow can be run again
-    $('btn-read-creds').disabled = !port;
-
-    if (okRead) {
-      $('v-devaddr').textContent = got.devaddr;
-      $('v-deveui').textContent = got.deveui;
-      $('v-appeui').textContent = got.appeui;
-      setPStep(3, 'done');
-      setOpStatus(`Credentials read from device. DevEUI ${got.deveui}.`, 'ok');
-    } else {
-      setPStep(2, 'done');
-      setOpStatus('No clean reply seen within 12s of switching to 9600. Check the raw log, then try "Read Credentials" again.', 'err');
-    }
   }
   $('btn-read-creds').onclick = startCredFlow;
 
