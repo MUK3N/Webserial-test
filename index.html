@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>XCAMP Device Configurator — Test Build</title>
+<style>
+  :root{
+    --primary:#1E22AA;
+    --primary-text:#ffffff;
+    --card-bg:#ffffff;
+    --card-border:#C2CAD5;
+    --secondary-bg:#E7EAEE;
+    --secondary-border:#D3D9E1;
+    --text-dark:#20252D;
+    --text-muted:#65707E;
+    --page-bg:#F8FAFC;
+    --term-bg:#0B0D12;
+    --term-border:#28303D;
+    --term-rx:#E2E6EF;
+    --term-tx:#8B93FF;
+    --term-sys:#F0C56C;
+    --term-muted:#6E7481;
+    --ok:#1C8A4C;
+    --warn:#B45309;
+    --danger:#B3261E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--page-bg); color:var(--text-dark);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 24px; background:#fff; border-bottom:1px solid var(--card-border);
+  }
+  header .brand{display:flex; align-items:center; gap:12px; font-weight:700; font-size:18px;}
+  header .brand .sep{width:1px; height:20px; background:var(--card-border);}
+  header .brand .sub{font-weight:400; font-size:16px; color:var(--text-dark);}
+  .pill{font-size:12px; font-weight:600; color:var(--warn); background:#FEF3E2; border:1px solid #F3D9A8; padding:4px 10px; border-radius:999px;}
+  main{max-width:1100px; margin:0 auto; padding:24px;}
+  .banner{
+    background:var(--secondary-bg); border:1px solid var(--secondary-border);
+    border-radius:6px; padding:14px 16px; font-size:13px; color:var(--text-dark); margin-bottom:20px;
+  }
+  .banner.warn{background:#FEF3E2; border-color:#F3D9A8; color:#7A4A05;}
+  .banner b{font-weight:600;}
+  h1{font-size:20px; margin:0 0 4px;}
+  h2{font-size:16px; margin:0 0 4px;}
+  p.sub{color:var(--text-muted); font-size:13px; margin:0 0 20px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
+  .card{
+    background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:20px;
+  }
+  .product-card{cursor:pointer; transition:border-color .15s;}
+  .product-card:hover:not(.disabled){border-color:var(--primary);}
+  .product-card.disabled{opacity:.55; cursor:not-allowed;}
+  .product-card .name{font-weight:700; font-size:16px; margin-bottom:2px;}
+  .product-card .model{color:var(--text-muted); font-size:13px; margin-bottom:10px;}
+  .tag{display:inline-block; font-size:11px; font-weight:600; padding:3px 8px; border-radius:4px;}
+  .tag.ready{background:#E3F6EA; color:var(--ok); border:1px solid #BFE8CE;}
+  .tag.off{background:var(--secondary-bg); color:var(--text-muted); border:1px solid var(--secondary-border);}
+  button{
+    font:inherit; cursor:pointer; border-radius:4px; padding:9px 16px; font-size:13px; font-weight:600;
+    border:1px solid var(--secondary-border); background:var(--secondary-bg); color:var(--text-dark);
+  }
+  button.primary{background:var(--primary); border-color:var(--primary); color:var(--primary-text);}
+  button.primary:hover{opacity:.92;}
+  button:disabled{opacity:.5; cursor:not-allowed;}
+  button.linklike{background:none; border:none; color:var(--primary); padding:6px 0; font-weight:600;}
+  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .row.between{justify-content:space-between;}
+  label{font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;}
+  input[type=text], input[type=number]{
+    font:inherit; padding:8px 10px; border:1px solid var(--secondary-border); border-radius:4px;
+    width:100%; background:#fff; color:var(--text-dark);
+  }
+  select{font:inherit; padding:8px 10px; border:1px solid var(--secondary-border); border-radius:4px; background:#fff;}
+  .field{min-width:140px;}
+  .section-title{font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;}
+  .status-dot{width:8px; height:8px; border-radius:50%; background:var(--text-muted); display:inline-block;}
+  .status-dot.on{background:var(--ok);}
+  .status-dot.busy{background:var(--warn);}
+  .steps{display:flex; flex-direction:column; gap:10px; margin:14px 0;}
+  .step{display:flex; gap:10px; align-items:flex-start; padding:10px; border:1px solid var(--secondary-border); border-radius:6px; background:var(--secondary-bg);}
+  .step.active{border-color:var(--primary); background:#EEF0FF;}
+  .step.done{border-color:#BFE8CE; background:#E3F6EA;}
+  .step .num{
+    width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid var(--secondary-border);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex:none; color:var(--text-muted);
+  }
+  .step.active .num{border-color:var(--primary); color:var(--primary);}
+  .step.done .num{border-color:var(--ok); color:var(--ok); background:#fff;}
+  .step .body .t{font-weight:600; font-size:13px;}
+  .step .body .d{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .creds-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
+  .creds-grid .kv{border:1px solid var(--secondary-border); border-radius:6px; padding:10px;}
+  .creds-grid .kv .k{font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.03em;}
+  .creds-grid .kv .v{font-family:"Roboto Mono",Consolas,monospace; font-size:13px; margin-top:3px; word-break:break-all;}
+  .log{
+    background:var(--term-bg); border:1px solid var(--term-border); border-radius:6px; padding:12px 14px;
+    font-family:"Roboto Mono",Consolas,monospace; font-size:12px; height:220px; overflow-y:auto; white-space:pre-wrap; word-break:break-all;
+  }
+  .log .tx{color:var(--term-tx);}
+  .log .rx{color:var(--term-rx);}
+  .log .sys{color:var(--term-sys);}
+  .log .muted{color:var(--term-muted);}
+  .view{display:none;}
+  .view.active{display:block;}
+  footer{max-width:1100px; margin:0 auto; padding:16px 24px 40px; color:var(--text-muted); font-size:12px;}
+  .reply-box{font-family:"Roboto Mono",Consolas,monospace; font-size:12px; background:var(--secondary-bg); border:1px solid var(--secondary-border); border-radius:4px; padding:8px 10px; min-height:18px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">XCAMP <span class="sep"></span><span class="sub">Device Configurator</span></div>
+  <span class="pill">TEST BUILD · no login · local hardware only</span>
+</header>
+
+<main>
+
+  <!-- ===================== PRODUCT SELECTION ===================== -->
+  <div id="view-products" class="view active">
+    <div class="banner warn">
+      <b>Test build.</b> Login is skipped on purpose. This talks directly to real hardware over
+      <b>Web Serial</b> — only Chrome, Edge or Opera support it, and only when this page is served over
+      <b>HTTPS or http://localhost</b>. Firefox and Safari can't run this at all.
+    </div>
+    <h1>Select a product</h1>
+    <p class="sub">Only LevelPro is wired up in this test build.</p>
+    <div class="grid">
+      <div class="card product-card" id="card-levelpro">
+        <span class="tag ready">WIRED UP</span>
+        <div class="name" style="margin-top:8px;">LevelPro</div>
+        <div class="model">DF555 ultrasonic level sensor</div>
+        <div style="font-size:12px; color:var(--text-muted);">Credential read · reporting &amp; detection interval</div>
+      </div>
+      <div class="card product-card disabled">
+        <span class="tag off">NOT IN THIS BUILD</span>
+        <div class="name" style="margin-top:8px;">FieldTrack</div>
+        <div class="model">W03 GPS tracker</div>
+      </div>
+      <div class="card product-card disabled">
+        <span class="tag off">NOT IN THIS BUILD</span>
+        <div class="name" style="margin-top:8px;">FlexLink</div>
+        <div class="model">USR-DR502 cellular gateway</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== LEVELPRO ===================== -->
+  <div id="view-levelpro" class="view">
+    <button class="linklike" id="btn-back">&larr; Back to product selection</button>
+    <h1 style="margin-top:10px;">LevelPro — DF555</h1>
+    <p class="sub">Local serial test: credential read (debug mode) and reporting/detection interval (downlink-format command over normal serial).</p>
+
+    <div id="serial-unsupported" class="banner warn" style="display:none;">
+      <b>Web Serial isn't available in this browser/context.</b> Open this page in Chrome, Edge or Opera,
+      served over HTTPS or http://localhost — not file:// and not Firefox/Safari.
+    </div>
+
+    <!-- Connection -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="row between">
+        <div>
+          <h2>Connection</h2>
+          <p class="sub" style="margin-bottom:0;">115200 · 8N1 at the start, per the configuration manual. Switches to 9600 only during the credential-read flow below.</p>
+        </div>
+        <div class="row">
+          <span class="status-dot" id="conn-dot"></span>
+          <span id="conn-text" style="font-size:13px; color:var(--text-muted);">Not connected</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button class="primary" id="btn-connect">Connect over USB</button>
+        <button id="btn-disconnect" disabled>Disconnect</button>
+        <span id="baud-indicator" style="font-size:12px; color:var(--text-muted);"></span>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr; align-items:start;">
+
+      <!-- Credential read -->
+      <div class="card">
+        <h2>Read LoRaWAN credentials</h2>
+        <p class="sub" style="margin-bottom:10px;">Follows the configuration manual's debug-mode procedure exactly — each physical step (magnet, baud switch) needs you to confirm it happened before the app moves on.</p>
+
+        <div class="steps">
+          <div class="step" id="cred-step-1">
+            <div class="num">1</div>
+            <div class="body">
+              <div class="t">Request debug mode</div>
+              <div class="d">Sends <code>@</code> every 50 ms over the open 115200 connection.</div>
+            </div>
+          </div>
+          <div class="step" id="cred-step-2">
+            <div class="num">2</div>
+            <div class="body">
+              <div class="t">Restart with the magnet</div>
+              <div class="d">Hold the magnet to the sensor's magnet sensor, then remove it. Watch the log below for the sensor's restart menu, then confirm here.</div>
+            </div>
+          </div>
+          <div class="step" id="cred-step-3">
+            <div class="num">3</div>
+            <div class="body">
+              <div class="t">Enter debug mode (send "3")</div>
+              <div class="d">Per the manual, reply "3" to the restart menu to enter debug mode.</div>
+            </div>
+          </div>
+          <div class="step" id="cred-step-4">
+            <div class="num">4</div>
+            <div class="body">
+              <div class="t">Switch to 9600 baud</div>
+              <div class="d">The sensor prompts a baud change. Confirm once you see it, and the app reopens the port at 9600.</div>
+            </div>
+          </div>
+          <div class="step" id="cred-step-5">
+            <div class="num">5</div>
+            <div class="body">
+              <div class="t">Read credentials (AT+ID)</div>
+              <div class="d">Sends <code>AT+ID</code> and parses the DevAddr / DevEui / AppEui reply.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" id="cred-actions"></div>
+
+        <div class="creds-grid" id="creds-result" style="display:none;">
+          <div class="kv"><div class="k">DevAddr</div><div class="v" id="cred-devaddr">—</div></div>
+          <div class="kv"><div class="k">DevEui</div><div class="v" id="cred-deveui">—</div></div>
+          <div class="kv"><div class="k">AppEui</div><div class="v" id="cred-appeui">—</div></div>
+          <div class="kv"><div class="k">AppKey</div><div class="v">Not readable over serial</div></div>
+        </div>
+
+        <button class="linklike" id="btn-cred-reset" style="margin-top:8px;">Reset flow</button>
+      </div>
+
+      <!-- Reporting / detection interval -->
+      <div class="card">
+        <h2>Reporting &amp; detection interval</h2>
+        <p class="sub" style="margin-bottom:14px;">Sent as the downlink-format command over the normal 115200 connection — no debug mode needed. Command 0x01 / 0x08, DF555 Protocol V3.2 §2.2.1 &amp; §2.2.6.</p>
+
+        <div class="section-title">Upload (reporting) interval</div>
+        <div class="row" style="margin-bottom:16px;">
+          <div class="field">
+            <label for="upload-hours">Hours (1–168)</label>
+            <input type="number" id="upload-hours" min="1" max="168" value="24" />
+          </div>
+          <button id="btn-set-upload" style="align-self:flex-end;">Set upload interval</button>
+        </div>
+        <div class="reply-box" id="upload-reply"></div>
+
+        <div class="section-title" style="margin-top:18px;">Detection interval</div>
+        <div class="row" style="margin-bottom:16px;">
+          <div class="field">
+            <label for="detect-min">Minutes (1–60)</label>
+            <input type="number" id="detect-min" min="1" max="60" value="10" />
+          </div>
+          <button id="btn-set-detect" style="align-self:flex-end;">Set detection interval</button>
+        </div>
+        <div class="reply-box" id="detect-reply"></div>
+      </div>
+    </div>
+
+    <!-- Raw serial log -->
+    <div class="card" style="margin-top:16px;">
+      <div class="row between" style="margin-bottom:10px;">
+        <h2 style="margin:0;">Raw serial log</h2>
+        <div class="row">
+          <label style="margin:0;">Line ending
+            <select id="line-ending">
+              <option value="none">None</option>
+              <option value="crlf" selected>CRLF</option>
+              <option value="lf">LF</option>
+              <option value="cr">CR</option>
+            </select>
+          </label>
+          <button id="btn-clear-log">Clear</button>
+        </div>
+      </div>
+      <div class="log" id="log"></div>
+      <div class="row" style="margin-top:10px;">
+        <input type="text" id="raw-input" placeholder='Send raw ASCII, e.g. AT+ID or 80029999010A81' style="flex:1;" />
+        <button class="primary" id="btn-send-raw">Send</button>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  XCAMP Device Configurator · Test build — Web Serial talks directly to the device from your browser; nothing is sent to a server.
+</footer>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- view switching ----------
+  $('card-levelpro').addEventListener('click', () => showView('view-levelpro'));
+  $('btn-back').addEventListener('click', () => showView('view-products'));
+  function showView(id){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    $(id).classList.add('active');
+  }
+
+  // ---------- Web Serial plumbing ----------
+  let port = null;
+  let reader = null;
+  let readableClosed = null;
+  let writer = null;
+  let currentBaud = null;
+  let lineBuffer = '';
+  const lineListeners = new Set(); // callback(line)
+
+  if (!('serial' in navigator)) {
+    $('serial-unsupported').style.display = 'block';
+    $('btn-connect').disabled = true;
+  }
+
+  function log(text, cls){
+    const el = document.createElement('div');
+    if (cls) el.className = cls;
+    const ts = new Date().toLocaleTimeString('en-GB', { hour12:false }) + '.' + String(new Date().getMilliseconds()).padStart(3,'0');
+    el.textContent = `[${ts}] ${text}`;
+    $('log').appendChild(el);
+    $('log').scrollTop = $('log').scrollHeight;
+  }
+
+  async function openPort(baud){
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: baud, dataBits: 8, stopBits: 1, parity: 'none' });
+    currentBaud = baud;
+    startReadLoop();
+    setConnected(true);
+    log(`Connected · ${baud} 8N1`, 'sys');
+  }
+
+  async function reopenAtBaud(baud){
+    await stopReadLoop();
+    await port.close();
+    await port.open({ baudRate: baud, dataBits: 8, stopBits: 1, parity: 'none' });
+    currentBaud = baud;
+    startReadLoop();
+    log(`Reopened at ${baud} baud`, 'sys');
+    $('baud-indicator').textContent = `${baud} baud`;
+  }
+
+  async function stopReadLoop(){
+    if (reader) {
+      try { await reader.cancel(); } catch(e){}
+      try { await readableClosed; } catch(e){}
+      reader = null;
+    }
+  }
+
+  async function startReadLoop(){
+    const textDecoder = new TextDecoderStream();
+    readableClosed = port.readable.pipeTo(textDecoder.writable).catch(() => {});
+    reader = textDecoder.readable.getReader();
+    (async () => {
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value) handleIncoming(value);
+        }
+      } catch (e) {
+        // port likely closed/cancelled — expected during baud switch / disconnect
+      }
+    })();
+  }
+
+  function handleIncoming(chunk){
+    lineBuffer += chunk;
+    let idx;
+    while ((idx = lineBuffer.indexOf('\n')) >= 0) {
+      let line = lineBuffer.slice(0, idx).replace(/\r$/, '');
+      lineBuffer = lineBuffer.slice(idx + 1);
+      if (line.length) {
+        log(line, 'rx');
+        lineListeners.forEach(fn => fn(line));
+      }
+    }
+  }
+
+  function lineTerminator(){
+    switch ($('line-ending').value) {
+      case 'crlf': return '\r\n';
+      case 'lf': return '\n';
+      case 'cr': return '\r';
+      default: return '';
+    }
+  }
+
+  async function sendRaw(str, { withTerminator = true } = {}){
+    if (!port || !port.writable) { log('Not connected — nothing sent', 'muted'); return; }
+    const payload = str + (withTerminator ? lineTerminator() : '');
+    const w = port.writable.getWriter();
+    try {
+      await w.write(new TextEncoder().encode(payload));
+    } finally {
+      w.releaseLock();
+    }
+    log(str, 'tx');
+  }
+
+  function setConnected(on){
+    $('conn-dot').className = 'status-dot' + (on ? ' on' : '');
+    $('conn-text').textContent = on ? 'Connected' : 'Not connected';
+    $('btn-connect').disabled = on;
+    $('btn-disconnect').disabled = !on;
+    $('baud-indicator').textContent = on ? `${currentBaud} baud` : '';
+  }
+
+  $('btn-connect').addEventListener('click', async () => {
+    try { await openPort(115200); }
+    catch (e) { log('Connect failed: ' + e.message, 'muted'); }
+  });
+
+  $('btn-disconnect').addEventListener('click', async () => {
+    try {
+      await stopReadLoop();
+      if (writer) { try { writer.releaseLock(); } catch(e){} writer = null; }
+      if (port) await port.close();
+    } catch(e){ log('Disconnect error: ' + e.message, 'muted'); }
+    port = null;
+    setConnected(false);
+    log('Disconnected', 'sys');
+  });
+
+  $('btn-clear-log').addEventListener('click', () => { $('log').innerHTML = ''; });
+
+  $('btn-send-raw').addEventListener('click', () => {
+    const v = $('raw-input').value.trim();
+    if (v) sendRaw(v);
+    $('raw-input').value = '';
+  });
+  $('raw-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('btn-send-raw').click();
+  });
+
+  // ---------- DF555 downlink-format command helper ----------
+  // Frame: 80 02 9999 <cmd> <content> 81, sent as literal ASCII hex characters
+  // (not raw binary) — per DF555 Configuration Manual V2.0 §2.3 and
+  // DF555 LoRaWAN Protocol V3.2 §2.2. No checksum.
+  function hex2(n){ return n.toString(16).toUpperCase().padStart(2, '0'); }
+  function buildDownlinkCommand(cmdByte, contentByte){
+    return `80029999${hex2(cmdByte)}${hex2(contentByte)}81`;
+  }
+
+  $('btn-set-upload').addEventListener('click', async () => {
+    const hours = parseInt($('upload-hours').value, 10);
+    if (!(hours >= 1 && hours <= 168)) { $('upload-reply').textContent = 'Enter 1–168'; return; }
+    const cmd = buildDownlinkCommand(0x01, hours);
+    $('upload-reply').textContent = `Sent ${cmd} — waiting for reply…`;
+    const onLine = (line) => {
+      if (/uploadtime/i.test(line)) { $('upload-reply').textContent = line; lineListeners.delete(onLine); }
+    };
+    lineListeners.add(onLine);
+    await sendRaw(cmd, { withTerminator: false }); // command frame is self-delimited by 0x81 tail
+  });
+
+  $('btn-set-detect').addEventListener('click', async () => {
+    const mins = parseInt($('detect-min').value, 10);
+    if (!(mins >= 1 && mins <= 60)) { $('detect-reply').textContent = 'Enter 1–60'; return; }
+    const cmd = buildDownlinkCommand(0x08, mins);
+    $('detect-reply').textContent = `Sent ${cmd} — waiting for reply…`;
+    const onLine = (line) => {
+      if (/detect/i.test(line) || /cycle/i.test(line)) { $('detect-reply').textContent = line; lineListeners.delete(onLine); }
+    };
+    lineListeners.add(onLine);
+    await sendRaw(cmd, { withTerminator: false });
+  });
+
+  // ---------- Credential read flow (guided, per Configuration Manual §3) ----------
+  let credTimer = null;
+  const steps = [1,2,3,4,5].map(n => $('cred-step-' + n));
+  function setStep(n, state){ // state: 'active' | 'done' | ''
+    steps.forEach((el, i) => {
+      el.classList.remove('active','done');
+      if (i + 1 < n) el.classList.add('done');
+      if (i + 1 === n && state) el.classList.add(state);
+    });
+  }
+  function renderCredActions(html){ $('cred-actions').innerHTML = html; }
+
+  function credStart(){
+    if (!port) { log('Connect at 115200 first', 'muted'); return; }
+    setStep(1, 'active');
+    log('Requesting debug mode: sending "@" every 50ms…', 'sys');
+    credTimer = setInterval(() => sendRaw('@', { withTerminator: false }), 50);
+    renderCredActions(`<button class="primary" id="cred-next-2">I restarted it with the magnet</button>`);
+    $('cred-next-2').addEventListener('click', () => {
+      clearInterval(credTimer); credTimer = null;
+      setStep(2, 'done');
+      setStep(3, 'active');
+      renderCredActions(`<button class="primary" id="cred-send-3">Send "3" (enter debug mode)</button>`);
+      $('cred-send-3').addEventListener('click', async () => {
+        await sendRaw('3');
+        setStep(3, 'done');
+        setStep(4, 'active');
+        renderCredActions(`<button class="primary" id="cred-next-4">Sensor is prompting a baud switch — reopen at 9600</button>`);
+        $('cred-next-4').addEventListener('click', async () => {
+          try {
+            await reopenAtBaud(9600);
+            setStep(4, 'done');
+            setStep(5, 'active');
+            renderCredActions(`<button class="primary" id="cred-send-id">Send AT+ID</button>`);
+            $('cred-send-id').addEventListener('click', async () => {
+              const got = { devaddr:null, deveui:null, appeui:null };
+              const onLine = (line) => {
+                let m;
+                if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
+                if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
+                if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
+                if (got.devaddr && got.deveui && got.appeui) {
+                  $('cred-devaddr').textContent = got.devaddr;
+                  $('cred-deveui').textContent = got.deveui;
+                  $('cred-appeui').textContent = got.appeui;
+                  $('creds-result').style.display = 'grid';
+                  setStep(5, 'done');
+                  lineListeners.delete(onLine);
+                  renderCredActions(`<span style="font-size:13px; color:var(--text-muted);">Done. Restart the sensor with the magnet again, then reconnect at 115200 to return it to normal mode.</span>`);
+                }
+              };
+              lineListeners.add(onLine);
+              await sendRaw('AT+ID');
+            });
+          } catch (e) {
+            log('Reopen at 9600 failed: ' + e.message, 'muted');
+          }
+        });
+      });
+    });
+  }
+
+  renderCredActions(`<button class="primary" id="cred-begin">Start credential read</button>`);
+  $('cred-begin').addEventListener('click', credStart);
+
+  $('btn-cred-reset').addEventListener('click', () => {
+    if (credTimer) { clearInterval(credTimer); credTimer = null; }
+    setStep(0);
+    $('creds-result').style.display = 'none';
+    renderCredActions(`<button class="primary" id="cred-begin">Start credential read</button>`);
+    $('cred-begin').addEventListener('click', credStart);
+  });
+
+})();
+</script>
+</body>
+</html>
