@@ -848,7 +848,12 @@
     });
   }
 
-  $('btn-read-creds').addEventListener('click', async () => {
+  // Single onclick-based state machine for this button — never addEventListener
+  // alongside onclick here, or the "continue after magnet" click fires both the
+  // original listener (which silently restarts the whole flow from step 1) and
+  // the step-2 handler at once. That bug looked like "spams @ forever, magnet
+  // tap does nothing" — the first click handler was re-triggering step 1.
+  async function startCredFlow(){
     if (!port) { setOpStatus('Connect the device first.', 'err'); return; }
     $('btn-read-creds').disabled = true;
     setPStep(1, 'active');
@@ -857,14 +862,14 @@
     credTimer = setInterval(() => sendRaw('@', { withTerminator: false }), 50);
 
     await new Promise((resolve) => {
-      const proceed = () => {
+      $('btn-read-creds').textContent = 'I restarted it with the magnet — continue';
+      $('btn-read-creds').disabled = false;
+      $('btn-read-creds').onclick = () => {
         clearInterval(credTimer); credTimer = null;
+        $('btn-read-creds').disabled = true;
         $('btn-read-creds').textContent = 'Read Credentials';
         resolve();
       };
-      $('btn-read-creds').textContent = 'I restarted it with the magnet — continue';
-      $('btn-read-creds').disabled = false;
-      $('btn-read-creds').onclick = proceed;
     });
 
     setPStep(2, 'active');
@@ -874,7 +879,7 @@
     } catch (e) {
       log('Reopen at 9600 failed: ' + e.message, 'muted');
       setOpStatus('Could not reopen at 9600 baud: ' + e.message, 'err');
-      $('btn-read-creds').onclick = null;
+      $('btn-read-creds').onclick = startCredFlow;
       $('btn-read-creds').disabled = false;
       return;
     }
@@ -895,7 +900,7 @@
     await sendRaw('AT+ID');
     const okRead = await idPromise;
 
-    $('btn-read-creds').onclick = null;
+    $('btn-read-creds').onclick = startCredFlow; // restored so the flow can be run again
     $('btn-read-creds').disabled = !port;
 
     if (okRead) {
@@ -908,7 +913,8 @@
       setPStep(2, 'done');
       setOpStatus('AT+ID sent, but no complete reply seen within 4s. Check the raw log.', 'err');
     }
-  });
+  }
+  $('btn-read-creds').onclick = startCredFlow;
 
 })();
 </script>
