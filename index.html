@@ -8,133 +8,250 @@
   :root{
     --primary:#1E22AA;
     --primary-text:#ffffff;
-    --card-bg:#ffffff;
-    --card-border:#C2CAD5;
-    --secondary-bg:#E7EAEE;
-    --secondary-border:#D3D9E1;
-    --text-dark:#20252D;
-    --text-muted:#65707E;
-    --page-bg:#F8FAFC;
+    --ink:#20252D;
+    --ink-soft:#3B434D;
+    --muted:#65707E;
+    --muted2:#57616E;
+    --disabled-text:#8B929B;
+    --border:#C2CAD5;
+    --border-soft:#D3D9E1;
+    --border-input:#ADB8C5;
+    --border-input-strong:#9BA7B6;
+    --border-section:#BCC5D1;
+    --section-header-border:#C7CDD6;
+    --bg-page:#FAFBFC;
+    --bg-card:#ffffff;
+    --bg-input-readonly:#F6F7F9;
+    --bg-chip:#EEF0F3;
+    --bg-section-header:#ECEEF1;
+    --bg-nav-active:#EEF0FB;
+    --bg-footer:#F6F7F9;
+    --bg-disabled-input:#F0F2F5;
+    --ok-text:#267333;
+    --ok-bg:#F3FAF4;
+    --ok-border:#B7DCBF;
+    --ok-bg-strong:#E4F3E7;
+    --ok-text-strong:#1F5C29;
+    --warn-text:#8A5A00;
+    --warn-bg:#FEF3E2;
+    --warn-border:#F3D9A8;
     --term-bg:#0B0D12;
     --term-border:#28303D;
     --term-rx:#E2E6EF;
     --term-tx:#8B93FF;
     --term-sys:#F0C56C;
     --term-muted:#6E7481;
-    --ok:#1C8A4C;
-    --warn:#B45309;
-    --danger:#B3261E;
+    --mono:'Roboto Mono', ui-monospace, Menlo, Consolas, monospace;
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; background:var(--page-bg); color:var(--text-dark);
+    margin:0; background:var(--bg-page); color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;
   }
-  header{
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ---------- header / chrome ---------- */
+  header.app{
     display:flex; align-items:center; justify-content:space-between;
-    padding:16px 24px; background:#fff; border-bottom:1px solid var(--card-border);
+    padding:18px 32px; background:#fff; border-bottom:1px solid var(--border-soft);
   }
-  header .brand{display:flex; align-items:center; gap:12px; font-weight:700; font-size:18px;}
-  header .brand .sep{width:1px; height:20px; background:var(--card-border);}
-  header .brand .sub{font-weight:400; font-size:16px; color:var(--text-dark);}
-  .pill{font-size:12px; font-weight:600; color:var(--warn); background:#FEF3E2; border:1px solid #F3D9A8; padding:4px 10px; border-radius:999px;}
-  main{max-width:1100px; margin:0 auto; padding:24px;}
-  .banner{
-    background:var(--secondary-bg); border:1px solid var(--secondary-border);
-    border-radius:6px; padding:14px 16px; font-size:13px; color:var(--text-dark); margin-bottom:20px;
+  header.app .brand{display:flex; align-items:center; gap:22px; font-size:21px; color:var(--ink);}
+  header.app .brand b{font-weight:800; font-size:26px;}
+  header.app .brand .sep{width:1px; height:28px; background:#C7CDD6;}
+  header.app .right{display:flex; align-items:center; gap:18px;}
+  header.app .acct{font-size:12px; color:var(--muted);}
+  .pill{font-size:11px; font-weight:700; color:var(--warn-text); background:var(--warn-bg); border:1px solid var(--warn-border); padding:4px 10px; border-radius:999px; letter-spacing:.02em;}
+
+  main{max-width:1440px; margin:0 auto; padding:24px 32px 0;}
+  footer.app{
+    display:flex; justify-content:space-between; color:var(--muted); font-size:12px;
+    max-width:1440px; margin:0 auto; padding:24px 32px 40px;
   }
-  .banner.warn{background:#FEF3E2; border-color:#F3D9A8; color:#7A4A05;}
-  .banner b{font-weight:600;}
-  h1{font-size:20px; margin:0 0 4px;}
-  h2{font-size:16px; margin:0 0 4px;}
-  p.sub{color:var(--text-muted); font-size:13px; margin:0 0 20px;}
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
-  .card{
-    background:var(--card-bg); border:1px solid var(--card-border); border-radius:8px; padding:20px;
+
+  h1{font-size:22px; margin:0 0 4px; font-weight:800;}
+  p.sub{color:var(--muted); font-size:13px; margin:0 0 18px; line-height:1.5;}
+
+  button{
+    font:inherit; cursor:pointer; border-radius:4px; padding:11px 19px; font-size:14px; font-weight:700;
+    border:1px solid var(--border-input-strong); background:var(--bg-card); color:var(--ink);
   }
+  button.secondary{background:var(--bg-chip); border-color:var(--border-soft); color:var(--disabled-text);}
+  button.primary{background:var(--primary); border-color:var(--primary); color:var(--primary-text);}
+  button.primary:hover{opacity:.92;}
+  button:disabled{opacity:.5; cursor:not-allowed;}
+  button.sm{padding:7px 12px; font-size:13px;}
+  button.linklike{background:none; border:none; color:var(--primary); padding:0; font-weight:700;}
+
+  /* ---------- product selection ---------- */
+  .grid-products{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-bottom:24px;}
+  .card{background:var(--bg-card); border:1px solid var(--border); border-radius:4px; padding:20px;}
   .product-card{cursor:pointer; transition:border-color .15s;}
   .product-card:hover:not(.disabled){border-color:var(--primary);}
   .product-card.disabled{opacity:.55; cursor:not-allowed;}
   .product-card .name{font-weight:700; font-size:16px; margin-bottom:2px;}
-  .product-card .model{color:var(--text-muted); font-size:13px; margin-bottom:10px;}
+  .product-card .model{color:var(--muted); font-size:13px; margin-bottom:10px;}
   .tag{display:inline-block; font-size:11px; font-weight:600; padding:3px 8px; border-radius:4px;}
-  .tag.ready{background:#E3F6EA; color:var(--ok); border:1px solid #BFE8CE;}
-  .tag.off{background:var(--secondary-bg); color:var(--text-muted); border:1px solid var(--secondary-border);}
-  button{
-    font:inherit; cursor:pointer; border-radius:4px; padding:9px 16px; font-size:13px; font-weight:600;
-    border:1px solid var(--secondary-border); background:var(--secondary-bg); color:var(--text-dark);
+  .tag.ready{background:var(--ok-bg-strong); color:var(--ok-text); border:1px solid var(--ok-border);}
+  .tag.off{background:var(--bg-chip); color:var(--muted); border:1px solid var(--border-soft);}
+  .banner{background:#EEF0F3; border-radius:4px; padding:12px 16px; font-size:14px; color:var(--ink-soft); margin-bottom:20px;}
+  .banner.warn{background:var(--warn-bg); border:1px solid var(--warn-border); color:#7A4A05;}
+
+  /* ---------- breadcrumb / top cards ---------- */
+  .breadcrumb{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .breadcrumb .path{font-size:12px; color:var(--muted2);}
+  .topcards{display:flex; gap:16px; align-items:stretch; margin-bottom:18px;}
+  .topcards .card{display:flex; flex-direction:column; gap:14px;}
+  .topcards .card.product{width:295px; flex:none; gap:16px;}
+  .topcards .card.conn{flex:1;}
+  .kv-row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .chip{display:inline-flex; font-size:12px; font-weight:500; padding:4px 10px; border-radius:3px; background:var(--bg-chip); color:var(--ink-soft);}
+  .chip.ok{background:var(--ok-bg-strong); color:var(--ok-text);}
+  .label-bold{font-weight:700; font-size:14px;}
+
+  /* ---------- config layout ---------- */
+  .config-layout{display:flex; align-items:stretch; background:var(--bg-card); border:1px solid var(--border); border-radius:4px; overflow:hidden;}
+  .sidebar{width:205px; flex:none; border-right:1px solid var(--border-soft); padding-top:20px;}
+  .nav-item{padding:13px 20px; font-size:14px; color:var(--ink-soft); cursor:default;}
+  .nav-item.active{background:var(--bg-nav-active); border-left:3px solid var(--primary); padding-left:17px; font-weight:700; color:var(--primary);}
+  .section-index{padding:110px 20px 20px; font-size:12px; line-height:1.9;}
+  .section-index .hdr{font-weight:600; color:var(--muted2); letter-spacing:.03em;}
+  .section-index div{color:var(--muted);}
+  .content{flex:1; min-width:0; padding:22px; display:flex; flex-direction:column; gap:24px;}
+
+  /* ---------- cards within content ---------- */
+  .panel{background:#fff; border:1px solid var(--border); border-radius:6px;}
+  .panel-header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:20px 22px 16px; border-bottom:1px solid var(--border-soft);}
+  .panel-header h2{font-size:20px; margin:0 0 6px; font-weight:700;}
+  .panel-header p{margin:0; font-size:12px; color:var(--muted2); line-height:1.5;}
+  .panel-body{padding:18px 22px; display:flex; flex-direction:column; gap:16px;}
+  .panel-footer{display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--bg-footer); border-top:1px solid var(--border-soft); padding:14px 22px; border-radius:0 0 6px 6px;}
+  .panel-footer p{margin:0; font-size:12px; color:var(--muted); flex:1;}
+  .help-btn{
+    width:26px; height:26px; border-radius:50%; border:1px solid var(--border-input-strong); background:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--muted2); cursor:help; flex:none;
   }
-  button.primary{background:var(--primary); border-color:var(--primary); color:var(--primary-text);}
-  button.primary:hover{opacity:.92;}
-  button:disabled{opacity:.5; cursor:not-allowed;}
-  button.linklike{background:none; border:none; color:var(--primary); padding:6px 0; font-weight:600;}
-  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
-  .row.between{justify-content:space-between;}
-  label{font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;}
-  input[type=text], input[type=number]{
-    font:inherit; padding:8px 10px; border:1px solid var(--secondary-border); border-radius:4px;
-    width:100%; background:#fff; color:var(--text-dark);
+  .help-btn.sm{width:20px; height:20px; font-size:12px;}
+
+  /* ---------- credentials ---------- */
+  .progress-row{display:flex; gap:10px;}
+  .pstep{flex:1; display:flex; gap:10px; padding:10px 12px; border-radius:4px; border:1px solid var(--border-soft); background:#F8F9FA;}
+  .pstep .num{width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid var(--border-input); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex:none; color:var(--muted);}
+  .pstep .t{font-weight:700; font-size:13px; color:var(--ink-soft);}
+  .pstep .d{font-size:12px; color:var(--muted); margin-top:2px;}
+  .pstep.active{background:#EEF0FF; border-color:var(--primary);}
+  .pstep.active .num{border-color:var(--primary); color:var(--primary);}
+  .pstep.done{background:var(--ok-bg); border-color:var(--ok-border);}
+  .pstep.done .num{background:var(--ok-text); color:#fff; border-color:var(--ok-text);}
+  .pstep.done .t{color:var(--ok-text);}
+
+  .cred-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .cred-field .k{font-weight:500; font-size:13px; margin-bottom:8px;}
+  .cred-value{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--bg-input-readonly); border:1px solid var(--border-input); border-radius:3px; padding:10px 13px;
   }
-  select{font:inherit; padding:8px 10px; border:1px solid var(--secondary-border); border-radius:4px; background:#fff;}
-  .field{min-width:140px;}
-  .section-title{font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;}
-  .status-dot{width:8px; height:8px; border-radius:50%; background:var(--text-muted); display:inline-block;}
-  .status-dot.on{background:var(--ok);}
-  .status-dot.busy{background:var(--warn);}
-  .steps{display:flex; flex-direction:column; gap:10px; margin:14px 0;}
-  .step{display:flex; gap:10px; align-items:flex-start; padding:10px; border:1px solid var(--secondary-border); border-radius:6px; background:var(--secondary-bg);}
-  .step.active{border-color:var(--primary); background:#EEF0FF;}
-  .step.done{border-color:#BFE8CE; background:#E3F6EA;}
-  .step .num{
-    width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid var(--secondary-border);
-    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex:none; color:var(--text-muted);
+  .cred-value .v{font-family:var(--mono); font-size:14px; word-break:break-all;}
+  .cred-value .copy{font-weight:700; font-size:12px; color:var(--primary); background:none; border:none; padding:0; cursor:pointer; flex:none;}
+
+  /* ---------- fields ---------- */
+  .field-row{display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;}
+  .field{flex:1; min-width:170px; display:flex; flex-direction:column; gap:8px;}
+  .field .k{font-weight:500; font-size:13px;}
+  .field .hint{font-size:12px; color:var(--muted); line-height:1.4;}
+  .field .hint.warn{color:var(--warn-text);}
+  .input-box{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:#fff; border:1px solid var(--border-input); border-radius:3px; padding:10px 13px;
   }
-  .step.active .num{border-color:var(--primary); color:var(--primary);}
-  .step.done .num{border-color:var(--ok); color:var(--ok); background:#fff;}
-  .step .body .t{font-weight:600; font-size:13px;}
-  .step .body .d{font-size:12px; color:var(--text-muted); margin-top:2px;}
-  .creds-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
-  .creds-grid .kv{border:1px solid var(--secondary-border); border-radius:6px; padding:10px;}
-  .creds-grid .kv .k{font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.03em;}
-  .creds-grid .kv .v{font-family:"Roboto Mono",Consolas,monospace; font-size:13px; margin-top:3px; word-break:break-all;}
+  .input-box input[type=number], .input-box input[type=text]{
+    border:none; outline:none; font:inherit; font-size:14px; color:var(--ink); width:100%; background:transparent; padding:0;
+  }
+  .input-box .unit{color:var(--muted); font-size:14px; flex:none;}
+  .input-box.select{cursor:pointer; position:relative;}
+  .input-box select{border:none; outline:none; font:inherit; font-size:14px; color:var(--ink); background:transparent; width:100%; appearance:none; padding:0;}
+  .input-box .chev{flex:none; color:var(--muted);}
+  .input-box.disabled{background:var(--bg-disabled-input); border-color:var(--border-soft);}
+  .input-box.disabled input{color:var(--disabled-text);}
+
+  /* ---------- toggle switch ---------- */
+  .toggle-row{display:flex; align-items:center; gap:12px; padding:8px 0;}
+  .switch{
+    width:34px; height:19px; border-radius:999px; background:var(--border-input); position:relative; border:none; padding:0; cursor:pointer; flex:none;
+    transition:background .15s;
+  }
+  .switch::after{content:''; position:absolute; top:2px; left:2px; width:15px; height:15px; border-radius:50%; background:#fff; transition:left .15s;}
+  .switch.on{background:var(--primary);}
+  .switch.on::after{left:17px;}
+  .toggle-row .state{font-size:14px; color:var(--ink);}
+
+  /* ---------- sections within Device Configuration ---------- */
+  .section-box{border:1px solid var(--border-section); border-radius:4px; overflow:hidden;}
+  .section-hd{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 16px; background:var(--bg-section-header); border-bottom:1px solid var(--section-header-border);}
+  .section-hd .t{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .section-hd .t b{font-size:14px;}
+  .section-hd .t span{font-size:12px; color:var(--muted);}
+  .section-body{padding:15px 18px;}
+
+  .cmd-preview{
+    background:var(--bg-page); border:1px dashed var(--border-input); border-radius:4px; padding:12px 16px;
+    font-size:12px; color:var(--ink-soft); display:flex; flex-direction:column; gap:4px;
+  }
+  .cmd-preview .title{font-weight:700;}
+  .cmd-preview .line{font-family:var(--mono); white-space:pre;}
+  .cmd-preview.empty{color:var(--muted); font-style:normal;}
+
+  .op-status{margin:24px 0;}
+  .op-status .hd{padding:11px 18px; border-bottom:1px solid var(--border-soft); font-weight:700; font-size:14px;}
+  .op-status .body{padding:12px 16px;}
+  .op-status .msg{border-radius:3px; padding:12px 16px; font-size:14px;}
+  .op-status .msg.ok{background:var(--ok-bg-strong); color:var(--ok-text-strong);}
+  .op-status .msg.idle{background:var(--bg-chip); color:var(--muted2);}
+  .op-status .msg.err{background:#FBEAE9; color:#8C241C;}
+
+  /* ---------- raw log (kept for debugging, tucked away) ---------- */
+  details.rawlog{margin:18px 0 32px;}
+  details.rawlog > summary{cursor:pointer; font-size:13px; font-weight:700; color:var(--muted2); padding:8px 0;}
   .log{
     background:var(--term-bg); border:1px solid var(--term-border); border-radius:6px; padding:12px 14px;
-    font-family:"Roboto Mono",Consolas,monospace; font-size:12px; height:220px; overflow-y:auto; white-space:pre-wrap; word-break:break-all;
+    font-family:var(--mono); font-size:12px; height:200px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; margin-top:8px;
   }
   .log .tx{color:var(--term-tx);}
   .log .rx{color:var(--term-rx);}
   .log .sys{color:var(--term-sys);}
   .log .muted{color:var(--term-muted);}
-  .view{display:none;}
-  .view.active{display:block;}
-  footer{max-width:1100px; margin:0 auto; padding:16px 24px 40px; color:var(--text-muted); font-size:12px;}
-  .reply-box{font-family:"Roboto Mono",Consolas,monospace; font-size:12px; background:var(--secondary-bg); border:1px solid var(--secondary-border); border-radius:4px; padding:8px 10px; min-height:18px;}
+  .rawlog-controls{display:flex; gap:8px; align-items:center; margin-top:10px;}
+  .rawlog-controls input{flex:1; font:inherit; padding:8px 10px; border:1px solid var(--border-soft); border-radius:4px;}
+  select.le{font:inherit; padding:6px 8px; border:1px solid var(--border-soft); border-radius:4px;}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">XCAMP <span class="sep"></span><span class="sub">Device Configurator</span></div>
-  <span class="pill">TEST BUILD · no login · local hardware only</span>
+<header class="app">
+  <div class="brand"><b>XCAMP</b><span class="sep"></span><span>Device Configurator</span></div>
+  <div class="right">
+    <span class="pill">TEST BUILD · no login</span>
+    <span class="acct">Approved account</span>
+    <button class="sm">Log out</button>
+  </div>
 </header>
 
 <main>
 
   <!-- ===================== PRODUCT SELECTION ===================== -->
   <div id="view-products" class="view active">
-    <div class="banner warn">
+    <div class="banner warn" style="margin-top:20px;">
       <b>Test build.</b> Login is skipped on purpose. This talks directly to real hardware over
-      <b>Web Serial</b> — only Chrome, Edge or Opera support it, and only when this page is served over
-      <b>HTTPS or http://localhost</b>. Firefox and Safari can't run this at all.
+      <b>Web Serial</b> — Chrome, Edge or Opera only, served over HTTPS or http://localhost.
     </div>
     <h1>Select a product</h1>
     <p class="sub">Only LevelPro is wired up in this test build.</p>
-    <div class="grid">
+    <div class="grid-products">
       <div class="card product-card" id="card-levelpro">
         <span class="tag ready">WIRED UP</span>
         <div class="name" style="margin-top:8px;">LevelPro</div>
         <div class="model">DF555 ultrasonic level sensor</div>
-        <div style="font-size:12px; color:var(--text-muted);">Credential read · reporting &amp; detection interval</div>
+        <div style="font-size:12px; color:var(--muted);">Credentials · Functions · Reporting · Alarm thresholds · Device actions</div>
       </div>
       <div class="card product-card disabled">
         <span class="tag off">NOT IN THIS BUILD</span>
@@ -151,238 +268,253 @@
 
   <!-- ===================== LEVELPRO ===================== -->
   <div id="view-levelpro" class="view">
-    <button class="linklike" id="btn-back">&larr; Back to product selection</button>
-    <h1 style="margin-top:10px;">LevelPro — DF555</h1>
-    <p class="sub">Local serial test: credential read (debug mode) and reporting/detection interval (downlink-format command over normal serial).</p>
 
     <div id="serial-unsupported" class="banner warn" style="display:none;">
       <b>Web Serial isn't available in this browser/context.</b> Open this page in Chrome, Edge or Opera,
-      served over HTTPS or http://localhost — not file:// and not Firefox/Safari.
+      served over HTTPS or http://localhost.
     </div>
 
-    <!-- Connection -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="row between">
-        <div>
-          <h2>Connection</h2>
-          <p class="sub" style="margin-bottom:0;">115200 · 8N1 at the start, per the configuration manual. Switches to 9600 only during the credential-read flow below.</p>
-        </div>
-        <div class="row">
-          <span class="status-dot" id="conn-dot"></span>
-          <span id="conn-text" style="font-size:13px; color:var(--text-muted);">Not connected</span>
-        </div>
-      </div>
-      <div class="row" style="margin-top:14px;">
-        <button class="primary" id="btn-connect">Connect over USB</button>
-        <button id="btn-disconnect" disabled>Disconnect</button>
-        <span id="baud-indicator" style="font-size:12px; color:var(--text-muted);"></span>
-      </div>
+    <div class="breadcrumb">
+      <span class="path">Products / LevelPro / Configuration</span>
+      <button class="secondary sm" id="btn-change-product">Change Product</button>
     </div>
 
-    <div class="grid" style="grid-template-columns:1fr 1fr; align-items:start;">
+    <div class="banner" id="design-banner">
+      TEST BUILD · LevelPro profile built from Dingtek DF555 Protocol V3.2 (firmware V2.0.6+). Credential read is confirmed working on real hardware; Device Configuration writes are not yet confirmed — start small.
+    </div>
 
-      <!-- Credential read -->
-      <div class="card">
-        <h2>Read LoRaWAN credentials</h2>
-        <p class="sub" style="margin-bottom:10px;">Follows the configuration manual's debug-mode procedure exactly — each physical step (magnet, baud switch) needs you to confirm it happened before the app moves on.</p>
-
-        <div class="steps">
-          <div class="step" id="cred-step-1">
-            <div class="num">1</div>
-            <div class="body">
-              <div class="t">Request debug mode</div>
-              <div class="d">Sends <code>@</code> every 50 ms over the open 115200 connection.</div>
-            </div>
-          </div>
-          <div class="step" id="cred-step-2">
-            <div class="num">2</div>
-            <div class="body">
-              <div class="t">Restart with the magnet</div>
-              <div class="d">Hold the magnet to the sensor's magnet sensor, then remove it. Watch the log below for the sensor's restart menu, then confirm here.</div>
-            </div>
-          </div>
-          <div class="step" id="cred-step-3">
-            <div class="num">3</div>
-            <div class="body">
-              <div class="t">Enter debug mode (send "3")</div>
-              <div class="d">Per the manual, reply "3" to the restart menu to enter debug mode.</div>
-            </div>
-          </div>
-          <div class="step" id="cred-step-4">
-            <div class="num">4</div>
-            <div class="body">
-              <div class="t">Switch to 9600 baud</div>
-              <div class="d">The sensor prompts a baud change. Confirm once you see it, and the app reopens the port at 9600.</div>
-            </div>
-          </div>
-          <div class="step" id="cred-step-5">
-            <div class="num">5</div>
-            <div class="body">
-              <div class="t">Read credentials (AT+ID)</div>
-              <div class="d">Sends <code>AT+ID</code> and parses the DevAddr / DevEui / AppEui reply.</div>
-            </div>
-          </div>
+    <div class="topcards">
+      <div class="card product">
+        <div class="label-bold">1. Selected product</div>
+        <div class="kv-row">
+          <span class="label-bold">LevelPro</span>
+          <span class="chip">DF555 level sensor</span>
         </div>
-
-        <div class="row" id="cred-actions"></div>
-
-        <div class="creds-grid" id="creds-result" style="display:none;">
-          <div class="kv"><div class="k">DevAddr</div><div class="v" id="cred-devaddr">—</div></div>
-          <div class="kv"><div class="k">DevEui</div><div class="v" id="cred-deveui">—</div></div>
-          <div class="kv"><div class="k">AppEui</div><div class="v" id="cred-appeui">—</div></div>
-          <div class="kv"><div class="k">AppKey</div><div class="v">Not readable over serial</div></div>
-        </div>
-        <p class="sub" id="appkey-hint" style="margin:8px 0 0; display:none;">Write-only, by design — the module never echoes back a stored key. Set a new one under <b>Application key</b> on the right while you're still in debug mode.</p>
-
-        <button class="linklike" id="btn-cred-reset" style="margin-top:8px;">Reset flow</button>
+        <p style="margin:0; font-size:12px; color:var(--muted);">Disconnect before changing product.</p>
       </div>
-
-      <!-- Device configuration -->
-      <div class="card">
-        <h2>Device configuration</h2>
-        <p class="sub" style="margin-bottom:14px;">Normal 115200 connection, no debug mode — except Application key, which needs the debug-mode flow on the left.</p>
-
-        <div class="section-title">Upload (reporting) interval</div>
-        <div class="row" style="margin-bottom:16px;">
-          <div class="field">
-            <label for="upload-hours">Hours (1–168)</label>
-            <input type="number" id="upload-hours" min="1" max="168" value="24" />
+      <div class="card conn">
+        <div class="kv-row">
+          <span class="label-bold">2. USB Serial connection</span>
+          <span class="chip" id="conn-chip">Not connected</span>
+        </div>
+        <div class="kv-row" style="align-items:flex-end;">
+          <div style="flex:1;">
+            <div class="label-bold" style="margin-bottom:6px;">USB TTL Serial</div>
+            <p style="margin:0; font-size:12px; color:var(--muted); max-width:70ch;">Connect TX↔RX, RX↔TX, GND↔GND. If the sensor doesn't respond, it is asleep: restart it with the magnet.</p>
           </div>
-          <button id="btn-set-upload" style="align-self:flex-end;">Set upload interval</button>
-        </div>
-        <div class="reply-box" id="upload-reply"></div>
-
-        <div class="section-title" style="margin-top:18px;">Detection interval</div>
-        <div class="row" style="margin-bottom:16px;">
-          <div class="field">
-            <label for="detect-min">Minutes (1–60)</label>
-            <input type="number" id="detect-min" min="1" max="60" value="10" />
-          </div>
-          <button id="btn-set-detect" style="align-self:flex-end;">Set detection interval</button>
-        </div>
-        <div class="reply-box" id="detect-reply"></div>
-
-        <div class="section-title" style="margin-top:18px;">Alarm thresholds</div>
-        <div class="row" style="margin-bottom:10px;">
-          <div class="field">
-            <label for="alarm-full">Full alarm, cm (15–255)</label>
-            <input type="number" id="alarm-full" min="15" max="255" value="30" />
-          </div>
-          <button id="btn-set-full" style="align-self:flex-end;">Set</button>
-        </div>
-        <div class="reply-box" id="full-reply" style="margin-bottom:10px;"></div>
-
-        <div class="row" style="margin-bottom:10px;">
-          <div class="field">
-            <label for="alarm-fire">Fire alarm, °C (1–255)</label>
-            <input type="number" id="alarm-fire" min="1" max="255" value="75" />
-          </div>
-          <button id="btn-set-fire" style="align-self:flex-end;">Set</button>
-        </div>
-        <div class="reply-box" id="fire-reply" style="margin-bottom:10px;"></div>
-
-        <div class="row" style="margin-bottom:10px;">
-          <div class="field">
-            <label for="alarm-fall">Fall alarm, ° (15–90)</label>
-            <input type="number" id="alarm-fall" min="15" max="90" value="20" />
-          </div>
-          <button id="btn-set-fall" style="align-self:flex-end;">Set</button>
-        </div>
-        <div class="reply-box" id="fall-reply" style="margin-bottom:10px;"></div>
-
-        <div class="row" style="margin-bottom:10px;">
-          <div class="field">
-            <label for="alarm-batt">Battery alarm, % (5–99)</label>
-            <input type="number" id="alarm-batt" min="5" max="99" value="30" />
-          </div>
-          <button id="btn-set-batt" style="align-self:flex-end;">Set</button>
-        </div>
-        <div class="reply-box" id="batt-reply"></div>
-
-        <div class="section-title" style="margin-top:18px;">Functions</div>
-        <div class="row" style="margin-bottom:6px;">
-          <label style="margin:0; min-width:110px;">Work mode</label>
-          <select id="work-mode">
-            <option value="05">Normal</option>
-            <option value="06">Detection off</option>
-            <option value="0E">Demo</option>
-          </select>
-          <button id="btn-set-workmode">Set</button>
-        </div>
-        <div class="reply-box" id="workmode-reply" style="margin-bottom:10px;"></div>
-
-        <div class="row between" style="margin-bottom:6px;">
-          <label style="margin:0;">Tilt (fall) detection</label>
-          <div class="row" style="gap:6px;">
-            <button id="btn-fall-on">Turn on</button>
-            <button id="btn-fall-off">Turn off</button>
+          <div style="display:flex; gap:18px; flex:none;">
+            <button class="secondary" id="btn-connect">Connect Device</button>
+            <button id="btn-disconnect" disabled>Disconnect</button>
           </div>
         </div>
-        <div class="reply-box" id="fallfn-reply" style="margin-bottom:10px;"></div>
-
-        <div class="row between" style="margin-bottom:6px;">
-          <label style="margin:0;">GPS in uplink</label>
-          <div class="row" style="gap:6px;">
-            <button id="btn-gps-on">Turn on</button>
-            <button id="btn-gps-off">Turn off</button>
-          </div>
-        </div>
-        <div class="reply-box" id="gps-reply" style="margin-bottom:10px;"></div>
-
-        <div class="row between" style="margin-bottom:6px;">
-          <label style="margin:0;">Serial echo</label>
-          <div class="row" style="gap:6px;">
-            <button id="btn-echo-on">Turn on</button>
-            <button id="btn-echo-off">Turn off</button>
-          </div>
-        </div>
-        <div class="reply-box" id="echo-reply"></div>
-
-        <div class="section-title" style="margin-top:18px;">Device actions</div>
-        <div class="row" style="margin-bottom:10px;">
-          <button id="btn-restart-sensor">Restart sensor</button>
-        </div>
-        <div class="reply-box" id="restart-reply" style="margin-bottom:10px;"></div>
-
-        <div class="section-title" style="margin-top:18px;">Application key <span style="font-weight:400; text-transform:none; letter-spacing:0;">(write-only)</span></div>
-        <p class="sub" id="appkey-status" style="margin:0 0 10px;">Requires debug mode — run steps 1–4 on the left first.</p>
-        <div class="row" style="margin-bottom:10px;">
-          <input type="text" id="appkey-input" placeholder="32 hex characters, UPPERCASE" maxlength="32" style="font-family:'Roboto Mono',Consolas,monospace; text-transform:uppercase;" disabled />
-          <button id="btn-set-appkey" disabled>Write AppKey</button>
-        </div>
-        <div class="reply-box" id="appkey-reply"></div>
       </div>
     </div>
 
-    <!-- Raw serial log -->
-    <div class="card" style="margin-top:16px;">
-      <div class="row between" style="margin-bottom:10px;">
-        <h2 style="margin:0;">Raw serial log</h2>
-        <div class="row">
-          <label style="margin:0;">Line ending
-            <select id="line-ending">
-              <option value="none">None</option>
-              <option value="crlf" selected>CRLF</option>
-              <option value="lf">LF</option>
-              <option value="cr">CR</option>
-            </select>
-          </label>
-          <button id="btn-clear-log">Clear</button>
+    <div class="config-layout">
+      <div class="sidebar">
+        <div class="nav-item">LoRaWAN credentials</div>
+        <div class="nav-item active">Configuration</div>
+        <div class="nav-item">Connection guide</div>
+        <div class="section-index">
+          <div class="hdr">LEVELPRO</div>
+          <div>LoRaWAN credentials</div>
+          <div>Functions</div>
+          <div>Reporting</div>
+          <div>Alarm thresholds</div>
+          <div>Device actions</div>
         </div>
       </div>
+
+      <div class="content">
+
+        <!-- Card / LoRaWAN Credentials -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>LoRaWAN Credentials</h2>
+              <p>Reads the LoRa module's identity using the sensor's debug mode (9600 baud AT commands). Keep the magnet within reach.</p>
+            </div>
+            <span class="help-btn" title="Command: AT+ID, read in debug mode after the @ handshake and magnet restart.">?</span>
+          </div>
+          <div class="panel-body">
+            <div class="progress-row">
+              <div class="pstep" id="pstep-1"><div class="num">1</div><div><div class="t">Preparing</div><div class="d">Sending "@" to request debug mode and switching baud rate.</div></div></div>
+              <div class="pstep" id="pstep-2"><div class="num">2</div><div><div class="t">Waiting for magnet</div><div class="d">Restart the sensor with the magnet now.</div></div></div>
+              <div class="pstep" id="pstep-3"><div class="num">3</div><div><div class="t">Done</div><div class="d">Credentials read. Restart with the magnet again, then reconnect at 115200.</div></div></div>
+            </div>
+            <div class="cred-grid">
+              <div class="cred-field"><div class="k">DevEUI</div><div class="cred-value"><span class="v" id="v-deveui">—</span><button class="copy" data-copy="v-deveui">Copy</button></div></div>
+              <div class="cred-field"><div class="k">AppEUI / JoinEUI</div><div class="cred-value"><span class="v" id="v-appeui">—</span><button class="copy" data-copy="v-appeui">Copy</button></div></div>
+              <div class="cred-field"><div class="k">DevAddr</div><div class="cred-value"><span class="v" id="v-devaddr">—</span><button class="copy" data-copy="v-devaddr">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Band · Activation · Class</div><div class="cred-value"><span class="v" id="v-band">AS923 · OTAA · Class A</span><button class="copy" data-copy="v-band">Copy</button></div></div>
+            </div>
+            <div class="field" style="max-width:260px;">
+              <div class="k">AppKey</div>
+              <button class="secondary sm" id="btn-appkey-reveal" style="align-self:flex-start;">Set new AppKey…</button>
+              <div id="appkey-box" style="display:none; flex-direction:column; gap:8px;">
+                <div class="input-box"><input type="text" id="appkey-input" placeholder="32 hex characters, UPPERCASE" maxlength="32" style="font-family:var(--mono);" /></div>
+                <div style="display:flex; gap:8px;">
+                  <button class="primary sm" id="btn-appkey-send">Write</button>
+                  <button class="secondary sm" id="btn-appkey-cancel">Cancel</button>
+                </div>
+                <p class="hint">Write-only — the module never echoes a stored key back. Cleared from this field immediately after sending.</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <p>Example values from the manual. Commands used: AT+ID (DevEUI/AppEUI/DevAddr), AT+KEY (AppKey, write-only).</p>
+            <button class="primary" id="btn-read-creds" disabled>Read Credentials</button>
+          </div>
+        </div>
+
+        <!-- Card / Device Configuration -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Device Configuration</h2>
+              <p>Settings are sent as DF555 protocol commands at 115200 baud and confirmed by the sensor's reply. The DF555 can't report its settings over serial, so fields start at factory defaults.</p>
+            </div>
+            <span class="help-btn" title="Downlink-format frame 80 02 9999 cmd content 81, DF555 Protocol V3.2 §2.2.">?</span>
+          </div>
+          <div class="panel-body">
+
+            <div class="section-box">
+              <div class="section-hd">
+                <div class="t"><b>Functions</b><span>Command 0x09 · set these first, they enable fields below</span></div>
+                <span class="help-btn sm" title="0x09 switch-function command: work mode, tilt detection, GPS, serial echo.">?</span>
+              </div>
+              <div class="section-body field-row">
+                <div class="field">
+                  <div class="k">Work mode</div>
+                  <div class="input-box select">
+                    <select id="f-workmode">
+                      <option value="05">Normal (mode 0)</option>
+                      <option value="06">Detection off (mode 1)</option>
+                      <option value="0E">Demo (mode 2)</option>
+                    </select>
+                  </div>
+                  <div class="hint">Normal · Detection off · Demo (reports every detection)</div>
+                </div>
+                <div class="field">
+                  <div class="k">Tilt (fall) detection</div>
+                  <div class="toggle-row"><button class="switch" id="f-tilt" role="switch" aria-checked="false"></button><span class="state" id="f-tilt-state">Off</span></div>
+                  <div class="hint">Turns the tilt alarm on or off.</div>
+                </div>
+                <div class="field">
+                  <div class="k">GPS in uplink</div>
+                  <div class="toggle-row"><button class="switch" id="f-gps" role="switch" aria-checked="false"></button><span class="state" id="f-gps-state">Off</span></div>
+                  <div class="hint">Adds longitude/latitude to uplinks.</div>
+                </div>
+                <div class="field">
+                  <div class="k">Serial echo</div>
+                  <div class="toggle-row"><button class="switch on" id="f-echo" role="switch" aria-checked="true"></button><span class="state" id="f-echo-state">On</span></div>
+                  <div class="hint">Serial port echo (0B on / 0C off).</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-box">
+              <div class="section-hd">
+                <div class="t"><b>Reporting</b><span>Commands 0x01, 0x08</span></div>
+                <span class="help-btn sm" title="0x01 upload interval (1-168h), 0x08 detection interval (1-60min).">?</span>
+              </div>
+              <div class="section-body field-row">
+                <div class="field">
+                  <div class="k">Upload interval</div>
+                  <div class="input-box"><input type="number" id="f-upload" min="1" max="168" value="24" /><span class="unit">hours</span></div>
+                  <div class="hint">Allowed range: 1–168 hours · default 24</div>
+                </div>
+                <div class="field">
+                  <div class="k">Detection interval</div>
+                  <div class="input-box"><input type="number" id="f-detect" min="1" max="60" value="10" /><span class="unit">minutes</span></div>
+                  <div class="hint">Allowed range: 1–60 minutes · default 10. Unused when work mode is "Detection off".</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-box">
+              <div class="section-hd">
+                <div class="t"><b>Alarm thresholds</b><span>Commands 0x02, 0x03, 0x04, 0x05</span></div>
+                <span class="help-btn sm" title="0x02 full, 0x03 fire/temp, 0x04 tilt/fall, 0x05 battery.">?</span>
+              </div>
+              <div class="section-body field-row">
+                <div class="field">
+                  <div class="k">Full alarm (distance to surface)</div>
+                  <div class="input-box"><input type="number" id="f-full" min="15" max="255" value="30" /><span class="unit">cm</span></div>
+                  <div class="hint">Allowed range: 15–255 cm · default 30</div>
+                </div>
+                <div class="field">
+                  <div class="k" id="f-tiltalarm-label" style="color:var(--disabled-text);">Tilt (fall) alarm</div>
+                  <div class="input-box disabled" id="f-tiltalarm-box"><input type="number" id="f-tiltalarm" min="15" max="90" value="20" disabled /><span class="unit">°</span></div>
+                  <div class="hint warn" id="f-tiltalarm-hint">Turn on Tilt detection in Functions to edit. Range 15–90°.</div>
+                </div>
+                <div class="field">
+                  <div class="k">Low battery alarm</div>
+                  <div class="input-box"><input type="number" id="f-batt" min="5" max="99" value="20" /><span class="unit">%</span></div>
+                  <div class="hint">Allowed range: 5–99% · default 20% (user manual) / 30% (protocol)</div>
+                </div>
+                <div class="field">
+                  <div class="k">Fire (temperature) alarm</div>
+                  <div class="input-box"><input type="number" id="f-fire" min="1" max="255" value="75" /><span class="unit">°C</span></div>
+                  <div class="hint">Allowed range: 1–255 °C · default 75. Marked reserved in uplink.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-box">
+              <div class="section-hd">
+                <div class="t"><b>Device actions</b></div>
+                <span class="help-btn sm" title="0x09 sub-command 02: immediate restart, sensor sends one uplink right after.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; align-items:center; gap:20px;">
+                <button class="secondary" id="btn-restart" disabled>Restart sensor</button>
+                <p style="margin:0; font-size:12px; color:var(--muted); flex:1;">Sends the restart command (0x09 · 02). The sensor sends one uplink right after restarting. Not part of the staged changes below — sent immediately.</p>
+              </div>
+            </div>
+
+            <div class="cmd-preview empty" id="cmd-preview">
+              <div class="title">Commands to send (0 changes)</div>
+              <div class="hint" style="color:var(--muted);">Change a field above to see the exact command it will send.</div>
+            </div>
+
+          </div>
+          <div class="panel-footer">
+            <p>Only changed fields are sent. Each one waits for the sensor's reply.</p>
+            <button class="primary" id="btn-apply" disabled>Apply Configuration</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel op-status">
+      <div class="hd">Operation Status</div>
+      <div class="body"><div class="msg idle" id="op-msg">No actions yet this session.</div></div>
+    </div>
+
+    <details class="rawlog">
+      <summary>Advanced · raw serial log</summary>
       <div class="log" id="log"></div>
-      <div class="row" style="margin-top:10px;">
-        <input type="text" id="raw-input" placeholder='Send raw ASCII, e.g. AT+ID or 80029999010A81' style="flex:1;" />
-        <button class="primary" id="btn-send-raw">Send</button>
+      <div class="rawlog-controls">
+        <select class="le" id="line-ending">
+          <option value="none">No line ending</option>
+          <option value="crlf" selected>CRLF</option>
+          <option value="lf">LF</option>
+          <option value="cr">CR</option>
+        </select>
+        <input type="text" id="raw-input" placeholder='Send raw ASCII, e.g. AT+ID or 80029999010A81' />
+        <button class="primary sm" id="btn-send-raw">Send</button>
+        <button class="secondary sm" id="btn-clear-log">Clear</button>
       </div>
-    </div>
+    </details>
 
   </div>
 
 </main>
 
-<footer>
-  XCAMP Device Configurator · Test build — Web Serial talks directly to the device from your browser; nothing is sent to a server.
+<footer class="app">
+  <span>USB Serial · Device communication stays in your browser.</span>
+  <span>XCAMP Device Configurator · V1</span>
 </footer>
 
 <script>
@@ -391,7 +523,7 @@
 
   // ---------- view switching ----------
   $('card-levelpro').addEventListener('click', () => showView('view-levelpro'));
-  $('btn-back').addEventListener('click', () => showView('view-products'));
+  $('btn-change-product').addEventListener('click', () => showView('view-products'));
   function showView(id){
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     $(id).classList.add('active');
@@ -401,7 +533,6 @@
   let port = null;
   let reader = null;
   let readableClosed = null;
-  let writer = null;
   let currentBaud = null;
   let lineBuffer = '';
   const lineListeners = new Set(); // callback(line)
@@ -420,6 +551,12 @@
     $('log').scrollTop = $('log').scrollHeight;
   }
 
+  function setOpStatus(text, kind){ // kind: 'ok' | 'idle' | 'err'
+    const el = $('op-msg');
+    el.className = 'msg ' + (kind || 'idle');
+    el.textContent = text;
+  }
+
   async function openPort(baud){
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: baud, dataBits: 8, stopBits: 1, parity: 'none' });
@@ -436,7 +573,6 @@
     currentBaud = baud;
     startReadLoop();
     log(`Reopened at ${baud} baud`, 'sys');
-    $('baud-indicator').textContent = `${baud} baud`;
   }
 
   async function stopReadLoop(){
@@ -490,48 +626,65 @@
     if (!port || !port.writable) { log('Not connected — nothing sent', 'muted'); return; }
     const payload = str + (withTerminator ? lineTerminator() : '');
     const w = port.writable.getWriter();
-    try {
-      await w.write(new TextEncoder().encode(payload));
-    } finally {
-      w.releaseLock();
-    }
+    try { await w.write(new TextEncoder().encode(payload)); }
+    finally { w.releaseLock(); }
     log(str, 'tx');
   }
 
+  // wait for a line matching `test`, or null after timeoutMs
+  function waitForLine(test, timeoutMs = 3000){
+    return new Promise((resolve) => {
+      let done = false;
+      const onLine = (line) => {
+        if (done) return;
+        const m = test(line);
+        if (m !== null && m !== undefined && m !== false) { done = true; lineListeners.delete(onLine); resolve(m === true ? line : m); }
+      };
+      lineListeners.add(onLine);
+      setTimeout(() => { if (!done) { done = true; lineListeners.delete(onLine); resolve(null); } }, timeoutMs);
+    });
+  }
+
   function setConnected(on){
-    $('conn-dot').className = 'status-dot' + (on ? ' on' : '');
-    $('conn-text').textContent = on ? 'Connected' : 'Not connected';
+    $('conn-chip').textContent = on ? `Connected · ${currentBaud} 8N1` : 'Not connected';
+    $('conn-chip').classList.toggle('ok', !!on);
     $('btn-connect').disabled = on;
     $('btn-disconnect').disabled = !on;
-    $('baud-indicator').textContent = on ? `${currentBaud} baud` : '';
+    $('btn-read-creds').disabled = !on;
+    $('btn-apply').disabled = !on || pendingCount() === 0;
+    $('btn-restart').disabled = !on;
   }
 
   $('btn-connect').addEventListener('click', async () => {
-    try { await openPort(115200); }
+    try { await openPort(115200); setOpStatus('Connected at 115200 baud.', 'ok'); }
     catch (e) { log('Connect failed: ' + e.message, 'muted'); }
   });
 
   $('btn-disconnect').addEventListener('click', async () => {
     try {
       await stopReadLoop();
-      if (writer) { try { writer.releaseLock(); } catch(e){} writer = null; }
       if (port) await port.close();
     } catch(e){ log('Disconnect error: ' + e.message, 'muted'); }
     port = null;
     setConnected(false);
     log('Disconnected', 'sys');
-    if (inDebugMode) { inDebugMode = false; updateAppKeyUI(); }
+    setOpStatus('Disconnected.', 'idle');
   });
 
   $('btn-clear-log').addEventListener('click', () => { $('log').innerHTML = ''; });
-
   $('btn-send-raw').addEventListener('click', () => {
     const v = $('raw-input').value.trim();
     if (v) sendRaw(v);
     $('raw-input').value = '';
   });
-  $('raw-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') $('btn-send-raw').click();
+  $('raw-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-send-raw').click(); });
+
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = $(btn.dataset.copy).textContent;
+      navigator.clipboard?.writeText(text).catch(() => {});
+      const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => btn.textContent = old, 1000);
+    });
   });
 
   // ---------- DF555 downlink-format command helper ----------
@@ -543,191 +696,218 @@
     return `80029999${hex2(cmdByte)}${hex2(contentByte)}81`;
   }
 
-  $('btn-set-upload').addEventListener('click', async () => {
-    const hours = parseInt($('upload-hours').value, 10);
-    if (!(hours >= 1 && hours <= 168)) { $('upload-reply').textContent = 'Enter 1–168'; return; }
-    const cmd = buildDownlinkCommand(0x01, hours);
-    $('upload-reply').textContent = `Sent ${cmd} — waiting for reply…`;
-    const onLine = (line) => {
-      if (/uploadtime/i.test(line)) { $('upload-reply').textContent = line; lineListeners.delete(onLine); }
-    };
-    lineListeners.add(onLine);
-    await sendRaw(cmd, { withTerminator: false }); // command frame is self-delimited by 0x81 tail
-  });
-
-  $('btn-set-detect').addEventListener('click', async () => {
-    const mins = parseInt($('detect-min').value, 10);
-    if (!(mins >= 1 && mins <= 60)) { $('detect-reply').textContent = 'Enter 1–60'; return; }
-    const cmd = buildDownlinkCommand(0x08, mins);
-    $('detect-reply').textContent = `Sent ${cmd} — waiting for reply…`;
-    const onLine = (line) => {
-      if (/detect/i.test(line) || /cycle/i.test(line)) { $('detect-reply').textContent = line; lineListeners.delete(onLine); }
-    };
-    lineListeners.add(onLine);
-    await sendRaw(cmd, { withTerminator: false });
-  });
-
-  // ---------- generic downlink-command wiring (alarm thresholds, functions) ----------
-  function wireDownlinkButton(btnId, replyId, cmdByte, getContent, matchReply){
-    $(btnId).addEventListener('click', async () => {
-      const content = getContent();
-      if (content == null) return; // getContent already set an error into the reply box
-      const cmd = buildDownlinkCommand(cmdByte, content);
-      $(replyId).textContent = `Sent ${cmd} — waiting for reply…`;
-      const onLine = (line) => {
-        if (matchReply(line)) { $(replyId).textContent = line; lineListeners.delete(onLine); }
-      };
-      lineListeners.add(onLine);
-      await sendRaw(cmd, { withTerminator: false });
+  // ---------- Functions toggles / work mode ----------
+  function wireSwitch(id, stateId, onChange){
+    const el = $(id);
+    el.addEventListener('click', () => {
+      const on = !el.classList.contains('on');
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-checked', String(on));
+      $(stateId).textContent = on ? 'On' : 'Off';
+      onChange(on);
+      refreshCmdPreview();
     });
   }
-  function numberGetter(inputId, replyId, min, max){
-    return () => {
-      const v = parseInt($(inputId).value, 10);
-      if (!(v >= min && v <= max)) { $(replyId).textContent = `Enter ${min}–${max}`; return null; }
-      return v;
+  wireSwitch('f-tilt', 'f-tilt-state', (on) => {
+    $('f-tiltalarm').disabled = !on;
+    $('f-tiltalarm-box').classList.toggle('disabled', !on);
+    $('f-tiltalarm-label').style.color = on ? 'var(--ink)' : 'var(--disabled-text)';
+    $('f-tiltalarm-hint').textContent = on
+      ? 'Allowed range: 15–90° · default 20'
+      : 'Turn on Tilt detection in Functions to edit. Range 15–90°.';
+    $('f-tiltalarm-hint').classList.toggle('warn', !on);
+  });
+  wireSwitch('f-gps', 'f-gps-state', () => {});
+  wireSwitch('f-echo', 'f-echo-state', () => {});
+  $('f-workmode').addEventListener('change', refreshCmdPreview);
+  ['f-upload','f-detect','f-full','f-tiltalarm','f-batt','f-fire'].forEach(id => {
+    $(id).addEventListener('input', refreshCmdPreview);
+  });
+
+  // ---------- staged-changes / command preview / apply ----------
+  const baseline = { workmode:'05', tilt:false, gps:false, echo:true, upload:24, detect:10, full:30, tiltalarm:20, batt:20, fire:75 };
+
+  function currentValues(){
+    return {
+      workmode: $('f-workmode').value,
+      tilt: $('f-tilt').classList.contains('on'),
+      gps: $('f-gps').classList.contains('on'),
+      echo: $('f-echo').classList.contains('on'),
+      upload: parseInt($('f-upload').value, 10),
+      detect: parseInt($('f-detect').value, 10),
+      full: parseInt($('f-full').value, 10),
+      tiltalarm: parseInt($('f-tiltalarm').value, 10),
+      batt: parseInt($('f-batt').value, 10),
+      fire: parseInt($('f-fire').value, 10),
     };
   }
 
-  wireDownlinkButton('btn-set-full', 'full-reply', 0x02, numberGetter('alarm-full','full-reply',15,255), (l) => /full/i.test(l));
-  wireDownlinkButton('btn-set-fire', 'fire-reply', 0x03, numberGetter('alarm-fire','fire-reply',1,255), (l) => /fire|temp/i.test(l));
-  wireDownlinkButton('btn-set-fall', 'fall-reply', 0x04, numberGetter('alarm-fall','fall-reply',15,90), (l) => /fall|angle/i.test(l));
-  wireDownlinkButton('btn-set-batt', 'batt-reply', 0x05, numberGetter('alarm-batt','batt-reply',5,99), (l) => /batt/i.test(l));
-
-  // ---------- 0x09 switch-function commands ----------
-  async function sendSwitchFunction(contentByte, replyId, label){
-    const cmd = buildDownlinkCommand(0x09, contentByte);
-    $(replyId).textContent = `Sent ${cmd} (${label}) — waiting for reply…`;
-    const onLine = (line) => { $(replyId).textContent = line; lineListeners.delete(onLine); };
-    lineListeners.add(onLine);
-    await sendRaw(cmd, { withTerminator: false });
+  function buildPendingCommands(){
+    const v = currentValues();
+    const cmds = []; // { label, cmd }
+    if (v.workmode !== baseline.workmode) {
+      const label = $('f-workmode').selectedOptions[0].textContent;
+      cmds.push({ label: `Work mode → ${label}`, cmd: buildDownlinkCommand(0x09, parseInt(v.workmode, 16)) });
+    }
+    if (v.tilt !== baseline.tilt) cmds.push({ label: `Tilt detection → ${v.tilt ? 'On' : 'Off'}`, cmd: buildDownlinkCommand(0x09, v.tilt ? 0x0A : 0x09) });
+    if (v.gps !== baseline.gps) cmds.push({ label: `GPS in uplink → ${v.gps ? 'On' : 'Off'}`, cmd: buildDownlinkCommand(0x09, v.gps ? 0x01 : 0x00) });
+    if (v.echo !== baseline.echo) cmds.push({ label: `Serial echo → ${v.echo ? 'On' : 'Off'}`, cmd: buildDownlinkCommand(0x09, v.echo ? 0x0B : 0x0C) });
+    if (v.upload !== baseline.upload && v.upload >= 1 && v.upload <= 168) cmds.push({ label: `Upload interval → ${v.upload} h`, cmd: buildDownlinkCommand(0x01, v.upload) });
+    if (v.detect !== baseline.detect && v.detect >= 1 && v.detect <= 60) cmds.push({ label: `Detection interval → ${v.detect} min`, cmd: buildDownlinkCommand(0x08, v.detect) });
+    if (v.full !== baseline.full && v.full >= 15 && v.full <= 255) cmds.push({ label: `Full alarm → ${v.full} cm`, cmd: buildDownlinkCommand(0x02, v.full) });
+    if (v.tilt && v.tiltalarm !== baseline.tiltalarm && v.tiltalarm >= 15 && v.tiltalarm <= 90) cmds.push({ label: `Tilt alarm → ${v.tiltalarm}°`, cmd: buildDownlinkCommand(0x04, v.tiltalarm) });
+    if (v.batt !== baseline.batt && v.batt >= 5 && v.batt <= 99) cmds.push({ label: `Battery alarm → ${v.batt}%`, cmd: buildDownlinkCommand(0x05, v.batt) });
+    if (v.fire !== baseline.fire && v.fire >= 1 && v.fire <= 255) cmds.push({ label: `Fire alarm → ${v.fire}°C`, cmd: buildDownlinkCommand(0x03, v.fire) });
+    return cmds;
   }
-  $('btn-set-workmode').addEventListener('click', () => {
-    const v = parseInt($('work-mode').value, 16);
-    const label = $('work-mode').selectedOptions[0].textContent;
-    sendSwitchFunction(v, 'workmode-reply', label);
+  function pendingCount(){ return buildPendingCommands().length; }
+
+  function refreshCmdPreview(){
+    const cmds = buildPendingCommands();
+    const box = $('cmd-preview');
+    if (cmds.length === 0) {
+      box.classList.add('empty');
+      box.innerHTML = `<div class="title">Commands to send (0 changes)</div><div class="hint" style="color:var(--muted);">Change a field above to see the exact command it will send.</div>`;
+    } else {
+      box.classList.remove('empty');
+      box.innerHTML = `<div class="title">Commands to send (${cmds.length} change${cmds.length>1?'s':''})</div>` +
+        cmds.map(c => `<div class="line">${c.cmd}  ·  ${c.label}</div>`).join('');
+    }
+    $('btn-apply').disabled = !port || cmds.length === 0;
+  }
+  refreshCmdPreview();
+
+  $('btn-apply').addEventListener('click', async () => {
+    const cmds = buildPendingCommands();
+    if (!cmds.length) return;
+    $('btn-apply').disabled = true;
+    setOpStatus(`Applying ${cmds.length} change${cmds.length>1?'s':''}…`, 'idle');
+    const replies = [];
+    for (const c of cmds) {
+      const replyPromise = waitForLine((line) => /uploadtime|detect|full|fire|temp|fall|angle|batt|mode|key|ok/i.test(line) ? true : null, 2500);
+      await sendRaw(c.cmd, { withTerminator: false });
+      const reply = await replyPromise;
+      replies.push(`${c.label}${reply ? ` (reply: "${reply}")` : ' (no reply seen)'}`);
+    }
+    // new baseline = whatever is now in the fields
+    const v = currentValues();
+    Object.assign(baseline, v);
+    refreshCmdPreview();
+    setConnected(!!port);
+    setOpStatus(replies.join(' · '), 'ok');
   });
-  $('btn-fall-on').addEventListener('click', () => sendSwitchFunction(0x0A, 'fallfn-reply', 'fall detection on'));
-  $('btn-fall-off').addEventListener('click', () => sendSwitchFunction(0x09, 'fallfn-reply', 'fall detection off'));
-  $('btn-gps-on').addEventListener('click', () => sendSwitchFunction(0x01, 'gps-reply', 'GPS on'));
-  $('btn-gps-off').addEventListener('click', () => sendSwitchFunction(0x00, 'gps-reply', 'GPS off'));
-  $('btn-echo-on').addEventListener('click', () => sendSwitchFunction(0x0B, 'echo-reply', 'serial echo on'));
-  $('btn-echo-off').addEventListener('click', () => sendSwitchFunction(0x0C, 'echo-reply', 'serial echo off'));
-  $('btn-restart-sensor').addEventListener('click', () => {
+
+  $('btn-restart').addEventListener('click', async () => {
     if (!confirm('Restart the sensor now? It will reboot and send one uplink right after.')) return;
-    sendSwitchFunction(0x02, 'restart-reply', 'restart sensor');
+    const cmd = buildDownlinkCommand(0x09, 0x02);
+    await sendRaw(cmd, { withTerminator: false });
+    setOpStatus('Restart command sent (0x09 · 02). The sensor should send one uplink shortly after rebooting.', 'ok');
+  });
+
+  // ---------- AppKey write (write-only, debug mode) ----------
+  function isValidAppKey(v){ return /^[0-9A-F]{32}$/.test(v); }
+  $('appkey-input').addEventListener('input', () => {
+    $('appkey-input').value = $('appkey-input').value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 32);
+  });
+  $('btn-appkey-reveal').addEventListener('click', () => {
+    $('btn-appkey-reveal').style.display = 'none';
+    $('appkey-box').style.display = 'flex';
+  });
+  $('btn-appkey-cancel').addEventListener('click', () => {
+    $('appkey-input').value = '';
+    $('appkey-box').style.display = 'none';
+    $('btn-appkey-reveal').style.display = 'inline-flex';
+  });
+  $('btn-appkey-send').addEventListener('click', async () => {
+    const key = $('appkey-input').value;
+    if (!isValidAppKey(key)) { setOpStatus('AppKey must be exactly 32 hex characters, uppercase.', 'err'); return; }
+    if (!inDebugMode) { setOpStatus('Run "Read Credentials" first to enter debug mode (9600 baud) before writing a key.', 'err'); return; }
+    $('appkey-input').value = ''; // cleared immediately — never lingers in the UI
+    const replyPromise = waitForLine((line) => {
+      const m = line.match(/\+KEY:\s*APPKEY\s+([0-9A-Fa-f]+)/i);
+      return m ? m[1].toUpperCase() : null;
+    }, 3000);
+    await sendRaw(`AT+KEY=APPKEY, "${key}"`);
+    const echoed = await replyPromise;
+    if (echoed === key) setOpStatus('AppKey written — device echoed back a match. Set the same key in ChirpStack and verify via join.', 'ok');
+    else if (echoed) setOpStatus(`AppKey write sent, but device echoed ${echoed}, which doesn't match. Check the raw log.`, 'err');
+    else setOpStatus('AppKey write sent — no echo seen within 3s. Check the raw log.', 'err');
+    $('appkey-box').style.display = 'none';
+    $('btn-appkey-reveal').style.display = 'inline-flex';
   });
 
   // ---------- Credential read flow (guided, per Configuration Manual §3) ----------
   let credTimer = null;
   let inDebugMode = false;
-  function updateAppKeyUI(){
-    $('appkey-input').disabled = !inDebugMode;
-    $('btn-set-appkey').disabled = !inDebugMode || !isValidAppKey($('appkey-input').value);
-    $('appkey-status').textContent = inDebugMode
-      ? 'Debug mode active — this will be sent at 9600 baud.'
-      : 'Requires debug mode — run steps 1–4 on the left first.';
-    $('appkey-hint').style.display = inDebugMode ? 'block' : 'none';
-    if (!inDebugMode) { $('appkey-input').value = ''; }
-  }
-  function isValidAppKey(v){ return /^[0-9A-F]{32}$/.test(v); }
-  $('appkey-input').addEventListener('input', () => {
-    $('appkey-input').value = $('appkey-input').value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 32);
-    $('btn-set-appkey').disabled = !inDebugMode || !isValidAppKey($('appkey-input').value);
-  });
-  $('btn-set-appkey').addEventListener('click', async () => {
-    const key = $('appkey-input').value;
-    if (!isValidAppKey(key)) return;
-    $('appkey-input').value = ''; // cleared immediately on send — never lingers in the UI
-    $('appkey-reply').textContent = 'Writing key — waiting for reply…';
-    const onLine = (line) => {
-      const m = line.match(/\+KEY:\s*APPKEY\s+([0-9A-Fa-f]+)/i);
-      if (m) {
-        const echoed = m[1].toUpperCase();
-        $('appkey-reply').textContent = (echoed === key)
-          ? 'Written — device echoed back a match.'
-          : `Device echoed ${echoed}, which doesn't match what was sent. Check the raw log.`;
-        lineListeners.delete(onLine);
-      }
-    };
-    lineListeners.add(onLine);
-    await sendRaw(`AT+KEY=APPKEY, "${key}"`);
-  });
-  updateAppKeyUI();
-
-  const steps = [1,2,3,4,5].map(n => $('cred-step-' + n));
-  function setStep(n, state){ // state: 'active' | 'done' | ''
-    steps.forEach((el, i) => {
+  function setPStep(n, state){ // n: 1-3, state: 'active'|'done'
+    [1,2,3].forEach(i => {
+      const el = $('pstep-' + i);
       el.classList.remove('active','done');
-      if (i + 1 < n) el.classList.add('done');
-      if (i + 1 === n && state) el.classList.add(state);
+      if (i < n) el.classList.add('done');
+      if (i === n && state) el.classList.add(state);
     });
   }
-  function renderCredActions(html){ $('cred-actions').innerHTML = html; }
 
-  function credStart(){
-    if (!port) { log('Connect at 115200 first', 'muted'); return; }
-    setStep(1, 'active');
+  $('btn-read-creds').addEventListener('click', async () => {
+    if (!port) { setOpStatus('Connect the device first.', 'err'); return; }
+    $('btn-read-creds').disabled = true;
+    setPStep(1, 'active');
+    setOpStatus('Requesting debug mode…', 'idle');
     log('Requesting debug mode: sending "@" every 50ms…', 'sys');
     credTimer = setInterval(() => sendRaw('@', { withTerminator: false }), 50);
-    renderCredActions(`<button class="primary" id="cred-next-2">I restarted it with the magnet</button>`);
-    $('cred-next-2').addEventListener('click', () => {
-      clearInterval(credTimer); credTimer = null;
-      setStep(2, 'done');
-      setStep(3, 'active');
-      renderCredActions(`<button class="primary" id="cred-send-3">Send "3" (enter debug mode)</button>`);
-      $('cred-send-3').addEventListener('click', async () => {
-        await sendRaw('3');
-        setStep(3, 'done');
-        setStep(4, 'active');
-        renderCredActions(`<button class="primary" id="cred-next-4">Sensor is prompting a baud switch — reopen at 9600</button>`);
-        $('cred-next-4').addEventListener('click', async () => {
-          try {
-            await reopenAtBaud(9600);
-            inDebugMode = true;
-            updateAppKeyUI();
-            setStep(4, 'done');
-            setStep(5, 'active');
-            renderCredActions(`<button class="primary" id="cred-send-id">Send AT+ID</button>`);
-            $('cred-send-id').addEventListener('click', async () => {
-              const got = { devaddr:null, deveui:null, appeui:null };
-              const onLine = (line) => {
-                let m;
-                if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
-                if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
-                if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
-                if (got.devaddr && got.deveui && got.appeui) {
-                  $('cred-devaddr').textContent = got.devaddr;
-                  $('cred-deveui').textContent = got.deveui;
-                  $('cred-appeui').textContent = got.appeui;
-                  $('creds-result').style.display = 'grid';
-                  setStep(5, 'done');
-                  lineListeners.delete(onLine);
-                  renderCredActions(`<span style="font-size:13px; color:var(--text-muted);">Done. Restart the sensor with the magnet again, then reconnect at 115200 to return it to normal mode.</span>`);
-                }
-              };
-              lineListeners.add(onLine);
-              await sendRaw('AT+ID');
-            });
-          } catch (e) {
-            log('Reopen at 9600 failed: ' + e.message, 'muted');
-          }
-        });
-      });
+
+    await new Promise((resolve) => {
+      const proceed = () => {
+        clearInterval(credTimer); credTimer = null;
+        $('btn-read-creds').textContent = 'Read Credentials';
+        resolve();
+      };
+      $('btn-read-creds').textContent = 'I restarted it with the magnet — continue';
+      $('btn-read-creds').disabled = false;
+      $('btn-read-creds').onclick = proceed;
     });
-  }
 
-  renderCredActions(`<button class="primary" id="cred-begin">Start credential read</button>`);
-  $('cred-begin').addEventListener('click', credStart);
+    setPStep(2, 'active');
+    await sendRaw('3');
+    try {
+      await reopenAtBaud(9600);
+    } catch (e) {
+      log('Reopen at 9600 failed: ' + e.message, 'muted');
+      setOpStatus('Could not reopen at 9600 baud: ' + e.message, 'err');
+      $('btn-read-creds').onclick = null;
+      $('btn-read-creds').disabled = false;
+      return;
+    }
+    inDebugMode = true;
 
-  $('btn-cred-reset').addEventListener('click', () => {
-    if (credTimer) { clearInterval(credTimer); credTimer = null; }
-    setStep(0);
-    $('creds-result').style.display = 'none';
-    inDebugMode = false;
-    updateAppKeyUI();
-    renderCredActions(`<button class="primary" id="cred-begin">Start credential read</button>`);
-    $('cred-begin').addEventListener('click', credStart);
+    const got = { devaddr:null, deveui:null, appeui:null };
+    const idPromise = new Promise((resolve) => {
+      const onLine = (line) => {
+        let m;
+        if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
+        if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
+        if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
+        if (got.devaddr && got.deveui && got.appeui) { lineListeners.delete(onLine); resolve(true); }
+      };
+      lineListeners.add(onLine);
+      setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, 4000);
+    });
+    await sendRaw('AT+ID');
+    const okRead = await idPromise;
+
+    $('btn-read-creds').onclick = null;
+    $('btn-read-creds').disabled = !port;
+
+    if (okRead) {
+      $('v-devaddr').textContent = got.devaddr;
+      $('v-deveui').textContent = got.deveui;
+      $('v-appeui').textContent = got.appeui;
+      setPStep(3, 'done');
+      setOpStatus(`Credentials read from device. DevEUI ${got.deveui}.`, 'ok');
+    } else {
+      setPStep(2, 'done');
+      setOpStatus('AT+ID sent, but no complete reply seen within 4s. Check the raw log.', 'err');
+    }
   });
 
 })();
