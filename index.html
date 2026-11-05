@@ -535,6 +535,7 @@
   let readableClosed = null;
   let currentBaud = null;
   let lineBuffer = '';
+  let lastRxAt = 0; // timestamp of the last byte received, used to detect "the device has gone quiet"
   const lineListeners = new Set(); // callback(line)
 
   if (!('serial' in navigator)) {
@@ -572,11 +573,31 @@
     lineBuffer = ''; // drop any partial/garbled bytes left over from the old baud rate
     await port.open({ baudRate: baud, dataBits: 8, stopBits: 1, parity: 'none' });
     currentBaud = baud;
+    lastRxAt = Date.now(); // don't let bytes seen before the reopen count as "recent"
     startReadLoop();
     log(`Reopened at ${baud} baud`, 'sys');
   }
 
   function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  // Waits until no bytes have arrived for `idleMs`, instead of guessing a fixed
+  // delay. This is what a human was effectively doing when they watched the raw
+  // log and clicked "continue" only once it stopped scrolling — the device's
+  // status/menu text can take a variable amount of time to finish printing, and
+  // a fixed sleep that's too short catches the tail of it at the wrong baud
+  // rate and produces garbage. `maxMs` is a safety cap in case the device never
+  // goes fully quiet (e.g. it keeps re-printing a menu).
+  function waitForQuiet(idleMs, maxMs){
+    return new Promise((resolve) => {
+      const start = Date.now();
+      lastRxAt = Date.now(); // baseline: don't resolve on silence that happened before this call
+      (function check(){
+        const now = Date.now();
+        if (now - lastRxAt >= idleMs || now - start >= maxMs) { resolve(); return; }
+        setTimeout(check, 50);
+      })();
+    });
+  }
 
   async function stopReadLoop(){
     if (reader) {
@@ -604,6 +625,7 @@
   }
 
   function handleIncoming(chunk){
+    lastRxAt = Date.now();
     lineBuffer += chunk;
     let idx;
     while ((idx = lineBuffer.indexOf('\n')) >= 0) {
@@ -877,15 +899,19 @@
 
     setPStep(2, 'active');
     await sendRaw('3');
-    // Give the device time to finish printing its still-115200-baud
-    // "switching baud rate" message and actually switch over before we
-    // yank the host side to 9600 — reopening immediately caught the tail
-    // of that message at the wrong speed and produced garbage.
-    await sleep(600);
+    // Wait for the device to actually finish printing its still-115200-baud
+    // "switching baud rate" message, rather than guessing a fixed delay — a
+    // fixed delay that's even slightly too short catches the tail of that
+    // message at the wrong speed and produces garbage. We treat 400ms of
+    // silence as "it's done talking", capped at 3s so a device that never
+    // quiets down doesn't hang the flow forever.
+    await waitForQuiet(400, 3000);
     try {
       await reopenAtBaud(9600);
-      // let the device's own UART settle to 9600 before we address it
-      await sleep(400);
+      // The device's own UART also needs a moment to settle onto 9600, and
+      // the transition itself can spit out a burst of noise on the new baud
+      // rate — wait that out too instead of assuming a fixed gap is enough.
+      await waitForQuiet(300, 2000);
     } catch (e) {
       log('Reopen at 9600 failed: ' + e.message, 'muted');
       setOpStatus('Could not reopen at 9600 baud: ' + e.message, 'err');
@@ -893,22 +919,40 @@
       $('btn-read-creds').disabled = false;
       return;
     }
+    // Final sweep: discard anything that trickled in during the quiet-wait
+    // itself (it was transition noise, not a reply to a command we haven't
+    // sent yet) so it can't glue onto the real AT+ID reply.
+    lineBuffer = '';
     inDebugMode = true;
 
-    const got = { devaddr:null, deveui:null, appeui:null };
-    const idPromise = new Promise((resolve) => {
-      const onLine = (line) => {
-        let m;
-        if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
-        if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
-        if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
-        if (got.devaddr && got.deveui && got.appeui) { lineListeners.delete(onLine); resolve(true); }
-      };
-      lineListeners.add(onLine);
-      setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, 6000);
-    });
-    await sendRaw('AT+ID');
-    const okRead = await idPromise;
+    async function tryReadId(timeoutMs){
+      const got = { devaddr:null, deveui:null, appeui:null };
+      const idPromise = new Promise((resolve) => {
+        const onLine = (line) => {
+          let m;
+          if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
+          if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
+          if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
+          if (got.devaddr && got.deveui && got.appeui) { lineListeners.delete(onLine); resolve(true); }
+        };
+        lineListeners.add(onLine);
+        setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, timeoutMs);
+      });
+      await sendRaw('AT+ID');
+      const ok = await idPromise;
+      return { ok, got };
+    }
+
+    let { ok: okRead, got } = await tryReadId(6000);
+    if (!okRead) {
+      // One retry: the device may simply have still been settling. Let it go
+      // quiet again, drop whatever garbage arrived, and ask once more before
+      // giving up.
+      log('No clean AT+ID reply — retrying once…', 'muted');
+      await waitForQuiet(300, 1500);
+      lineBuffer = '';
+      ({ ok: okRead, got } = await tryReadId(6000));
+    }
 
     $('btn-read-creds').onclick = startCredFlow; // restored so the flow can be run again
     $('btn-read-creds').disabled = !port;
@@ -921,7 +965,7 @@
       setOpStatus(`Credentials read from device. DevEUI ${got.deveui}.`, 'ok');
     } else {
       setPStep(2, 'done');
-      setOpStatus('AT+ID sent, but no complete reply seen within 4s. Check the raw log.', 'err');
+      setOpStatus('AT+ID sent (twice), but no complete reply seen. Check the raw log — the device may need more time after the magnet restart, or need another "Read Credentials" attempt.', 'err');
     }
   }
   $('btn-read-creds').onclick = startCredFlow;
