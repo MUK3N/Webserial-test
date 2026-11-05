@@ -899,19 +899,24 @@
 
     setPStep(2, 'active');
     await sendRaw('3');
-    // Wait for the device to actually finish printing its still-115200-baud
-    // "switching baud rate" message, rather than guessing a fixed delay — a
-    // fixed delay that's even slightly too short catches the tail of that
-    // message at the wrong speed and produces garbage. We treat 400ms of
-    // silence as "it's done talking", capped at 3s so a device that never
-    // quiets down doesn't hang the flow forever.
-    await waitForQuiet(400, 3000);
+    // Cross-checked against a known-good capture from a different serial
+    // terminal: the device keeps re-printing "Please Select Mode…" several
+    // times — it does NOT go quiet right after "3" — and only switches once
+    // it prints a line containing "Remap Uart3 BaudRate: 9600". Waiting for
+    // *silence* (the previous approach) could time out and reopen our side
+    // while the device was still mid-menu at 115200, which is exactly what
+    // produced the garbled, badly-delayed replies. Wait for that actual
+    // marker line instead; fall back to a quiet-period guess only if the
+    // wording ever differs.
+    const remapLine = await waitForLine((line) => /remap/i.test(line) ? true : null, 8000);
+    if (remapLine) {
+      log('Saw the baud-remap line — device is switching now.', 'sys');
+    } else {
+      log('Never saw a "Remap…" line — falling back to a quiet-period guess.', 'muted');
+      await waitForQuiet(500, 3000);
+    }
     try {
       await reopenAtBaud(9600);
-      // The device's own UART also needs a moment to settle onto 9600, and
-      // the transition itself can spit out a burst of noise on the new baud
-      // rate — wait that out too instead of assuming a fixed gap is enough.
-      await waitForQuiet(300, 2000);
     } catch (e) {
       log('Reopen at 9600 failed: ' + e.message, 'muted');
       setOpStatus('Could not reopen at 9600 baud: ' + e.message, 'err');
@@ -919,40 +924,34 @@
       $('btn-read-creds').disabled = false;
       return;
     }
-    // Final sweep: discard anything that trickled in during the quiet-wait
-    // itself (it was transition noise, not a reply to a command we haven't
-    // sent yet) so it can't glue onto the real AT+ID reply.
+    // Let the transition noise clear, then drop whatever trickled in so it
+    // can't glue onto the real reply.
+    await waitForQuiet(300, 1500);
     lineBuffer = '';
     inDebugMode = true;
 
-    async function tryReadId(timeoutMs){
-      const got = { devaddr:null, deveui:null, appeui:null };
-      const idPromise = new Promise((resolve) => {
-        const onLine = (line) => {
-          let m;
-          if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
-          if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
-          if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
-          if (got.devaddr && got.deveui && got.appeui) { lineListeners.delete(onLine); resolve(true); }
-        };
-        lineListeners.add(onLine);
-        setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, timeoutMs);
-      });
-      await sendRaw('AT+ID');
-      const ok = await idPromise;
-      return { ok, got };
-    }
-
-    let { ok: okRead, got } = await tryReadId(6000);
-    if (!okRead) {
-      // One retry: the device may simply have still been settling. Let it go
-      // quiet again, drop whatever garbage arrived, and ask once more before
-      // giving up.
-      log('No clean AT+ID reply — retrying once…', 'muted');
-      await waitForQuiet(300, 1500);
-      lineBuffer = '';
-      ({ ok: okRead, got } = await tryReadId(6000));
-    }
+    // Same known-good capture shows the device announcing "+LOWPOWER: WAKEUP"
+    // then "+ID: DevAddr/DevEui/AppEui" on its own, repeatedly, without ever
+    // being asked — AT+ID isn't strictly required. So we send it once as a
+    // nudge (matches the documented procedure) but the listener below is
+    // passive: it catches the ID lines whether they're a reply to AT+ID or
+    // just the device announcing itself, and we deliberately do NOT resend —
+    // a second AT+ID landing while the device is mid-transmission is a likely
+    // cause of the corrupted, glued-together replies seen before.
+    const got = { devaddr:null, deveui:null, appeui:null };
+    const idPromise = new Promise((resolve) => {
+      const onLine = (line) => {
+        let m;
+        if ((m = line.match(/\+ID:\s*DevAddr,\s*([0-9A-Fa-f:]+)/i))) got.devaddr = m[1];
+        if ((m = line.match(/\+ID:\s*DevEui,\s*([0-9A-Fa-f:]+)/i))) got.deveui = m[1];
+        if ((m = line.match(/\+ID:\s*AppEui,\s*([0-9A-Fa-f:]+)/i))) got.appeui = m[1];
+        if (got.devaddr && got.deveui && got.appeui) { lineListeners.delete(onLine); resolve(true); }
+      };
+      lineListeners.add(onLine);
+      setTimeout(() => { lineListeners.delete(onLine); resolve(false); }, 12000);
+    });
+    await sendRaw('AT+ID');
+    const okRead = await idPromise;
 
     $('btn-read-creds').onclick = startCredFlow; // restored so the flow can be run again
     $('btn-read-creds').disabled = !port;
@@ -965,7 +964,7 @@
       setOpStatus(`Credentials read from device. DevEUI ${got.deveui}.`, 'ok');
     } else {
       setPStep(2, 'done');
-      setOpStatus('AT+ID sent (twice), but no complete reply seen. Check the raw log — the device may need more time after the magnet restart, or need another "Read Credentials" attempt.', 'err');
+      setOpStatus('No clean reply seen within 12s of switching to 9600. Check the raw log, then try "Read Credentials" again.', 'err');
     }
   }
   $('btn-read-creds').onclick = startCredFlow;
