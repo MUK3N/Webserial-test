@@ -112,11 +112,14 @@
   /* ---------- config layout ---------- */
   .config-layout{display:flex; align-items:stretch; background:var(--bg-card); border:1px solid var(--border); border-radius:4px; overflow:hidden;}
   .sidebar{width:205px; flex:none; border-right:1px solid var(--border-soft); padding-top:20px;}
-  .nav-item{padding:13px 20px; font-size:14px; color:var(--ink-soft); cursor:default;}
+  .nav-item{padding:13px 20px; font-size:14px; color:var(--ink-soft); cursor:pointer;}
+  .nav-item:not(.active):hover{background:var(--bg-chip);}
   .nav-item.active{background:var(--bg-nav-active); border-left:3px solid var(--primary); padding-left:17px; font-weight:700; color:var(--primary);}
   .section-index{padding:110px 20px 20px; font-size:12px; line-height:1.9;}
   .section-index .hdr{font-weight:600; color:var(--muted2); letter-spacing:.03em;}
   .section-index div{color:var(--muted);}
+  .section-index div[data-target]{cursor:pointer;}
+  .section-index div[data-target]:hover{color:var(--primary);}
   .content{flex:1; min-width:0; padding:22px; display:flex; flex-direction:column; gap:24px;}
 
   /* ---------- cards within content ---------- */
@@ -312,23 +315,25 @@
 
     <div class="config-layout">
       <div class="sidebar">
-        <div class="nav-item">LoRaWAN credentials</div>
-        <div class="nav-item active">Configuration</div>
-        <div class="nav-item">Connection guide</div>
-        <div class="section-index">
+        <div class="nav-item" id="nav-credentials">LoRaWAN credentials</div>
+        <div class="nav-item active" id="nav-configuration">Configuration</div>
+        <div class="nav-item" id="nav-guide">Connection guide</div>
+        <div class="section-index" id="section-index">
           <div class="hdr">LEVELPRO</div>
-          <div>LoRaWAN credentials</div>
-          <div>Functions</div>
-          <div>Reporting</div>
-          <div>Alarm thresholds</div>
-          <div>Device actions</div>
+          <div data-target="sec-credentials">LoRaWAN credentials</div>
+          <div data-target="sec-functions">Functions</div>
+          <div data-target="sec-reporting">Reporting</div>
+          <div data-target="sec-alarms">Alarm thresholds</div>
+          <div data-target="sec-actions">Device actions</div>
         </div>
       </div>
 
       <div class="content">
 
+      <div id="content-configuration">
+
         <!-- Card / LoRaWAN Credentials -->
-        <div class="panel">
+        <div class="panel" id="sec-credentials">
           <div class="panel-header">
             <div>
               <h2>LoRaWAN Credentials</h2>
@@ -381,7 +386,7 @@
           </div>
           <div class="panel-body">
 
-            <div class="section-box">
+            <div class="section-box" id="sec-functions">
               <div class="section-hd">
                 <div class="t"><b>Functions</b><span>Command 0x09 · set these first, they enable fields below</span></div>
                 <span class="help-btn sm" title="0x09 switch-function command: work mode, tilt detection, GPS, serial echo.">?</span>
@@ -416,7 +421,7 @@
               </div>
             </div>
 
-            <div class="section-box">
+            <div class="section-box" id="sec-reporting">
               <div class="section-hd">
                 <div class="t"><b>Reporting</b><span>Commands 0x01, 0x08</span></div>
                 <span class="help-btn sm" title="0x01 upload interval (1-168h), 0x08 detection interval (1-60min).">?</span>
@@ -435,7 +440,7 @@
               </div>
             </div>
 
-            <div class="section-box">
+            <div class="section-box" id="sec-alarms">
               <div class="section-hd">
                 <div class="t"><b>Alarm thresholds</b><span>Commands 0x02, 0x03, 0x04, 0x05</span></div>
                 <span class="help-btn sm" title="0x02 full, 0x03 fire/temp, 0x04 tilt/fall, 0x05 battery.">?</span>
@@ -464,7 +469,7 @@
               </div>
             </div>
 
-            <div class="section-box">
+            <div class="section-box" id="sec-actions">
               <div class="section-hd">
                 <div class="t"><b>Device actions</b></div>
                 <span class="help-btn sm" title="0x09 sub-command 02: immediate restart, sensor sends one uplink right after.">?</span>
@@ -488,6 +493,127 @@
         </div>
 
       </div>
+
+      <div id="content-guide" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Wiring</h2>
+              <p>USB-to-TTL serial adapter, three wires, no driver install needed beyond what Chrome already handles.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>Connections</b></div></div>
+              <div class="section-body">
+                <p style="margin:0 0 10px; font-size:13px; color:var(--ink-soft);">TX ↔ RX, RX ↔ TX, GND ↔ GND. The two TX/RX lines are crossed — the adapter's TX goes to the sensor's RX, and vice versa.</p>
+                <p style="margin:0; font-size:13px; color:var(--ink-soft);">If the sensor doesn't respond to anything once connected, it's most likely asleep — restart it with the magnet before troubleshooting the wiring.</p>
+              </div>
+            </div>
+            <div class="section-box" style="margin-top:14px;">
+              <div class="section-hd"><div class="t"><b>The magnet</b></div></div>
+              <div class="section-body">
+                <p style="margin:0; font-size:13px; color:var(--ink-soft);">Hold it to the sensor's marked spot, then remove it — that's a restart. It's used twice in a normal session: once to enter debug mode for reading credentials, and once more afterwards to put the sensor back into its normal 115200 mode.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Browser &amp; hosting</h2>
+              <p>This page talks to the sensor directly from your browser — nothing passes through a server.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>Requirements</b></div></div>
+              <div class="section-body">
+                <p style="margin:0 0 10px; font-size:13px; color:var(--ink-soft);">Web Serial only works in Chrome, Edge or Opera, and only over HTTPS or <code>http://localhost</code> — it won't appear at all in Firefox/Safari or over plain HTTP.</p>
+                <p style="margin:0; font-size:13px; color:var(--ink-soft);">All device communication happens locally in your browser tab. Nothing you read from or send to the sensor is uploaded anywhere by this page.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Reading LoRaWAN credentials, step by step</h2>
+              <p>Every step here is a button press on purpose — the sensor's own baud-rate switch takes a variable amount of time, so each step waits for you to see it happen rather than guessing.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>The five clicks</b></div></div>
+              <div class="section-body">
+                <ol style="margin:0; padding-left:20px; font-size:13px; color:var(--ink-soft); line-height:1.9;">
+                  <li><b>Read Credentials</b> — starts sending "@" to the sensor, asking it to enter debug mode.</li>
+                  <li><b>Tap the magnet, then click "I restarted it with the magnet — continue."</b> Don't click this before you've actually tapped the magnet — see the warning below.</li>
+                  <li><b>Send "3"</b> — tells the sensor to enter debug mode, once you can see its mode-select menu in the raw log.</li>
+                  <li><b>Reopen at 9600</b> — click once the sensor is visibly prompting for the baud switch. This reopens the connection on the browser side to match.</li>
+                  <li><b>Send AT+ID</b> — reads back DevAddr, DevEUI and AppEUI/JoinEUI. If it doesn't catch a clean reply, you can press it again without restarting the whole flow.</li>
+                </ol>
+              </div>
+            </div>
+            <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
+              <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>If step 2 gets clicked too early</b></div></div>
+              <div class="section-body">
+                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">If "continue" gets clicked before the magnet is actually tapped, the sensor never enters its debug menu — so sending "3" afterwards does nothing meaningful. If the flow is then pushed on to "reopen at 9600," the browser switches speed but the sensor doesn't, and from that point nothing readable comes back.</p>
+                <p style="margin:0; font-size:13px; color:var(--warn-text);">Press <b>Reset</b> (next to Read Credentials) to recover — it reopens the connection at 115200 to resync with the sensor and puts the flow back at the start, no page reload needed.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Writing a new AppKey</h2>
+              <p>AppKey is write-only by design on this module.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>Why it can't be read back</b></div></div>
+              <div class="section-body">
+                <p style="margin:0 0 10px; font-size:13px; color:var(--ink-soft);">There's no AT command that queries a stored AppKey — only one that sets it (<code>AT+KEY=APPKEY,"..."</code>), and the module echoes back exactly what was just written as confirmation, nothing more. This is deliberate hardware/firmware behavior, not a limitation of this page.</p>
+                <p style="margin:0; font-size:13px; color:var(--ink-soft);">Writing one requires debug mode, so run "Read Credentials" first — the field stays locked until that succeeds, and it's cleared from the page the instant it's sent.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Command reference</h2>
+              <p>DF555 Protocol V3.2 — what each field on the Configuration page actually sends.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>Downlink-format commands</b><span>sent at 115200 baud</span></div></div>
+              <div class="section-body">
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;">
+                  <b>0x01</b> upload interval (1–168h) · <b>0x08</b> detection interval (1–60min) · <b>0x09</b> functions (work mode, tilt, GPS, echo) and sub-command 02 (restart) · <b>0x02</b> full threshold · <b>0x03</b> fire/temp threshold · <b>0x04</b> tilt/fall threshold · <b>0x05</b> battery threshold.<br/>
+                  Frame shape: <code>80 02 9999 &lt;cmd&gt; &lt;content&gt; 81</code>, sent as literal ASCII hex text, no checksum.
+                </p>
+              </div>
+            </div>
+            <div class="section-box" style="margin-top:14px;">
+              <div class="section-hd"><div class="t"><b>Debug-mode AT commands</b><span>sent at 9600 baud, after the magnet restart</span></div></div>
+              <div class="section-body">
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;"><b>AT+ID</b> reads DevAddr / DevEUI / AppEUI. <b>AT+KEY=APPKEY,"..."</b> writes a new AppKey (write-only).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
     </div>
 
     <div class="panel op-status">
@@ -525,12 +651,61 @@
   const $ = (id) => document.getElementById(id);
 
   // ---------- view switching ----------
-  $('card-levelpro').addEventListener('click', () => showView('view-levelpro'));
+  $('card-levelpro').addEventListener('click', () => {
+    showView('view-levelpro');
+    showConfigContent();
+    setNavActive('nav-configuration');
+  });
   $('btn-change-product').addEventListener('click', () => showView('view-products'));
   function showView(id){
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     $(id).classList.add('active');
   }
+
+  // ---------- LevelPro sidebar nav ----------
+  // "Configuration" and "LoRaWAN credentials" both show the same combined
+  // content (the credentials panel is simply the top of it) — they differ in
+  // which part they scroll to. "Connection guide" swaps in separate content.
+  function showConfigContent(){
+    $('content-configuration').style.display = '';
+    $('content-guide').style.display = 'none';
+    $('section-index').style.display = '';
+  }
+  function showGuideContent(){
+    $('content-configuration').style.display = 'none';
+    $('content-guide').style.display = '';
+    $('section-index').style.display = 'none';
+  }
+  function setNavActive(id){
+    ['nav-credentials', 'nav-configuration', 'nav-guide'].forEach(n => $(n).classList.toggle('active', n === id));
+  }
+  function scrollToSection(targetId){
+    const el = $(targetId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('nav-credentials').addEventListener('click', () => {
+    showConfigContent();
+    setNavActive('nav-credentials');
+    scrollToSection('sec-credentials');
+  });
+  $('nav-configuration').addEventListener('click', () => {
+    showConfigContent();
+    setNavActive('nav-configuration');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('nav-guide').addEventListener('click', () => {
+    showGuideContent();
+    setNavActive('nav-guide');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.querySelectorAll('#section-index [data-target]').forEach((el) => {
+    el.addEventListener('click', () => {
+      showConfigContent();
+      setNavActive('nav-configuration');
+      scrollToSection(el.dataset.target);
+    });
+  });
 
   // ---------- Web Serial plumbing ----------
   let port = null;
