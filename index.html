@@ -79,6 +79,7 @@
   button.secondary{background:var(--bg-chip); border-color:var(--border-soft); color:var(--ink-soft);}
   button.primary{background:var(--primary); border-color:var(--primary); color:var(--primary-text);}
   button.primary:hover{opacity:.92;}
+  button.danger{background:#fff; border-color:#B42318; color:#B42318;}
   button:disabled{opacity:.5; cursor:not-allowed;}
   button.sm{padding:7px 12px; font-size:13px;}
   button.linklike{background:none; border:none; color:var(--primary); padding:0; font-weight:700;}
@@ -147,6 +148,15 @@
   .pstep.done{background:var(--ok-bg); border-color:var(--ok-border);}
   .pstep.done .num{background:var(--ok-text); color:#fff; border-color:var(--ok-text);}
   .pstep.done .t{color:var(--ok-text);}
+
+  /* ---------- status tiles (FlexLink device info) ---------- */
+  .tile-row{display:flex; gap:12px;}
+  .tile{flex:1; min-width:0; background:var(--bg-input-readonly); border:1px solid var(--border-soft); border-radius:4px; padding:12px 14px; display:flex; flex-direction:column; gap:6px;}
+  .tile .k{font-weight:500; font-size:12px; color:var(--muted2);}
+  .tile .v{font-weight:700; font-size:16px; color:var(--ink);}
+  .tile .sub{font-size:12px; color:var(--muted);}
+  .tile .dot{display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--border-input); margin-right:6px;}
+  .tile .dot.ok{background:var(--ok-text);}
 
   .cred-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
   .cred-field .k{font-weight:500; font-size:13px; margin-bottom:8px;}
@@ -248,7 +258,7 @@
       <b>Web Serial</b> — Chrome, Edge or Opera only, served over HTTPS or http://localhost.
     </div>
     <h1>Select a product</h1>
-    <p class="sub">Only LevelPro is wired up in this test build.</p>
+    <p class="sub">LevelPro and FlexLink are wired up in this test build.</p>
     <div class="grid-products">
       <div class="card product-card" id="card-levelpro">
         <span class="tag ready">WIRED UP</span>
@@ -261,10 +271,11 @@
         <div class="name" style="margin-top:8px;">FieldTrack</div>
         <div class="model">W03 GPS tracker</div>
       </div>
-      <div class="card product-card disabled">
-        <span class="tag off">NOT IN THIS BUILD</span>
+      <div class="card product-card" id="card-flexlink">
+        <span class="tag ready">WIRED UP</span>
         <div class="name" style="margin-top:8px;">FlexLink</div>
-        <div class="model">USR-DR502 cellular gateway</div>
+        <div class="model">USR-DR502-E cellular gateway</div>
+        <div style="font-size:12px; color:var(--muted);">AT-mode connect · Device info · Serial/MQTT/APN config · Maintenance</div>
       </div>
     </div>
   </div>
@@ -639,6 +650,418 @@
 
   </div>
 
+  <!-- ===================== FLEXLINK (USR-DR502-E) ===================== -->
+  <div id="view-flexlink" class="view">
+
+    <div id="fl-serial-unsupported" class="banner warn" style="display:none;">
+      <b>Web Serial isn't available in this browser/context.</b> Open this page in Chrome, Edge or Opera,
+      served over HTTPS or http://localhost.
+    </div>
+
+    <div class="breadcrumb">
+      <span class="path">Products / FlexLink / Configuration</span>
+      <button class="secondary sm" id="btn-change-product-fl">Change Product</button>
+    </div>
+
+    <div class="banner" id="fl-design-banner">
+      DESIGN PREVIEW · FlexLink profile built from the USR-DR502-E manual (transparent-mode AT command set) plus the MQTT-firmware command names shown on this screen.
+      Entering/exiting AT command mode, restart and factory reset are confirmed against the manual. The MQTT broker, topic, serial-port and APN command syntax (AT+MQTTSVR, AT+UART, AT+APN, etc.) and every reply format below are <b>not yet verified on hardware</b> —
+      send one change at a time and read the raw log.
+    </div>
+
+    <div class="topcards">
+      <div class="card product">
+        <div class="label-bold">1. Selected product</div>
+        <div class="kv-row">
+          <span class="label-bold">FlexLink</span>
+          <span class="chip">USR-DR502-E</span>
+        </div>
+        <p style="margin:0; font-size:12px; color:var(--muted);">Disconnect before changing product.</p>
+      </div>
+      <div class="card conn">
+        <div class="kv-row">
+          <span class="label-bold">2. RS485 connection</span>
+          <span class="chip" id="fl-conn-chip">Not connected</span>
+        </div>
+        <div class="kv-row" style="align-items:flex-end;">
+          <div style="flex:1;">
+            <div class="label-bold" style="margin-bottom:6px;">RS485-to-USB adapter</div>
+            <p style="margin:0; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring. Connecting sends "+++" to enter AT command mode.</p>
+          </div>
+          <div style="display:flex; gap:18px; flex:none;">
+            <button class="secondary" id="fl-btn-connect">Connect Device</button>
+            <button id="fl-btn-disconnect" disabled>Disconnect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-layout">
+      <div class="sidebar">
+        <div class="nav-item active" id="fl-nav-configuration">Configuration</div>
+        <div class="nav-item" id="fl-nav-info">Device info &amp; status</div>
+        <div class="nav-item" id="fl-nav-guide">Connection guide</div>
+        <div class="section-index" id="fl-section-index">
+          <div class="hdr">FLEXLINK</div>
+          <div data-target="fl-sec-info">Device info &amp; status</div>
+          <div data-target="fl-sec-serial">Serial port (RS485)</div>
+          <div data-target="fl-sec-mqtt">MQTT broker</div>
+          <div data-target="fl-sec-topics">Topics</div>
+          <div data-target="fl-sec-apn">Cellular (APN)</div>
+          <div data-target="fl-sec-maint">Maintenance</div>
+        </div>
+      </div>
+
+      <div class="content">
+
+      <div id="fl-content-configuration">
+
+        <!-- Card / Device Info & Status -->
+        <div class="panel" id="fl-sec-info">
+          <div class="panel-header">
+            <div>
+              <h2>Device Info &amp; Status</h2>
+              <p>Read-only values reported by the gateway. Refresh to update signal and connection status.</p>
+            </div>
+            <span class="help-btn" title="Signal: AT+CSQ. Firmware: AT+VER (confirmed). MQTT status: AT+MQTTSTA (unverified). Network/Local IP/ICCID/SN have no confirmed command yet.">?</span>
+          </div>
+          <div class="panel-body">
+            <div class="tile-row">
+              <div class="tile">
+                <div class="k">Signal</div>
+                <div class="v" id="fl-v-signal">—</div>
+                <div class="sub" id="fl-v-signal-sub">AT+CSQ</div>
+              </div>
+              <div class="tile">
+                <div class="k">Network</div>
+                <div class="v" id="fl-v-network">—</div>
+                <div class="sub">Not available in this build</div>
+              </div>
+              <div class="tile">
+                <div class="k">MQTT broker</div>
+                <div class="v" id="fl-v-mqtt-status"><span class="dot" id="fl-v-mqtt-dot"></span><span id="fl-v-mqtt-text">—</span></div>
+                <div class="sub">AT+MQTTSTA · unverified</div>
+              </div>
+              <div class="tile">
+                <div class="k">Local IP</div>
+                <div class="v" id="fl-v-ip">—</div>
+                <div class="sub">Not available in this build</div>
+              </div>
+            </div>
+            <div class="cred-grid">
+              <div class="cred-field"><div class="k">IMEI</div><div class="cred-value"><span class="v" id="fl-v-imei">—</span><button class="copy" data-copy="fl-v-imei">Copy</button></div></div>
+              <div class="cred-field"><div class="k">SIM ICCID</div><div class="cred-value"><span class="v" id="fl-v-iccid">—</span><button class="copy" data-copy="fl-v-iccid">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Serial number (SN)</div><div class="cred-value"><span class="v" id="fl-v-sn">—</span><button class="copy" data-copy="fl-v-sn">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Firmware</div><div class="cred-value"><span class="v" id="fl-v-fw">—</span><button class="copy" data-copy="fl-v-fw">Copy</button></div></div>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <p>Sends AT+CSQ, AT+VER and AT+MQTTSTA and shows what comes back in the raw log. IMEI/ICCID/SN aren't queried yet — no confirmed command for them.</p>
+            <button class="primary" id="fl-btn-refresh" disabled>Refresh</button>
+          </div>
+        </div>
+
+        <!-- Card / Configuration -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Configuration</h2>
+              <p>Changes are staged below and sent with AT+S, which saves and restarts the gateway.</p>
+            </div>
+            <span class="help-btn" title="Field commands (AT+UART, AT+MQTTSVR/MQTTCID/MQTTUSER/MQTTPSW, AT+MQTTSUBTP/MQTTPUBTP, AT+APN) are as labeled on the design but not yet confirmed on hardware.">?</span>
+          </div>
+          <div class="panel-body">
+
+            <div class="section-box" id="fl-sec-serial">
+              <div class="section-hd">
+                <div class="t"><b>Serial port (RS485)</b><span>AT+UART · unverified syntax</span></div>
+                <span class="help-btn sm" title="Baud/data/stop/parity for the RS485 link itself. Changing this can disconnect the app if it doesn't match.">?</span>
+              </div>
+              <div class="section-body field-row">
+                <div class="field">
+                  <div class="k">Baud rate</div>
+                  <div class="input-box select">
+                    <select id="fl-f-baud">
+                      <option value="9600">9600</option>
+                      <option value="19200">19200</option>
+                      <option value="38400">38400</option>
+                      <option value="57600">57600</option>
+                      <option value="115200" selected>115200</option>
+                      <option value="230400">230400</option>
+                    </select>
+                  </div>
+                  <div class="hint">1200–921600 · default 115200</div>
+                </div>
+                <div class="field">
+                  <div class="k">Data bits</div>
+                  <div class="input-box disabled"><input type="text" value="8" disabled /></div>
+                  <div class="hint">Fixed</div>
+                </div>
+                <div class="field">
+                  <div class="k">Stop bits</div>
+                  <div class="input-box select">
+                    <select id="fl-f-stopbits">
+                      <option value="1" selected>1</option>
+                      <option value="2">2</option>
+                    </select>
+                  </div>
+                  <div class="hint">1 or 2</div>
+                </div>
+                <div class="field">
+                  <div class="k">Parity</div>
+                  <div class="input-box select">
+                    <select id="fl-f-parity">
+                      <option value="NONE" selected>None</option>
+                      <option value="ODD">Odd</option>
+                      <option value="EVEN">Even</option>
+                    </select>
+                  </div>
+                  <div class="hint">None, Odd or Even</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-box" id="fl-sec-mqtt">
+              <div class="section-hd">
+                <div class="t"><b>MQTT broker</b><span>AT+MQTTSVR, MQTTCID, MQTTUSER, MQTTPSW</span></div>
+                <span class="help-btn sm" title="Broker host/port, client ID and login. Unverified command syntax.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Broker host</div>
+                    <div class="input-box"><input type="text" id="fl-f-mqtt-host" placeholder="broker.example.com" /></div>
+                    <div class="hint">Domain name or IP address · up to 256 characters</div>
+                  </div>
+                  <div class="field" style="max-width:220px;">
+                    <div class="k">Port</div>
+                    <div class="input-box"><input type="number" id="fl-f-mqtt-port" min="1" max="65535" value="1883" /></div>
+                    <div class="hint">1–65535 · default 1883</div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Client ID</div>
+                    <div class="input-box"><input type="text" id="fl-f-mqtt-cid" placeholder="flexlink-0001" /></div>
+                    <div class="hint">Must be unique on the broker</div>
+                  </div>
+                  <div class="field">
+                    <div class="k">Username</div>
+                    <div class="input-box"><input type="text" id="fl-f-mqtt-user" placeholder="Optional" /></div>
+                  </div>
+                  <div class="field">
+                    <div class="k">Password</div>
+                    <div class="input-box"><input type="password" id="fl-f-mqtt-pass" placeholder="Optional" /><button class="secondary sm" id="fl-btn-mqtt-pass-show">Show</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-box" id="fl-sec-topics">
+              <div class="section-hd">
+                <div class="t"><b>Topics</b><span>AT+MQTTSUBTP, AT+MQTTPUBTP · topic 1 only</span></div>
+                <span class="help-btn sm" title="Subscribe = sent to the RS485 port. Publish = data read from the RS485 port.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Subscribe topic</div>
+                    <div class="input-box"><input type="text" id="fl-f-sub-topic" style="font-family:var(--mono);" placeholder="flexlink/0001/cmd" /></div>
+                    <div class="hint">Messages on this topic are sent to the RS485 port.</div>
+                  </div>
+                  <div class="field" style="max-width:120px;">
+                    <div class="k">QoS</div>
+                    <div class="input-box select">
+                      <select id="fl-f-sub-qos"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option></select>
+                    </div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Publish topic</div>
+                    <div class="input-box"><input type="text" id="fl-f-pub-topic" style="font-family:var(--mono);" placeholder="flexlink/0001/data" /></div>
+                    <div class="hint">Data from the RS485 port is published here.</div>
+                  </div>
+                  <div class="field" style="max-width:120px;">
+                    <div class="k">QoS</div>
+                    <div class="input-box select">
+                      <select id="fl-f-pub-qos"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option></select>
+                    </div>
+                  </div>
+                  <div class="field" style="max-width:120px;">
+                    <div class="k">Retain</div>
+                    <div class="toggle-row"><button class="switch" id="fl-f-retain" role="switch" aria-checked="false"></button><span class="state" id="fl-f-retain-state">Off</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-box" id="fl-sec-apn">
+              <div class="section-hd">
+                <div class="t"><b>Cellular (APN)</b><span>AT+APN</span></div>
+                <span class="help-btn sm" title="From your SIM provider. Factory value CMNET only works in China.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">APN</div>
+                    <div class="input-box"><input type="text" id="fl-f-apn" placeholder="internet" /></div>
+                    <div class="hint">From your SIM provider. Factory value CMNET only works in China.</div>
+                  </div>
+                  <div class="field" style="max-width:220px;">
+                    <div class="k">Authentication type</div>
+                    <div class="input-box select">
+                      <select id="fl-f-apn-auth"><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option></select>
+                    </div>
+                    <div class="hint">0, 1 or 2 as required by the provider · default 0</div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">APN username</div>
+                    <div class="input-box"><input type="text" id="fl-f-apn-user" placeholder="Optional" /></div>
+                  </div>
+                  <div class="field">
+                    <div class="k">APN password</div>
+                    <div class="input-box"><input type="password" id="fl-f-apn-pass" placeholder="Optional" /><button class="secondary sm" id="fl-btn-apn-pass-show">Show</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cmd-preview empty" id="fl-cmd-preview">
+              <div class="title">Commands to send (0 changes)</div>
+              <div class="hint" style="color:var(--muted);">Change a field above to see the exact command it will send.</div>
+            </div>
+
+          </div>
+          <div class="panel-footer">
+            <p>Only changed fields are sent, each one waits for a reply, then AT+S saves and restarts the gateway.</p>
+            <div style="display:flex; gap:12px;">
+              <button class="secondary" id="fl-btn-read" disabled>Read from Device</button>
+              <button class="primary" id="fl-btn-apply" disabled>Save &amp; Restart</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card / Maintenance -->
+        <div class="panel" id="fl-sec-maint">
+          <div class="panel-header">
+            <div>
+              <h2>Maintenance</h2>
+              <p>Actions that restart the gateway or erase its settings.</p>
+            </div>
+            <span class="help-btn" title="Restart: AT+Z. Factory reset: AT+CLEAR (confirmed in the manual).">?</span>
+          </div>
+          <div class="panel-body">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <button class="secondary" id="fl-btn-restart" disabled style="width:170px;">Restart gateway</button>
+              <p style="margin:0; font-size:12px; color:var(--muted); flex:1;">Restarts without changing settings (AT+Z).</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; margin-top:16px;">
+              <button class="danger" id="fl-btn-factory-reset" disabled style="width:170px;">Factory reset</button>
+              <p style="margin:0; font-size:12px; color:var(--muted); flex:1;">Erases all settings, including APN and MQTT broker (AT+CLEAR, confirmed in the manual). Asks for confirmation first.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="fl-content-guide" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Wiring</h2>
+              <p>RS485-to-USB adapter, two signal wires plus ground, and separate 9–36 V power for the gateway.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>Connections</b></div></div>
+              <div class="section-body">
+                <p style="margin:0 0 10px; font-size:13px; color:var(--ink-soft);">A ↔ A, B ↔ B on the RS485 terminals. The gateway needs its own 9–36 V power — the USB side only carries data, not power.</p>
+                <p style="margin:0; font-size:13px; color:var(--ink-soft);">Disconnect the field sensor/actuator from the RS485 terminals while configuring, so its traffic doesn't collide with the AT command session.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Entering AT command mode</h2>
+              <p>Unlike LevelPro, this doesn't need a magnet — it's a fixed handshake the app runs automatically on Connect.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>The handshake</b><span>USR-DR502-E User Manual §7.1</span></div></div>
+              <div class="section-body">
+                <ol style="margin:0; padding-left:20px; font-size:13px; color:var(--ink-soft); line-height:1.9;">
+                  <li>Send <code>+++</code> — nothing else should be sent right before it.</li>
+                  <li>The gateway replies <code>a</code>.</li>
+                  <li>Send <code>a</code> back within 3 seconds.</li>
+                  <li>The gateway replies <code>+ok</code> — it's now in AT command mode.</li>
+                </ol>
+                <p style="margin:10px 0 0; font-size:13px; color:var(--ink-soft);">To leave AT mode and resume normal MQTT/transparent operation, send <code>AT+ENTM</code> (confirmed in the manual). Disconnecting does this for you.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>What's confirmed, what isn't</h2>
+              <p>Be more careful with the fields marked unverified — check the raw log after each one.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>Confirmed against the USR-DR502-E manual</b></div></div>
+              <div class="section-body">
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;">Entering/exiting AT mode (<code>+++</code> / <code>a</code> / <code>+ok</code>, <code>AT+ENTM</code>) · <b>AT+VER</b> firmware query · <b>AT+S</b> save &amp; restart · <b>AT+Z</b> restart without saving · <b>AT+CLEAR</b> factory reset · <b>AT+CSQ</b> signal quality (standard on virtually all cellular modems).</p>
+              </div>
+            </div>
+            <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
+              <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Not yet verified on hardware</b></div></div>
+              <div class="section-body">
+                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">AT+UART (serial settings), AT+MQTTSVR/MQTTCID/MQTTUSER/MQTTPSW (broker), AT+MQTTSUBTP/MQTTPUBTP (topics), AT+APN (cellular), and AT+MQTTSTA (broker status) are the command names shown on this screen's design — the parameter order, and the gateway's reply format for all of them, haven't been checked against real hardware yet.</p>
+                <p style="margin:0; font-size:13px; color:var(--warn-text);">Change one field at a time, send it, and read what comes back in the raw log — that's how LevelPro's commands went from "design preview" to confirmed, too.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      </div>
+    </div>
+
+    <div class="panel op-status">
+      <div class="hd">Operation Status</div>
+      <div class="body"><div class="msg idle" id="fl-op-msg">No actions yet this session.</div></div>
+    </div>
+
+    <details class="rawlog">
+      <summary>Advanced · raw serial log</summary>
+      <div class="log" id="fl-log"></div>
+      <div class="rawlog-controls">
+        <select class="le" id="fl-line-ending">
+          <option value="none">No line ending</option>
+          <option value="crlf" selected>CRLF</option>
+          <option value="lf">LF</option>
+          <option value="cr">CR</option>
+        </select>
+        <input type="text" id="fl-raw-input" placeholder='Send raw ASCII, e.g. AT+VER or +++' />
+        <button class="primary sm" id="fl-btn-send-raw">Send</button>
+        <button class="secondary sm" id="fl-btn-clear-log">Clear</button>
+      </div>
+    </details>
+
+  </div>
+
 </main>
 
 <footer class="app">
@@ -657,6 +1080,12 @@
     setNavActive('nav-configuration');
   });
   $('btn-change-product').addEventListener('click', () => showView('view-products'));
+  $('card-flexlink').addEventListener('click', () => {
+    showView('view-flexlink');
+    flShowConfigContent();
+    flSetNavActive('fl-nav-configuration');
+  });
+  $('btn-change-product-fl').addEventListener('click', () => showView('view-products'));
   function showView(id){
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     $(id).classList.add('active');
@@ -1192,6 +1621,441 @@
     log('Credential flow reset.', 'sys');
   }
   $('btn-reset-creds').onclick = resetCredFlow;
+
+  // =====================================================================
+  // FlexLink (USR-DR502-E) — fully independent state/ids from LevelPro's,
+  // so nothing here can regress the hardware-verified LevelPro flow above.
+  // =====================================================================
+
+  // ---------- FlexLink sidebar nav ----------
+  function flShowConfigContent(){
+    $('fl-content-configuration').style.display = '';
+    $('fl-content-guide').style.display = 'none';
+    $('fl-section-index').style.display = '';
+  }
+  function flShowGuideContent(){
+    $('fl-content-configuration').style.display = 'none';
+    $('fl-content-guide').style.display = '';
+    $('fl-section-index').style.display = 'none';
+  }
+  function flSetNavActive(id){
+    ['fl-nav-configuration', 'fl-nav-info', 'fl-nav-guide'].forEach(n => $(n).classList.toggle('active', n === id));
+  }
+  function flScrollToSection(targetId){
+    const el = $(targetId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  $('fl-nav-configuration').addEventListener('click', () => {
+    flShowConfigContent();
+    flSetNavActive('fl-nav-configuration');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('fl-nav-info').addEventListener('click', () => {
+    flShowConfigContent();
+    flSetNavActive('fl-nav-info');
+    flScrollToSection('fl-sec-info');
+  });
+  $('fl-nav-guide').addEventListener('click', () => {
+    flShowGuideContent();
+    flSetNavActive('fl-nav-guide');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.querySelectorAll('#fl-section-index [data-target]').forEach((el) => {
+    el.addEventListener('click', () => {
+      flShowConfigContent();
+      flSetNavActive('fl-nav-configuration');
+      flScrollToSection(el.dataset.target);
+    });
+  });
+
+  // ---------- FlexLink Web Serial plumbing (independent of LevelPro's) ----------
+  let flPort = null;
+  let flReader = null;
+  let flReadableClosed = null;
+  let flLineBuffer = '';
+  const flLineListeners = new Set(); // callback(line)
+  let flAtMode = false;
+
+  if (!('serial' in navigator)) {
+    $('fl-serial-unsupported').style.display = 'block';
+    $('fl-btn-connect').disabled = true;
+  }
+
+  function flLog(text, cls){
+    const el = document.createElement('div');
+    if (cls) el.className = cls;
+    const ts = new Date().toLocaleTimeString('en-GB', { hour12:false }) + '.' + String(new Date().getMilliseconds()).padStart(3,'0');
+    el.textContent = `[${ts}] ${text}`;
+    $('fl-log').appendChild(el);
+    $('fl-log').scrollTop = $('fl-log').scrollHeight;
+  }
+
+  function flSetOpStatus(text, kind){ // kind: 'ok' | 'idle' | 'err'
+    const el = $('fl-op-msg');
+    el.className = 'msg ' + (kind || 'idle');
+    el.textContent = text;
+  }
+
+  async function flStopReadLoop(){
+    if (flReader) {
+      try { await flReader.cancel(); } catch(e){}
+      try { await flReadableClosed; } catch(e){}
+      flReader = null;
+    }
+  }
+
+  async function flStartReadLoop(){
+    const textDecoder = new TextDecoderStream();
+    flReadableClosed = flPort.readable.pipeTo(textDecoder.writable).catch(() => {});
+    flReader = textDecoder.readable.getReader();
+    (async () => {
+      try {
+        while (true) {
+          const { value, done } = await flReader.read();
+          if (done) break;
+          if (value) flHandleIncoming(value);
+        }
+      } catch (e) {
+        // port likely closed/cancelled — expected during disconnect
+      }
+    })();
+  }
+
+  function flHandleIncoming(chunk){
+    flLineBuffer += chunk;
+    let idx;
+    while ((idx = flLineBuffer.indexOf('\n')) >= 0) {
+      let line = flLineBuffer.slice(0, idx).replace(/\r$/, '');
+      flLineBuffer = flLineBuffer.slice(idx + 1);
+      if (line.length) {
+        flLog(line, 'rx');
+        flLineListeners.forEach(fn => fn(line));
+      }
+    }
+    // The "+++"→"a" handshake replies are a single bare character with no
+    // line ending, so they'd never reach a line listener above. Surface them
+    // too, without consuming flLineBuffer's line-based parsing for anything else.
+    if (/^a+$/.test(flLineBuffer)) {
+      flLog(flLineBuffer, 'rx');
+      flLineListeners.forEach(fn => fn(flLineBuffer));
+      flLineBuffer = '';
+    }
+  }
+
+  function flLineTerminator(){
+    switch ($('fl-line-ending').value) {
+      case 'crlf': return '\r\n';
+      case 'lf': return '\n';
+      case 'cr': return '\r';
+      default: return '';
+    }
+  }
+
+  async function flSendRaw(str, { withTerminator = true } = {}){
+    if (!flPort || !flPort.writable) { flLog('Not connected — nothing sent', 'muted'); return; }
+    const payload = str + (withTerminator ? flLineTerminator() : '');
+    const w = flPort.writable.getWriter();
+    try { await w.write(new TextEncoder().encode(payload)); }
+    finally { w.releaseLock(); }
+    flLog(str, 'tx');
+  }
+
+  function flSleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  // wait for a line/token matching `test`, or null after timeoutMs
+  function flWaitForLine(test, timeoutMs = 3000){
+    return new Promise((resolve) => {
+      let done = false;
+      const onLine = (line) => {
+        if (done) return;
+        const m = test(line);
+        if (m !== null && m !== undefined && m !== false) { done = true; flLineListeners.delete(onLine); resolve(m === true ? line : m); }
+      };
+      flLineListeners.add(onLine);
+      setTimeout(() => { if (!done) { done = true; flLineListeners.delete(onLine); resolve(null); } }, timeoutMs);
+    });
+  }
+
+  function flSetConnected(on){
+    $('fl-conn-chip').textContent = on ? (flAtMode ? 'Connected · AT mode' : 'Connected · transparent mode') : 'Not connected';
+    $('fl-conn-chip').classList.toggle('ok', !!on);
+    $('fl-btn-connect').disabled = on;
+    $('fl-btn-disconnect').disabled = !on;
+    $('fl-btn-refresh').disabled = !on;
+    $('fl-btn-read').disabled = !on;
+    $('fl-btn-apply').disabled = !on || flPendingCount() === 0;
+    $('fl-btn-restart').disabled = !on;
+    $('fl-btn-factory-reset').disabled = !on;
+  }
+
+  // Per the USR-DR502-E manual: send "+++" (nothing else right before it),
+  // device replies "a", send "a" back within 3s, device replies "+ok" and is
+  // now in AT command mode. This one doesn't need a magnet — it's a fixed
+  // handshake, so the app can run it on its own rather than button-gating it.
+  async function flEnterAtMode(){
+    flSetOpStatus('Entering AT command mode…', 'idle');
+    flLog('Waiting briefly for the line to go quiet before "+++"…', 'sys');
+    await flSleep(1000); // best-effort "nothing sent right before +++"
+    const aPromise = flWaitForLine((line) => /^a+$/i.test(line.trim()) ? true : null, 2000);
+    await flSendRaw('+++', { withTerminator: false });
+    const gotA = await aPromise;
+    if (!gotA) {
+      flSetOpStatus('No reply to "+++" within 2s — the gateway may already be in AT mode, or at a different baud. You can still try raw commands below.', 'err');
+      return false;
+    }
+    const okPromise = flWaitForLine((line) => /\+ok/i.test(line) ? true : null, 3000);
+    await flSendRaw('a', { withTerminator: false });
+    const gotOk = await okPromise;
+    if (!gotOk) {
+      flSetOpStatus('Sent "a" back but no "+ok" within 3s — AT mode may not be active. You can still try raw commands below.', 'err');
+      return false;
+    }
+    flAtMode = true;
+    flLog('AT command mode active.', 'sys');
+    return true;
+  }
+
+  $('fl-btn-connect').addEventListener('click', async () => {
+    try {
+      flPort = await navigator.serial.requestPort();
+      await flPort.open({ baudRate: 115200, dataBits: 8, stopBits: 1, parity: 'none' });
+      flStartReadLoop();
+      flSetConnected(true);
+      flLog('Connected · 115200 8N1', 'sys');
+      const ok = await flEnterAtMode();
+      flSetConnected(true); // refresh chip text now that flAtMode may have changed
+      if (ok) flSetOpStatus('Connected and in AT command mode.', 'ok');
+    } catch (e) {
+      flLog('Connect failed: ' + e.message, 'muted');
+      flSetOpStatus('Connect failed: ' + e.message, 'err');
+    }
+  });
+
+  $('fl-btn-disconnect').addEventListener('click', async () => {
+    try {
+      if (flAtMode) { await flSendRaw('AT+ENTM'); await flSleep(150); }
+      await flStopReadLoop();
+      if (flPort) await flPort.close();
+    } catch(e){ flLog('Disconnect error: ' + e.message, 'muted'); }
+    flPort = null;
+    flAtMode = false;
+    flSetConnected(false);
+    flLog('Disconnected', 'sys');
+    flSetOpStatus('Disconnected.', 'idle');
+  });
+
+  $('fl-btn-clear-log').addEventListener('click', () => { $('fl-log').innerHTML = ''; });
+  $('fl-btn-send-raw').addEventListener('click', () => {
+    const v = $('fl-raw-input').value.trim();
+    if (v) flSendRaw(v);
+    $('fl-raw-input').value = '';
+  });
+  $('fl-raw-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('fl-btn-send-raw').click(); });
+
+  // ---------- show/hide for the two password fields ----------
+  function flWirePasswordShow(btnId, inputId){
+    $(btnId).addEventListener('click', () => {
+      const input = $(inputId);
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      $(btnId).textContent = showing ? 'Show' : 'Hide';
+    });
+  }
+  flWirePasswordShow('fl-btn-mqtt-pass-show', 'fl-f-mqtt-pass');
+  flWirePasswordShow('fl-btn-apn-pass-show', 'fl-f-apn-pass');
+
+  // ---------- retain toggle ----------
+  wireSwitch('fl-f-retain', 'fl-f-retain-state', () => {});
+
+  // ---------- Device Info & Status ----------
+  $('fl-btn-refresh').addEventListener('click', async () => {
+    $('fl-btn-refresh').disabled = true;
+    flSetOpStatus('Refreshing device info…', 'idle');
+    try {
+      const verPromise = flWaitForLine((line) => /^\+?VER|version/i.test(line) ? line : null, 2000);
+      await flSendRaw('AT+VER');
+      const ver = await verPromise;
+      $('fl-v-fw').textContent = ver || 'No reply';
+
+      const csqPromise = flWaitForLine((line) => { const m = line.match(/CSQ[:=]?\s*(\d+)/i); return m ? m[1] : null; }, 2000);
+      await flSendRaw('AT+CSQ');
+      const csq = await csqPromise;
+      $('fl-v-signal').textContent = csq ? `${csq}/31` : '—';
+      $('fl-v-signal-sub').textContent = csq ? 'AT+CSQ' : 'AT+CSQ · no reply';
+
+      const mqttPromise = flWaitForLine((line) => /mqtt/i.test(line) ? line : null, 2000);
+      await flSendRaw('AT+MQTTSTA');
+      const mqttLine = await mqttPromise;
+      const mqttOk = !!mqttLine && /connect(ed)?|ok|1/i.test(mqttLine) && !/disconnect|fail|0/i.test(mqttLine);
+      $('fl-v-mqtt-dot').classList.toggle('ok', mqttOk);
+      $('fl-v-mqtt-text').textContent = mqttLine ? (mqttOk ? 'Connected' : mqttLine) : 'No reply (unverified command)';
+
+      flSetOpStatus('Refresh done — check the raw log for the exact replies.', 'ok');
+    } catch (e) {
+      flSetOpStatus('Refresh failed: ' + e.message, 'err');
+    } finally {
+      $('fl-btn-refresh').disabled = !flPort;
+    }
+  });
+
+  // ---------- Read from Device ----------
+  // Reply format for these isn't confirmed on hardware, so this only sends
+  // the "?" query form (the same query convention confirmed for AT+CCLK? on
+  // this device family) and logs whatever comes back — it does not try to
+  // parse replies into the fields above, to avoid silently showing a wrong
+  // guess as if it were the device's real configuration.
+  $('fl-btn-read').addEventListener('click', async () => {
+    $('fl-btn-read').disabled = true;
+    flSetOpStatus('Reading configuration — watch the raw log for replies (reply format not yet confirmed).', 'idle');
+    const queries = ['AT+UART?', 'AT+MQTTSVR?', 'AT+MQTTCID?', 'AT+MQTTUSER?', 'AT+MQTTSUBTP?', 'AT+MQTTPUBTP?', 'AT+APN?'];
+    for (const q of queries) {
+      await flSendRaw(q);
+      await flSleep(400);
+    }
+    flSetOpStatus('Read commands sent — check the raw log for replies, then update the fields by hand.', 'ok');
+    $('fl-btn-read').disabled = !flPort;
+  });
+
+  // ---------- staged-changes / command preview / Save & Restart ----------
+  const flBaseline = {
+    baud:'115200', stopbits:'1', parity:'NONE',
+    mqttHost:'', mqttPort:'1883', mqttCid:'', mqttUser:'', mqttPass:'',
+    subTopic:'', subQos:'0', pubTopic:'', pubQos:'0', retain:false,
+    apn:'', apnAuth:'0', apnUser:'', apnPass:''
+  };
+
+  function flCurrentValues(){
+    return {
+      baud: $('fl-f-baud').value,
+      stopbits: $('fl-f-stopbits').value,
+      parity: $('fl-f-parity').value,
+      mqttHost: $('fl-f-mqtt-host').value.trim(),
+      mqttPort: $('fl-f-mqtt-port').value,
+      mqttCid: $('fl-f-mqtt-cid').value.trim(),
+      mqttUser: $('fl-f-mqtt-user').value.trim(),
+      mqttPass: $('fl-f-mqtt-pass').value,
+      subTopic: $('fl-f-sub-topic').value.trim(),
+      subQos: $('fl-f-sub-qos').value,
+      pubTopic: $('fl-f-pub-topic').value.trim(),
+      pubQos: $('fl-f-pub-qos').value,
+      retain: $('fl-f-retain').classList.contains('on'),
+      apn: $('fl-f-apn').value.trim(),
+      apnAuth: $('fl-f-apn-auth').value,
+      apnUser: $('fl-f-apn-user').value.trim(),
+      apnPass: $('fl-f-apn-pass').value
+    };
+  }
+
+  function flMask(s){ return s.length ? '•'.repeat(s.length) : s; }
+
+  function flBuildPendingCommands(){
+    const v = flCurrentValues();
+    const cmds = []; // { label, cmd, previewCmd }
+    if (v.baud !== flBaseline.baud || v.stopbits !== flBaseline.stopbits || v.parity !== flBaseline.parity) {
+      const cmd = `AT+UART=${v.baud},8,${v.stopbits},${v.parity}`;
+      cmds.push({ label: `Serial port → ${v.baud} 8${v.parity[0]}${v.stopbits}`, cmd, previewCmd: cmd });
+    }
+    if (v.mqttHost !== flBaseline.mqttHost || v.mqttPort !== flBaseline.mqttPort) {
+      const cmd = `AT+MQTTSVR=${v.mqttHost},${v.mqttPort}`;
+      cmds.push({ label: `MQTT broker → ${v.mqttHost || '(empty)'}:${v.mqttPort}`, cmd, previewCmd: cmd });
+    }
+    if (v.mqttCid !== flBaseline.mqttCid) {
+      const cmd = `AT+MQTTCID=${v.mqttCid}`;
+      cmds.push({ label: `MQTT client ID → ${v.mqttCid || '(empty)'}`, cmd, previewCmd: cmd });
+    }
+    if (v.mqttUser !== flBaseline.mqttUser) {
+      const cmd = `AT+MQTTUSER=${v.mqttUser}`;
+      cmds.push({ label: `MQTT username → ${v.mqttUser || '(empty)'}`, cmd, previewCmd: cmd });
+    }
+    if (v.mqttPass !== flBaseline.mqttPass) {
+      const cmd = `AT+MQTTPSW=${v.mqttPass}`;
+      cmds.push({ label: 'MQTT password → (changed)', cmd, previewCmd: `AT+MQTTPSW=${flMask(v.mqttPass)}` });
+    }
+    if (v.subTopic !== flBaseline.subTopic || v.subQos !== flBaseline.subQos) {
+      const cmd = `AT+MQTTSUBTP=${v.subTopic},${v.subQos}`;
+      cmds.push({ label: `Subscribe topic → ${v.subTopic || '(empty)'} (QoS ${v.subQos})`, cmd, previewCmd: cmd });
+    }
+    if (v.pubTopic !== flBaseline.pubTopic || v.pubQos !== flBaseline.pubQos || v.retain !== flBaseline.retain) {
+      const cmd = `AT+MQTTPUBTP=${v.pubTopic},${v.pubQos},${v.retain ? 1 : 0}`;
+      cmds.push({ label: `Publish topic → ${v.pubTopic || '(empty)'} (QoS ${v.pubQos}, retain ${v.retain ? 'on' : 'off'})`, cmd, previewCmd: cmd });
+    }
+    if (v.apn !== flBaseline.apn || v.apnAuth !== flBaseline.apnAuth || v.apnUser !== flBaseline.apnUser || v.apnPass !== flBaseline.apnPass) {
+      const cmd = `AT+APN=${v.apn},${v.apnAuth},${v.apnUser},${v.apnPass}`;
+      const previewCmd = `AT+APN=${v.apn},${v.apnAuth},${v.apnUser},${flMask(v.apnPass)}`;
+      cmds.push({ label: `APN → ${v.apn || '(empty)'}`, cmd, previewCmd });
+    }
+    return cmds;
+  }
+  function flPendingCount(){ return flBuildPendingCommands().length; }
+
+  function flRefreshCmdPreview(){
+    const cmds = flBuildPendingCommands();
+    const box = $('fl-cmd-preview');
+    if (cmds.length === 0) {
+      box.classList.add('empty');
+      box.innerHTML = `<div class="title">Commands to send (0 changes)</div><div class="hint" style="color:var(--muted);">Change a field above to see the exact command it will send.</div>`;
+    } else {
+      box.classList.remove('empty');
+      box.innerHTML = `<div class="title">Commands to send (${cmds.length} change${cmds.length>1?'s':''})</div>` +
+        cmds.map(c => `<div class="line">${c.previewCmd}  ·  ${c.label}</div>`).join('');
+    }
+    $('fl-btn-apply').disabled = !flPort || cmds.length === 0;
+  }
+  flRefreshCmdPreview();
+
+  [
+    'fl-f-baud','fl-f-stopbits','fl-f-parity',
+    'fl-f-mqtt-host','fl-f-mqtt-port','fl-f-mqtt-cid','fl-f-mqtt-user','fl-f-mqtt-pass',
+    'fl-f-sub-topic','fl-f-sub-qos','fl-f-pub-topic','fl-f-pub-qos',
+    'fl-f-apn','fl-f-apn-auth','fl-f-apn-user','fl-f-apn-pass'
+  ].forEach(id => {
+    $(id).addEventListener('input', flRefreshCmdPreview);
+    $(id).addEventListener('change', flRefreshCmdPreview);
+  });
+
+  $('fl-btn-apply').addEventListener('click', async () => {
+    const cmds = flBuildPendingCommands();
+    if (!cmds.length) return;
+    $('fl-btn-apply').disabled = true;
+    flSetOpStatus(`Applying ${cmds.length} change${cmds.length>1?'s':''}…`, 'idle');
+    const replies = [];
+    for (const c of cmds) {
+      const replyPromise = flWaitForLine((line) => /\+ok|error/i.test(line) ? true : null, 2500);
+      await flSendRaw(c.cmd);
+      const reply = await replyPromise;
+      replies.push(`${c.label}${reply ? ` (reply: "${reply}")` : ' (no reply seen)'}`);
+    }
+    await flSendRaw('AT+S');
+    replies.push('AT+S sent (save & restart)');
+    const v = flCurrentValues();
+    Object.assign(flBaseline, v);
+    flRefreshCmdPreview();
+    flSetOpStatus(replies.join(' · '), 'ok');
+  });
+
+  // ---------- Maintenance ----------
+  $('fl-btn-restart').addEventListener('click', async () => {
+    if (!confirm('Restart the gateway now? Settings are kept; it will reboot (AT+Z).')) return;
+    $('fl-btn-restart').disabled = true;
+    const replyPromise = flWaitForLine((line) => /\+ok/i.test(line) ? true : null, 2500);
+    await flSendRaw('AT+Z');
+    const reply = await replyPromise;
+    flSetOpStatus(reply ? 'Restart command acknowledged (AT+Z).' : 'AT+Z sent — no reply seen within 2.5s. The gateway may still be restarting.', reply ? 'ok' : 'err');
+    flAtMode = false;
+    $('fl-btn-restart').disabled = !flPort;
+  });
+
+  $('fl-btn-factory-reset').addEventListener('click', async () => {
+    if (!confirm('Factory reset the gateway? This erases ALL settings, including the APN and MQTT broker (AT+CLEAR, confirmed in the manual). This cannot be undone.')) return;
+    $('fl-btn-factory-reset').disabled = true;
+    flSetOpStatus('Sending factory reset (AT+CLEAR)…', 'idle');
+    const replyPromise = flWaitForLine((line) => /\+ok/i.test(line) ? true : null, 2500);
+    await flSendRaw('AT+CLEAR');
+    const reply = await replyPromise;
+    flAtMode = false;
+    flSetOpStatus(reply ? 'Factory reset acknowledged. All settings were erased — reconnect once the gateway comes back up.' : 'AT+CLEAR sent — no reply seen within 2.5s. The gateway may be restarting; reconnect once it comes back.', reply ? 'ok' : 'err');
+    $('fl-btn-factory-reset').disabled = !flPort;
+  });
 
 })();
 </script>
