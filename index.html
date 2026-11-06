@@ -96,6 +96,12 @@
   .tag.ready{background:var(--ok-bg-strong); color:var(--ok-text); border:1px solid var(--ok-border);}
   .tag.off{background:var(--bg-chip); color:var(--muted); border:1px solid var(--border-soft);}
   .banner{background:#EEF0F3; border-radius:4px; padding:12px 16px; font-size:14px; color:var(--ink-soft); margin-bottom:20px;}
+  .modal-backdrop{position:fixed; inset:0; background:rgba(20,22,28,.55); display:none; align-items:center; justify-content:center; z-index:100;}
+  .modal-backdrop.open{display:flex;}
+  .modal-card{background:#fff; border-radius:8px; padding:24px; max-width:320px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .modal-card img{width:100%; max-width:213px; border-radius:6px; display:block; margin:0 auto 14px;}
+  .modal-card p{margin:0 0 16px; font-size:13px; color:var(--ink-soft);}
+  .modal-card button{width:100%;}
   .banner.warn{background:var(--warn-bg); border:1px solid var(--warn-border); color:#7A4A05;}
 
   /* ---------- breadcrumb / top cards ---------- */
@@ -266,7 +272,7 @@
         <div class="model">DF555 ultrasonic level sensor</div>
         <div style="font-size:12px; color:var(--muted);">Credentials · Functions · Reporting · Alarm thresholds · Device actions</div>
       </div>
-      <div class="card product-card disabled">
+      <div class="card product-card disabled" id="card-fieldtrack">
         <span class="tag off">NOT IN THIS BUILD</span>
         <div class="name" style="margin-top:8px;">FieldTrack</div>
         <div class="model">W03 GPS tracker</div>
@@ -277,6 +283,14 @@
         <div class="model">USR-DR502-E cellular gateway</div>
         <div style="font-size:12px; color:var(--muted);">AT-mode connect · Device info · Serial/MQTT/APN config · Maintenance</div>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="fieldtrack-modal">
+    <div class="modal-card">
+      <img src="assets/fieldtrack-placeholder.png" alt="FieldTrack placeholder" />
+      <p>FieldTrack (W03 GPS tracker) isn't wired up in this test build yet.</p>
+      <button class="secondary" id="fieldtrack-modal-close">Close</button>
     </div>
   </div>
 
@@ -686,9 +700,10 @@
         <div class="kv-row" style="align-items:flex-end;">
           <div style="flex:1;">
             <div class="label-bold" style="margin-bottom:6px;">RS485-to-USB adapter</div>
-            <p style="margin:0; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring. Connecting sends "+++" to enter AT command mode.</p>
+            <p style="margin:0; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring. Connecting tries "+++" once, automatically — but a cellular modem can take anywhere from a couple of seconds to half a minute to finish booting (longer if it's reboot-looping, e.g. no SIM inserted), so that first try can easily be too early. Watch the raw log below: once it's gone quiet after any boot text, click "Enter AT mode" to try again.</p>
           </div>
-          <div style="display:flex; gap:18px; flex:none;">
+          <div style="display:flex; gap:18px; flex:none; align-items:center;">
+            <button class="secondary" id="fl-btn-enter-at" disabled title="Retry the +++ / a / +ok handshake once the raw log has gone quiet">Enter AT mode</button>
             <button class="secondary" id="fl-btn-connect">Connect Device</button>
             <button id="fl-btn-disconnect" disabled>Disconnect</button>
           </div>
@@ -1080,6 +1095,10 @@
     setNavActive('nav-configuration');
   });
   $('btn-change-product').addEventListener('click', () => showView('view-products'));
+  $('card-fieldtrack').addEventListener('click', () => { $('fieldtrack-modal').classList.add('open'); });
+  $('fieldtrack-modal-close').addEventListener('click', () => { $('fieldtrack-modal').classList.remove('open'); });
+  $('fieldtrack-modal').addEventListener('click', (e) => { if (e.target.id === 'fieldtrack-modal') $('fieldtrack-modal').classList.remove('open'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('fieldtrack-modal').classList.remove('open'); });
   $('card-flexlink').addEventListener('click', () => {
     showView('view-flexlink');
     flShowConfigContent();
@@ -1776,43 +1795,63 @@
     });
   }
 
+  // Everything below needs the gateway to actually be in AT command mode —
+  // sending AT+VER etc. while it's still transparent/booting doesn't error,
+  // it just produces noise (or silence), which looked like a working
+  // "Refresh" even though nothing real happened. So these stay disabled
+  // until flAtMode is true, not just until the port is open.
   function flSetConnected(on){
-    $('fl-conn-chip').textContent = on ? (flAtMode ? 'Connected · AT mode' : 'Connected · transparent mode') : 'Not connected';
-    $('fl-conn-chip').classList.toggle('ok', !!on);
+    $('fl-conn-chip').textContent = on ? (flAtMode ? 'Connected · AT mode' : 'Connected · not in AT mode yet') : 'Not connected';
+    $('fl-conn-chip').classList.toggle('ok', !!(on && flAtMode));
     $('fl-btn-connect').disabled = on;
     $('fl-btn-disconnect').disabled = !on;
-    $('fl-btn-refresh').disabled = !on;
-    $('fl-btn-read').disabled = !on;
-    $('fl-btn-apply').disabled = !on || flPendingCount() === 0;
-    $('fl-btn-restart').disabled = !on;
-    $('fl-btn-factory-reset').disabled = !on;
+    $('fl-btn-enter-at').disabled = !on || flHandshakeBusy;
+    $('fl-btn-refresh').disabled = !on || !flAtMode;
+    $('fl-btn-read').disabled = !on || !flAtMode;
+    $('fl-btn-apply').disabled = !on || !flAtMode || flPendingCount() === 0;
+    $('fl-btn-restart').disabled = !on || !flAtMode;
+    $('fl-btn-factory-reset').disabled = !on || !flAtMode;
   }
 
   // Per the USR-DR502-E manual: send "+++" (nothing else right before it),
   // device replies "a", send "a" back within 3s, device replies "+ok" and is
-  // now in AT command mode. This one doesn't need a magnet — it's a fixed
-  // handshake, so the app can run it on its own rather than button-gating it.
+  // now in AT command mode. A cellular modem's own boot time is not
+  // predictable — anywhere from a couple of seconds to tens of seconds, far
+  // longer if it's reboot-looping (e.g. no SIM inserted) — so one fixed
+  // delay can't be trusted to land after it's ready, the same lesson
+  // LevelPro's credential flow already taught. This runs once automatically
+  // right after Connect as a first try, and the "Enter AT mode" button lets
+  // it be retried by hand once the raw log shows the gateway has gone quiet.
+  let flHandshakeBusy = false;
   async function flEnterAtMode(){
+    flHandshakeBusy = true;
+    flSetConnected(true);
     flSetOpStatus('Entering AT command mode…', 'idle');
     flLog('Waiting briefly for the line to go quiet before "+++"…', 'sys');
     await flSleep(1000); // best-effort "nothing sent right before +++"
-    const aPromise = flWaitForLine((line) => /^a+$/i.test(line.trim()) ? true : null, 2000);
-    await flSendRaw('+++', { withTerminator: false });
-    const gotA = await aPromise;
-    if (!gotA) {
-      flSetOpStatus('No reply to "+++" within 2s — the gateway may already be in AT mode, or at a different baud. You can still try raw commands below.', 'err');
-      return false;
+    try {
+      const aPromise = flWaitForLine((line) => /^a+$/i.test(line.trim()) ? true : null, 2000);
+      await flSendRaw('+++', { withTerminator: false });
+      const gotA = await aPromise;
+      if (!gotA) {
+        flSetOpStatus('No reply to "+++" within 2s. Watch the raw log — if the gateway is still printing boot text (or "No SIM,Reboot"), wait for it to go quiet, then click "Enter AT mode" to retry.', 'err');
+        return false;
+      }
+      const okPromise = flWaitForLine((line) => /\+ok/i.test(line) ? true : null, 3000);
+      await flSendRaw('a', { withTerminator: false });
+      const gotOk = await okPromise;
+      if (!gotOk) {
+        flSetOpStatus('Sent "a" back but no "+ok" within 3s. Click "Enter AT mode" to retry once the raw log settles.', 'err');
+        return false;
+      }
+      flAtMode = true;
+      flLog('AT command mode active.', 'sys');
+      flSetOpStatus('Connected and in AT command mode.', 'ok');
+      return true;
+    } finally {
+      flHandshakeBusy = false;
+      flSetConnected(true);
     }
-    const okPromise = flWaitForLine((line) => /\+ok/i.test(line) ? true : null, 3000);
-    await flSendRaw('a', { withTerminator: false });
-    const gotOk = await okPromise;
-    if (!gotOk) {
-      flSetOpStatus('Sent "a" back but no "+ok" within 3s — AT mode may not be active. You can still try raw commands below.', 'err');
-      return false;
-    }
-    flAtMode = true;
-    flLog('AT command mode active.', 'sys');
-    return true;
   }
 
   $('fl-btn-connect').addEventListener('click', async () => {
@@ -1822,14 +1861,14 @@
       flStartReadLoop();
       flSetConnected(true);
       flLog('Connected · 115200 8N1', 'sys');
-      const ok = await flEnterAtMode();
-      flSetConnected(true); // refresh chip text now that flAtMode may have changed
-      if (ok) flSetOpStatus('Connected and in AT command mode.', 'ok');
+      await flEnterAtMode();
     } catch (e) {
       flLog('Connect failed: ' + e.message, 'muted');
       flSetOpStatus('Connect failed: ' + e.message, 'err');
     }
   });
+
+  $('fl-btn-enter-at').addEventListener('click', () => { flEnterAtMode(); });
 
   $('fl-btn-disconnect').addEventListener('click', async () => {
     try {
