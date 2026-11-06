@@ -363,7 +363,10 @@
           </div>
           <div class="panel-footer">
             <p>Example values from the manual. Commands used: AT+ID (DevEUI/AppEUI/DevAddr), AT+KEY (AppKey, write-only).</p>
-            <button class="primary" id="btn-read-creds" disabled>Read Credentials</button>
+            <div style="display:flex; gap:10px;">
+              <button class="secondary" id="btn-reset-creds" disabled title="Abort the read and reopen at 115200 if it was switched to 9600">Reset</button>
+              <button class="primary" id="btn-read-creds" disabled>Read Credentials</button>
+            </div>
           </div>
         </div>
 
@@ -676,6 +679,7 @@
     $('btn-connect').disabled = on;
     $('btn-disconnect').disabled = !on;
     $('btn-read-creds').disabled = !on;
+    $('btn-reset-creds').disabled = !on;
     $('btn-apply').disabled = !on || pendingCount() === 0;
     $('btn-restart').disabled = !on;
   }
@@ -864,6 +868,11 @@
   // ---------- Credential read flow (guided, per Configuration Manual §3) ----------
   let credTimer = null;
   let inDebugMode = false;
+  // Bumped on every fresh start and on every Reset. A step that's still
+  // mid-flight when Reset is pressed (e.g. the 8s AT+ID wait) checks its own
+  // captured value against this before touching the UI, so a late result
+  // can't clobber the just-reset state.
+  let credFlowGen = 0;
   function setPStep(n, state){ // n: 1-3, state: 'active'|'done'
     [1,2,3].forEach(i => {
       const el = $('pstep-' + i);
@@ -898,6 +907,7 @@
 
   function startCredFlow(){
     if (!port) { setOpStatus('Connect the device first.', 'err'); return; }
+    const myGen = ++credFlowGen;
     setPStep(1, 'active');
     setOpStatus('Requesting debug mode…', 'idle');
     log('Requesting debug mode: sending "@" every 50ms…', 'sys');
@@ -926,6 +936,7 @@
             setBtn('Read Credentials', startCredFlow);
             return;
           }
+          if (myGen !== credFlowGen) return; // reset while this was in flight — abandon it
           inDebugMode = true;
           setOpStatus('Reopened at 9600. Give it a moment to settle, then read the credentials.', 'idle');
 
@@ -946,6 +957,7 @@
             });
             await sendRaw('AT+ID');
             const okRead = await idPromise;
+            if (myGen !== credFlowGen) return; // reset while this was in flight — abandon it
 
             if (okRead) {
               $('v-devaddr').textContent = got.devaddr;
@@ -966,6 +978,45 @@
     });
   }
   $('btn-read-creds').onclick = startCredFlow;
+
+  // Lets a misstep (e.g. pressing "continue" before actually tapping the
+  // magnet, so "3" gets sent to a device that never entered debug mode)
+  // be recovered from without a full page reload. It abandons whichever
+  // stage the flow is sitting in and, if the host had already switched to
+  // 9600, switches it back to 115200 so the host and device agree on a
+  // baud rate again — that mismatch is what turns a missed step into a
+  // soft-lock, since every command after it goes out at the wrong speed.
+  async function resetCredFlow(){
+    credFlowGen++; // invalidate any in-flight step so its result can't land after this
+    if (credTimer) { clearInterval(credTimer); credTimer = null; }
+    $('btn-read-creds').disabled = true;
+    $('btn-reset-creds').disabled = true;
+    if (port && currentBaud !== 115200) {
+      setOpStatus('Resetting — reopening at 115200 to resync with the device…', 'idle');
+      log('Reset: reopening at 115200.', 'sys');
+      try {
+        await reopenAtBaud(115200);
+      } catch (e) {
+        log('Reset: reopen at 115200 failed: ' + e.message, 'muted');
+        setOpStatus('Reset couldn’t reopen at 115200: ' + e.message + '. Try Disconnect / Connect Device instead.', 'err');
+        $('btn-reset-creds').disabled = !port;
+        return;
+      }
+    }
+    inDebugMode = false;
+    // AppKey writing is gated on inDebugMode — close it back up too, since a
+    // reset means the device is (or should be) back in normal 115200 mode.
+    $('appkey-input').value = '';
+    $('appkey-box').style.display = 'none';
+    $('btn-appkey-reveal').style.display = 'inline-flex';
+    setPStep(0);
+    setBtn('Read Credentials', startCredFlow);
+    $('btn-read-creds').disabled = !port;
+    $('btn-reset-creds').disabled = !port;
+    setOpStatus('Flow reset. Ready to try again from the start.', 'idle');
+    log('Credential flow reset.', 'sys');
+  }
+  $('btn-reset-creds').onclick = resetCredFlow;
 
 })();
 </script>
