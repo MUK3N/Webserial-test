@@ -693,7 +693,11 @@
         <div class="kv-row" style="align-items:flex-end;">
           <div style="flex:1;">
             <div class="label-bold" style="margin-bottom:6px;">RS485-to-USB adapter</div>
-            <p style="margin:0; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring. Connecting tries "+++" once, automatically — but a cellular modem can take anywhere from a couple of seconds to half a minute to finish booting (longer if it's reboot-looping, e.g. no SIM inserted), so that first try can easily be too early. Watch the raw log below: once it's gone quiet after any boot text, click "Enter AT mode" to try again.</p>
+            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring. Connecting tries "+++" once, automatically — but a cellular modem can take anywhere from a couple of seconds to half a minute to finish booting (longer if it's reboot-looping, e.g. no SIM inserted), so that first try can easily be too early. Watch the raw log below: once it's gone quiet after any boot text, click "Enter AT mode" to try again.</p>
+            <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--muted); max-width:70ch; cursor:pointer;">
+              <input type="checkbox" id="fl-rts-toggle" style="margin-top:2px;" />
+              <span>Toggle RTS around every send (half-duplex RS485 direction control). Try this if the raw log never shows a reply to anything you send, even though the gateway's own boot text comes through fine — that split means receiving works but your adapter may need its transmit-enable line driven manually instead of auto-sensed.</span>
+            </label>
           </div>
           <div style="display:flex; gap:18px; flex:none; align-items:center;">
             <button class="secondary" id="fl-btn-enter-at" disabled title="Retry the +++ / a / +ok handshake once the raw log has gone quiet">Enter AT mode</button>
@@ -2057,12 +2061,28 @@
     }
   }
 
+  // Some RS485-to-USB adapters are half-duplex and need their transmit-enable
+  // line driven by hand instead of auto-sensing TX activity — on those, a
+  // plain write() goes nowhere because the bus is still left in "receive"
+  // mode. The "Toggle RTS around every send" checkbox lets that be tried
+  // without guessing blind: assert RTS, give the driver a moment to switch
+  // to transmit, write, then hold RTS a little longer so the last byte's
+  // stop bit actually gets out before switching back to receive.
   async function flSendRaw(str, { withTerminator = true } = {}){
     if (!flPort || !flPort.writable) { flLog('Not connected — nothing sent', 'muted'); return; }
     const payload = str + (withTerminator ? flLineTerminator() : '');
+    const useRts = $('fl-rts-toggle').checked;
+    if (useRts) {
+      try { await flPort.setSignals({ requestToSend: true }); } catch(e){ flLog('RTS assert failed: ' + e.message, 'muted'); }
+      await flSleep(10);
+    }
     const w = flPort.writable.getWriter();
     try { await w.write(new TextEncoder().encode(payload)); }
     finally { w.releaseLock(); }
+    if (useRts) {
+      await flSleep(15);
+      try { await flPort.setSignals({ requestToSend: false }); } catch(e){ flLog('RTS release failed: ' + e.message, 'muted'); }
+    }
     flLog(str, 'tx');
   }
 
