@@ -672,7 +672,8 @@
 
     <div class="banner" id="fl-design-banner">
       DESIGN PREVIEW · FlexLink profile built from the USR-DR502-E manual (transparent-mode AT command set) plus the MQTT-firmware command names shown on this screen.
-      Entering/exiting AT command mode, restart and factory reset are confirmed against the manual. The MQTT broker, topic, serial-port and APN command syntax (AT+MQTTSVR, AT+UART, AT+APN, etc.) and every reply format below are <b>not yet verified on hardware</b> —
+      Connecting and entering AT command mode are now <b>confirmed on real hardware at 19200 baud, 8E1</b> (not the manual's claimed 115200 8N1 default) — the host spams "+++" then "a" until the gateway replies "+ok", which is what reliably worked, not the manual's single-shot timing.
+      The MQTT broker, topic, serial-port and APN command syntax (AT+MQTTSVR, AT+UART, AT+APN, etc.) and every reply format below are still <b>not yet verified on hardware</b> —
       send one change at a time and read the raw log.
     </div>
 
@@ -693,14 +694,14 @@
         <div class="kv-row" style="align-items:flex-end;">
           <div style="flex:1;">
             <div class="label-bold" style="margin-bottom:6px;">RS485-to-USB adapter</div>
-            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring. Connecting tries "+++" once, automatically — but a cellular modem can take anywhere from a couple of seconds to half a minute to finish booting (longer if it's reboot-looping, e.g. no SIM inserted), so that first try can easily be too early. Watch the raw log below: once it's gone quiet after any boot text, click "Enter AT mode" to try again.</p>
+            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring. Connects at <b>19200 baud, 8E1</b> — confirmed on real hardware, not the manual's claimed 115200 8N1 default. On Connect the host spams "+++" then "a" automatically until the gateway replies "+ok"; if it doesn't within 20s (e.g. the gateway was still booting), click "Enter AT mode" to retry once the raw log has settled.</p>
             <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--muted); max-width:70ch; cursor:pointer;">
               <input type="checkbox" id="fl-rts-toggle" style="margin-top:2px;" />
-              <span>Toggle RTS around every send (half-duplex RS485 direction control). Try this if the raw log never shows a reply to anything you send, even though the gateway's own boot text comes through fine — that split means receiving works but your adapter may need its transmit-enable line driven manually instead of auto-sensed.</span>
+              <span>Toggle RTS around every send (half-duplex RS485 direction control). Shouldn't be needed now that 19200 8E1 turned out to be the real issue, but leave this available in case your adapter also needs its transmit-enable line driven manually.</span>
             </label>
           </div>
           <div style="display:flex; gap:18px; flex:none; align-items:center;">
-            <button class="secondary" id="fl-btn-enter-at" disabled title="Retry the +++ / a / +ok handshake once the raw log has gone quiet">Enter AT mode</button>
+            <button class="secondary" id="fl-btn-enter-at" disabled title="Retry spamming +++ then a until +ok, once the raw log has gone quiet">Enter AT mode</button>
             <button class="secondary" id="fl-btn-connect">Connect Device</button>
             <button id="fl-btn-disconnect" disabled>Disconnect</button>
           </div>
@@ -795,14 +796,14 @@
                   <div class="input-box select">
                     <select id="fl-f-baud">
                       <option value="9600">9600</option>
-                      <option value="19200">19200</option>
+                      <option value="19200" selected>19200</option>
                       <option value="38400">38400</option>
                       <option value="57600">57600</option>
-                      <option value="115200" selected>115200</option>
+                      <option value="115200">115200</option>
                       <option value="230400">230400</option>
                     </select>
                   </div>
-                  <div class="hint">1200–921600 · default 115200</div>
+                  <div class="hint">1200–230400 per the manual · the gateway's actual default is 19200, not the manual's claimed 115200</div>
                 </div>
                 <div class="field">
                   <div class="k">Data bits</div>
@@ -823,12 +824,12 @@
                   <div class="k">Parity</div>
                   <div class="input-box select">
                     <select id="fl-f-parity">
-                      <option value="NONE" selected>None</option>
+                      <option value="NONE">None</option>
                       <option value="ODD">Odd</option>
-                      <option value="EVEN">Even</option>
+                      <option value="EVEN" selected>Even</option>
                     </select>
                   </div>
-                  <div class="hint">None, Odd or Even</div>
+                  <div class="hint">None, Odd or Even — the gateway's actual default is Even, not the manual's claimed None</div>
                 </div>
               </div>
             </div>
@@ -1003,20 +1004,20 @@
           <div class="panel-header">
             <div>
               <h2>Entering AT command mode</h2>
-              <p>Unlike LevelPro, this doesn't need a magnet — it's a fixed handshake the app runs automatically on Connect.</p>
+              <p>Unlike LevelPro, this doesn't need a magnet — it's a handshake the app runs automatically on Connect. The real hardware behavior turned out to differ from the manual's.</p>
             </div>
           </div>
           <div class="panel-body">
             <div class="section-box">
-              <div class="section-hd"><div class="t"><b>The handshake</b><span>USR-DR502-E User Manual §7.1</span></div></div>
+              <div class="section-hd"><div class="t"><b>What actually works</b><span>confirmed on real hardware</span></div></div>
               <div class="section-body">
+                <p style="margin:0 0 10px; font-size:13px; color:var(--ink-soft);">Connect at <b>19200 baud, 8 data bits, Even parity, 1 stop bit</b> — not the manual's claimed 115200 8N1 default. The manual's clean single-shot handshake (send <code>+++</code> once, wait for <code>a</code>, send <code>a</code> back within 3s) didn't hold up either: on real hardware the gateway answered the first <code>+++</code> with <code>+CME ERROR:58</code>, not <code>a</code>. What reliably worked instead:</p>
                 <ol style="margin:0; padding-left:20px; font-size:13px; color:var(--ink-soft); line-height:1.9;">
-                  <li>Send <code>+++</code> — nothing else should be sent right before it.</li>
-                  <li>The gateway replies <code>a</code>.</li>
-                  <li>Send <code>a</code> back within 3 seconds.</li>
-                  <li>The gateway replies <code>+ok</code> — it's now in AT command mode.</li>
+                  <li>Spam <code>+++</code> repeatedly for a short window.</li>
+                  <li>Then spam <code>a</code> repeatedly.</li>
+                  <li>Keep going — regardless of what comes back in between — until the gateway replies <code>+ok</code>. That's AT command mode.</li>
                 </ol>
-                <p style="margin:10px 0 0; font-size:13px; color:var(--ink-soft);">To leave AT mode and resume normal MQTT/transparent operation, send <code>AT+ENTM</code> (confirmed in the manual). Disconnecting does this for you.</p>
+                <p style="margin:10px 0 0; font-size:13px; color:var(--ink-soft);">This app does exactly that automatically on Connect. To leave AT mode and resume normal MQTT/transparent operation, send <code>AT+ENTM</code> (confirmed in the manual). Disconnecting does this for you.</p>
               </div>
             </div>
           </div>
@@ -1031,15 +1032,15 @@
           </div>
           <div class="panel-body">
             <div class="section-box">
-              <div class="section-hd"><div class="t"><b>Confirmed against the USR-DR502-E manual</b></div></div>
+              <div class="section-hd"><div class="t"><b>Confirmed on real hardware</b></div></div>
               <div class="section-body">
-                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;">Entering/exiting AT mode (<code>+++</code> / <code>a</code> / <code>+ok</code>, <code>AT+ENTM</code>) · <b>AT+VER</b> firmware query · <b>AT+S</b> save &amp; restart · <b>AT+Z</b> restart without saving · <b>AT+CLEAR</b> factory reset · <b>AT+CSQ</b> signal quality (standard on virtually all cellular modems).</p>
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;"><b>19200 baud, 8E1</b> connection · entering AT mode by spamming <code>+++</code> then <code>a</code> until <code>+ok</code> · exiting with <code>AT+ENTM</code> (manual) · <b>AT+S</b> save &amp; restart (manual) · <b>AT+Z</b> restart without saving (manual) · <b>AT+CLEAR</b> factory reset (manual) · <b>AT+CSQ</b> signal quality (standard on virtually all cellular modems). <b>AT+VER</b> is documented in the manual but hasn't actually been seen to reply yet.</p>
               </div>
             </div>
             <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
               <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Not yet verified on hardware</b></div></div>
               <div class="section-body">
-                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">AT+UART (serial settings), AT+MQTTSVR/MQTTCID/MQTTUSER/MQTTPSW (broker), AT+MQTTSUBTP/MQTTPUBTP (topics), AT+APN (cellular), and AT+MQTTSTA (broker status) are the command names shown on this screen's design — the parameter order, and the gateway's reply format for all of them, haven't been checked against real hardware yet.</p>
+                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">AT+UART (serial settings), AT+MQTTSVR/MQTTCID/MQTTUSER/MQTTPSW (broker), AT+MQTTSUBTP/MQTTPUBTP (topics), AT+APN (cellular), and AT+MQTTSTA (broker status) are the command names shown on this screen's design — the parameter order, and the gateway's reply format for all of them, haven't been checked against real hardware yet. Given the manual was already wrong about the connection baud and the handshake, treat its documented syntax for these as a starting guess too, not a guarantee.</p>
                 <p style="margin:0; font-size:13px; color:var(--warn-text);">Change one field at a time, send it, and read what comes back in the raw log — that's how LevelPro's commands went from "design preview" to confirmed, too.</p>
               </div>
             </div>
@@ -2120,39 +2121,42 @@
     $('fl-btn-factory-reset').disabled = !on || !flAtMode;
   }
 
-  // Per the USR-DR502-E manual: send "+++" (nothing else right before it),
-  // device replies "a", send "a" back within 3s, device replies "+ok" and is
-  // now in AT command mode. A cellular modem's own boot time is not
-  // predictable — anywhere from a couple of seconds to tens of seconds, far
-  // longer if it's reboot-looping (e.g. no SIM inserted) — so one fixed
-  // delay can't be trusted to land after it's ready, the same lesson
-  // LevelPro's credential flow already taught. This runs once automatically
-  // right after Connect as a first try, and the "Enter AT mode" button lets
-  // it be retried by hand once the raw log shows the gateway has gone quiet.
+  // The manual describes a clean single-shot handshake at 115200 8N1 (send
+  // "+++" once, wait for "a", send "a" back within 3s, wait for "+ok"). On
+  // real hardware neither half of that held up: the actual connection is
+  // 19200 baud / 8 data bits / Even parity / 1 stop bit, and the first
+  // "+++" came back as "+CME ERROR:58", not "a". What reliably worked was
+  // spamming "+++" for a short window and then spamming "a" — regardless of
+  // what came back in between — until "+ok" finally appeared. Same lesson
+  // as LevelPro's credential flow: don't guess a single precise exchange,
+  // keep trying until the device confirms it, then stop. This runs
+  // automatically on Connect, and "Enter AT mode" lets it be retried by
+  // hand if the first run times out (e.g. the gateway was still booting).
   let flHandshakeBusy = false;
   async function flEnterAtMode(){
     flHandshakeBusy = true;
     flSetConnected(true);
-    flSetOpStatus('Entering AT command mode…', 'idle');
-    flLog('Waiting briefly for the line to go quiet before "+++"…', 'sys');
-    await flSleep(1000); // best-effort "nothing sent right before +++"
+    flSetOpStatus('Entering AT command mode — spamming "+++" then "a" until "+ok"…', 'idle');
+    flLog('Spamming "+++" then "a" until the gateway replies "+ok"…', 'sys');
     try {
-      const aPromise = flWaitForLine((line) => /^a+$/i.test(line.trim()) ? true : null, 2000);
-      await flSendRaw('+++', { withTerminator: false });
-      const gotA = await aPromise;
-      if (!gotA) {
-        flSetOpStatus('No reply to "+++" within 2s. Watch the raw log — if the gateway is still printing boot text (or "No SIM,Reboot"), wait for it to go quiet, then click "Enter AT mode" to retry.', 'err');
-        return false;
-      }
-      const okPromise = flWaitForLine((line) => /\+ok/i.test(line) ? true : null, 3000);
-      await flSendRaw('a', { withTerminator: false });
+      let stop = false;
+      const okPromise = flWaitForLine((line) => /\+ok/i.test(line) ? true : null, 20000);
+      okPromise.then(() => { stop = true; });
+
+      const plusTimer = setInterval(() => { if (!stop) flSendRaw('+++', { withTerminator: false }); }, 150);
+      await flSleep(1500);
+      clearInterval(plusTimer);
+
+      const aTimer = stop ? null : setInterval(() => { if (!stop) flSendRaw('a', { withTerminator: false }); }, 150);
       const gotOk = await okPromise;
+      if (aTimer) clearInterval(aTimer);
+
       if (!gotOk) {
-        flSetOpStatus('Sent "a" back but no "+ok" within 3s. Click "Enter AT mode" to retry once the raw log settles.', 'err');
+        flSetOpStatus('Spammed "+++" then "a" for 20s but never saw "+ok". Watch the raw log — if the gateway is still printing boot text (or "No SIM,Reboot"), wait for it to go quiet, then click "Enter AT mode" to retry.', 'err');
         return false;
       }
       flAtMode = true;
-      flLog('AT command mode active.', 'sys');
+      flLog('AT command mode active ("+ok" seen).', 'sys');
       flSetOpStatus('Connected and in AT command mode.', 'ok');
       return true;
     } finally {
@@ -2164,10 +2168,10 @@
   $('fl-btn-connect').addEventListener('click', async () => {
     try {
       flPort = await navigator.serial.requestPort();
-      await flPort.open({ baudRate: 115200, dataBits: 8, stopBits: 1, parity: 'none' });
+      await flPort.open({ baudRate: 19200, dataBits: 8, stopBits: 1, parity: 'even' });
       flStartReadLoop();
       flSetConnected(true);
-      flLog('Connected · 115200 8N1', 'sys');
+      flLog('Connected · 19200 8E1', 'sys');
       await flEnterAtMode();
     } catch (e) {
       flLog('Connect failed: ' + e.message, 'muted');
@@ -2264,7 +2268,7 @@
 
   // ---------- staged-changes / command preview / Save & Restart ----------
   const flBaseline = {
-    baud:'115200', stopbits:'1', parity:'NONE',
+    baud:'19200', stopbits:'1', parity:'EVEN',
     mqttHost:'', mqttPort:'1883', mqttCid:'', mqttUser:'', mqttPass:'',
     subTopic:'', subQos:'0', pubTopic:'', pubQos:'0', retain:false,
     apn:'', apnAuth:'0', apnUser:'', apnPass:''
