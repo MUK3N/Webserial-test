@@ -264,7 +264,7 @@
       <b>Web Serial</b> — Chrome, Edge or Opera only, served over HTTPS or http://localhost.
     </div>
     <h1>Select a product</h1>
-    <p class="sub">LevelPro and FlexLink are wired up in this test build.</p>
+    <p class="sub">LevelPro, FlexLink and FieldTrack are wired up in this test build.</p>
     <div class="grid-products">
       <div class="card product-card" id="card-levelpro">
         <span class="tag ready">WIRED UP</span>
@@ -272,10 +272,11 @@
         <div class="model">DF555 ultrasonic level sensor</div>
         <div style="font-size:12px; color:var(--muted);">Credentials · Functions · Reporting · Alarm thresholds · Device actions</div>
       </div>
-      <div class="card product-card disabled" id="card-fieldtrack">
-        <span class="tag off">NOT IN THIS BUILD</span>
+      <div class="card product-card" id="card-fieldtrack">
+        <span class="tag ready">WIRED UP</span>
         <div class="name" style="margin-top:8px;">FieldTrack</div>
         <div class="model">W03 GPS tracker</div>
+        <div style="font-size:12px; color:var(--muted);">Device info · Wi-Fi · Reporting interval · Motion · Server</div>
       </div>
       <div class="card product-card" id="card-flexlink">
         <span class="tag ready">WIRED UP</span>
@@ -283,14 +284,6 @@
         <div class="model">USR-DR502-E cellular gateway</div>
         <div style="font-size:12px; color:var(--muted);">AT-mode connect · Device info · Serial/MQTT/APN config · Maintenance</div>
       </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="fieldtrack-modal">
-    <div class="modal-card">
-      <img src="assets/fieldtrack-placeholder.png" alt="FieldTrack placeholder" />
-      <p>FieldTrack (W03 GPS tracker) isn't wired up in this test build yet.</p>
-      <button class="secondary" id="fieldtrack-modal-close">Close</button>
     </div>
   </div>
 
@@ -1077,6 +1070,298 @@
 
   </div>
 
+  <!-- ===================== FIELDTRACK (W03 GPS tracker) ===================== -->
+  <div id="view-fieldtrack" class="view">
+
+    <div id="ft-serial-unsupported" class="banner warn" style="display:none;">
+      <b>Web Serial isn't available in this browser/context.</b> Open this page in Chrome, Edge or Opera,
+      served over HTTPS or http://localhost.
+    </div>
+
+    <div class="breadcrumb">
+      <span class="path">Products / FieldTrack / Configuration</span>
+      <button class="secondary sm" id="btn-change-product-ft">Change Product</button>
+    </div>
+
+    <div class="banner" id="ft-design-banner">
+      DESIGN PREVIEW · FieldTrack profile built from the W03 tracker command list. The available manuals document every command as SMS/Platform(WL) delivery only —
+      but the design calls out <b>Wi-Fi and Motion</b> as confirmed working over this serial port via the team's own macro workflow. Reporting interval and Server are documented for SMS/Platform
+      but not specifically confirmed over serial, and no reply format below has been verified — send one command at a time and read the raw log.
+    </div>
+
+    <div class="topcards">
+      <div class="card product">
+        <div class="label-bold">1. Selected product</div>
+        <div class="kv-row">
+          <span class="label-bold">FieldTrack</span>
+          <span class="chip">W03 GPS tracker</span>
+        </div>
+        <p style="margin:0; font-size:12px; color:var(--muted);">Disconnect before changing product.</p>
+      </div>
+      <div class="card conn">
+        <div class="kv-row">
+          <span class="label-bold">2. USB Serial connection</span>
+          <div style="display:flex; gap:8px;">
+            <span class="chip">115200 8N1 (confirmed)</span>
+            <span class="chip" id="ft-conn-chip">Not yet connected</span>
+          </div>
+        </div>
+        <div class="kv-row" style="align-items:flex-end;">
+          <div style="flex:1;">
+            <div class="label-bold" style="margin-bottom:6px;">USB Serial / data interface</div>
+            <p style="margin:0; font-size:12px; color:var(--muted); max-width:70ch;">Connect to the device's data interface at 115200 baud, 8N1. Commands below are documented only for SMS/platform delivery in the manuals, but are confirmed working over this serial link via the team's standard macro workflow.</p>
+          </div>
+          <div style="display:flex; gap:18px; flex:none;">
+            <button class="secondary" id="ft-btn-connect">Connect Device</button>
+            <button id="ft-btn-disconnect" disabled>Disconnect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-layout">
+      <div class="sidebar">
+        <div class="nav-item active" id="ft-nav-configuration">Configuration</div>
+        <div class="nav-item" id="ft-nav-info">Device info &amp; status</div>
+        <div class="nav-item" id="ft-nav-guide">Connection guide</div>
+        <div class="section-index" id="ft-section-index">
+          <div class="hdr">FIELDTRACK</div>
+          <div data-target="ft-sec-info">Device info &amp; status</div>
+          <div data-target="ft-sec-wifi">Wi-Fi</div>
+          <div data-target="ft-sec-reporting">Reporting interval</div>
+          <div data-target="ft-sec-motion">Motion</div>
+          <div data-target="ft-sec-server">Server</div>
+        </div>
+      </div>
+
+      <div class="content">
+
+      <div id="ft-content-configuration">
+
+        <!-- Card / Device Info & Status -->
+        <div class="panel" id="ft-sec-info">
+          <div class="panel-header">
+            <div>
+              <h2>Device Info &amp; Status</h2>
+              <p>Read-only values reported via qry infos, qry ip and qry sdkver. Refresh to re-read.</p>
+            </div>
+            <span class="help-btn" title="qry infos (version, IMSI, IMEI, ICCID, phone number) · qry ip · qry sdkver. Individual fields below are each also documented under their own qry command (qry imei, qry imsi, qry iccid, qry swver, qry sdkver, qry phnum, qry ip) — none of these have a confirmed reply format over serial yet.">?</span>
+          </div>
+          <div class="panel-body">
+            <div class="cred-grid">
+              <div class="cred-field"><div class="k">IMEI</div><div class="cred-value"><span class="v" id="ft-v-imei">864912050123456</span><button class="copy" data-copy="ft-v-imei">Copy</button></div></div>
+              <div class="cred-field"><div class="k">IMSI</div><div class="cred-value"><span class="v" id="ft-v-imsi">510011812345678</span><button class="copy" data-copy="ft-v-imsi">Copy</button></div></div>
+              <div class="cred-field"><div class="k">ICCID</div><div class="cred-value"><span class="v" id="ft-v-iccid">8962001812345678901</span><button class="copy" data-copy="ft-v-iccid">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Firmware</div><div class="cred-value"><span class="v" id="ft-v-fw">V2.1.03</span><button class="copy" data-copy="ft-v-fw">Copy</button></div></div>
+              <div class="cred-field"><div class="k">SDK version</div><div class="cred-value"><span class="v" id="ft-v-sdk">SDK_V1.0.8</span><button class="copy" data-copy="ft-v-sdk">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Phone number</div><div class="cred-value"><span class="v" id="ft-v-phone">+6281234567890</span><button class="copy" data-copy="ft-v-phone">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Local IP</div><div class="cred-value"><span class="v" id="ft-v-ip">10.64.12.33</span><button class="copy" data-copy="ft-v-ip">Copy</button></div></div>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <p>Example values · not yet read from hardware.</p>
+            <button class="primary" id="ft-btn-refresh" disabled>Refresh</button>
+          </div>
+        </div>
+
+        <!-- Card / Configuration -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Configuration</h2>
+              <p>Each section below sends its own command directly — there's no staged form to fill in and apply. Fields marked — are read-only until you press Check.</p>
+            </div>
+            <span class="help-btn" title="Commands come straight from the FieldTrack design: Wi-Fi and Motion are confirmed working over serial via the team's macro workflow even though they're absent from the manuals; Reporting interval and Server are in the manuals for SMS/Platform delivery but not specifically confirmed over this serial link.">?</span>
+          </div>
+          <div class="panel-body">
+
+            <div class="section-box" id="ft-sec-wifi">
+              <div class="section-hd">
+                <div class="t"><b>Wi-Fi</b><span>wifi get · wifi save · wifi crl — not in the manual</span></div>
+                <span class="help-btn sm" title="Check reads the current Wi-Fi config (wifi get). Clear wipes it (wifi crl). Set writes the SSID and password below (wifi save <ssid> <password>). None of the three are in the supplied manuals, but all three are confirmed working over serial — this is the team's standard macro workflow.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">SSID</div>
+                    <div class="input-box"><input type="text" id="ft-f-ssid" value="FieldTrack" maxlength="32" /></div>
+                    <div class="hint">Up to 32 characters</div>
+                  </div>
+                  <div class="field" style="max-width:260px;">
+                    <div class="k">Password</div>
+                    <div class="input-box"><input type="password" id="ft-f-password" value="FieldTrack2026" maxlength="64" /><button class="secondary sm" id="ft-btn-password-show">Show</button></div>
+                    <div class="hint">Up to 64 characters · sent in plain text over serial</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:12px;">
+                  <button class="secondary" id="ft-btn-wifi-check" disabled>Check Wi-Fi</button>
+                  <button class="secondary" id="ft-btn-wifi-clear" disabled>Clear Wi-Fi</button>
+                  <button class="primary" id="ft-btn-wifi-set" disabled>Set Wi-Fi</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-box" id="ft-sec-reporting">
+              <div class="section-hd">
+                <div class="t"><b>Reporting interval</b><span>get report — read-only in this release</span></div>
+                <span class="help-btn sm" title="ACC-on interval (ontv): how often the tracker uploads position while ignition is on, 0–1000 seconds. ACC-off interval (offtv): how often it uploads while ACC is off, typically longer to save battery, 0–80000 seconds. get report returns both together — no set command is included in this release.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">ACC-on interval (ontv)</div>
+                    <div class="input-box disabled"><input type="text" id="ft-v-ontv" value="—" disabled /></div>
+                    <div class="hint">0–1000 seconds · press Check to read</div>
+                  </div>
+                  <div class="field">
+                    <div class="k">ACC-off interval (offtv)</div>
+                    <div class="input-box disabled"><input type="text" id="ft-v-offtv" value="—" disabled /></div>
+                    <div class="hint">0–80000 seconds · press Check to read</div>
+                  </div>
+                </div>
+                <button class="primary" id="ft-btn-report-check" disabled style="align-self:flex-start;">Check Reporting Interval</button>
+              </div>
+            </div>
+
+            <div class="section-box" id="ft-sec-motion">
+              <div class="section-hd">
+                <div class="t"><b>Motion</b><span>get motion — not in the manual</span></div>
+                <span class="help-btn sm" title="Reads the tracker's motion/vibration-alarm setting — likely tied to the built-in vibration sensor used for anti-theft detection, per the W03 user manual. Not documented in any of the available manuals, but confirmed working over serial as part of the team's standard macro set; whether a corresponding 'set motion' command exists is still unconfirmed.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field">
+                  <div class="k">Motion</div>
+                  <div class="input-box disabled"><input type="text" id="ft-v-motion" value="—" disabled /></div>
+                  <div class="hint">Press Check to read the raw reply. No set command was given, so this is read-only.</div>
+                </div>
+                <button class="secondary" id="ft-btn-motion-check" disabled style="align-self:flex-start;">Check Motion</button>
+              </div>
+            </div>
+
+            <div class="section-box" id="ft-sec-server">
+              <div class="section-hd">
+                <div class="t"><b>Server</b><span>set server [id server port ptype] · get server [id]</span></div>
+                <span class="help-btn sm" title="Server address: domain or IP of the platform server. Protocol type (ptype): 0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart — the platform's own protocol doc only documents option 1. Server ID (id): which of the device's 5 server slots this writes to — 0 ServerM, 1 ServerS, 2 Server3, 3 Server4, 4 Server5. Port: the server's listening TCP port, 1–65535.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Server address</div>
+                    <div class="input-box"><input type="text" id="ft-f-server-addr" value="fieldtrack-tcp.xiot.my.id" /></div>
+                    <div class="hint">Domain name or IP</div>
+                  </div>
+                  <div class="field" style="max-width:220px;">
+                    <div class="k">Protocol type (ptype)</div>
+                    <div class="input-box select">
+                      <select id="ft-f-ptype">
+                        <option value="0">0 (None)</option>
+                        <option value="1" selected>1 (Wialon IPS)</option>
+                        <option value="2">2 (SPS)</option>
+                        <option value="3">3 (TianQin)</option>
+                        <option value="4">4 (RoadSmart)</option>
+                      </select>
+                    </div>
+                    <div class="hint">0 None · 1 Wialon IPS · 2 SPS · 3 TianQin · 4 RoadSmart</div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field" style="max-width:220px;">
+                    <div class="k">Server ID (id)</div>
+                    <div class="input-box"><input type="number" id="ft-f-server-id" min="0" max="4" placeholder="e.g. 1" /></div>
+                    <div class="hint">0–4 · selects which of 5 server slots to use</div>
+                  </div>
+                  <div class="field" style="max-width:220px;">
+                    <div class="k">Port</div>
+                    <div class="input-box"><input type="number" id="ft-f-server-port" min="1" max="65535" placeholder="e.g. 7713" /></div>
+                    <div class="hint">1–65535</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:12px;">
+                  <button class="secondary" id="ft-btn-server-check" disabled>Check Server</button>
+                  <button class="primary" id="ft-btn-server-set" disabled>Set Server</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="panel-footer">
+            <p>Each action above is sent immediately — there's nothing to batch or apply.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="ft-content-guide" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Wiring</h2>
+              <p>USB TTL / data interface at a fixed 115200 baud, 8N1.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>Connection</b></div></div>
+              <div class="section-body">
+                <p style="margin:0; font-size:13px; color:var(--ink-soft);">Connect to the tracker's USB Serial / data interface at 115200 baud, 8N1 — no handshake or mode switch needed, unlike LevelPro or FlexLink. Commands are plain ASCII text, one per line.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>What's confirmed, what isn't</h2>
+              <p>This page has no vendor manual behind it in this build — everything here comes from the design itself.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="section-box">
+              <div class="section-hd"><div class="t"><b>Confirmed working over this serial port</b></div></div>
+              <div class="section-body">
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;"><b>wifi get</b> / <b>wifi crl</b> / <b>wifi save &lt;ssid&gt; &lt;password&gt;</b> and <b>get motion</b> — none of these are in any of the available manuals, but the team's own macro workflow confirms they work over this serial link.</p>
+              </div>
+            </div>
+            <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
+              <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Not yet verified on hardware</b></div></div>
+              <div class="section-body">
+                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">The <b>qry infos / qry ip / qry sdkver</b> (and per-field qry imei / qry imsi / qry iccid / qry swver / qry phnum) device-info queries, <b>get report</b> (reporting interval), and <b>set server</b> / <b>get server</b> are documented in the available manuals only for SMS/Platform(WL) delivery — they haven't specifically been confirmed over this serial port, and no reply format for any command here has been checked against real hardware.</p>
+                <p style="margin:0; font-size:13px; color:var(--warn-text);">Send one command at a time and read the raw log, the same way LevelPro's and FlexLink's command sets went from design preview to confirmed.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      </div>
+    </div>
+
+    <div class="panel op-status">
+      <div class="hd">Operation Status</div>
+      <div class="body"><div class="msg idle" id="ft-op-msg">No actions yet this session.</div></div>
+    </div>
+
+    <details class="rawlog">
+      <summary>Advanced · raw serial log</summary>
+      <div class="log" id="ft-log"></div>
+      <div class="rawlog-controls">
+        <select class="le" id="ft-line-ending">
+          <option value="none">No line ending</option>
+          <option value="crlf" selected>CRLF</option>
+          <option value="lf">LF</option>
+          <option value="cr">CR</option>
+        </select>
+        <input type="text" id="ft-raw-input" placeholder='Send raw ASCII, e.g. wifi get' />
+        <button class="primary sm" id="ft-btn-send-raw">Send</button>
+        <button class="secondary sm" id="ft-btn-clear-log">Clear</button>
+      </div>
+    </details>
+
+  </div>
+
 </main>
 
 <footer class="app">
@@ -1095,16 +1380,18 @@
     setNavActive('nav-configuration');
   });
   $('btn-change-product').addEventListener('click', () => showView('view-products'));
-  $('card-fieldtrack').addEventListener('click', () => { $('fieldtrack-modal').classList.add('open'); });
-  $('fieldtrack-modal-close').addEventListener('click', () => { $('fieldtrack-modal').classList.remove('open'); });
-  $('fieldtrack-modal').addEventListener('click', (e) => { if (e.target.id === 'fieldtrack-modal') $('fieldtrack-modal').classList.remove('open'); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('fieldtrack-modal').classList.remove('open'); });
   $('card-flexlink').addEventListener('click', () => {
     showView('view-flexlink');
     flShowConfigContent();
     flSetNavActive('fl-nav-configuration');
   });
   $('btn-change-product-fl').addEventListener('click', () => showView('view-products'));
+  $('card-fieldtrack').addEventListener('click', () => {
+    showView('view-fieldtrack');
+    ftShowConfigContent();
+    ftSetNavActive('ft-nav-configuration');
+  });
+  $('btn-change-product-ft').addEventListener('click', () => showView('view-products'));
   function showView(id){
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     $(id).classList.add('active');
@@ -2094,6 +2381,246 @@
     flAtMode = false;
     flSetOpStatus(reply ? 'Factory reset acknowledged. All settings were erased — reconnect once the gateway comes back up.' : 'AT+CLEAR sent — no reply seen within 2.5s. The gateway may be restarting; reconnect once it comes back.', reply ? 'ok' : 'err');
     $('fl-btn-factory-reset').disabled = !flPort;
+  });
+
+  // =====================================================================
+  // FieldTrack (W03 GPS tracker) — independent state/ids again, same reason
+  // as FlexLink's: nothing here can regress LevelPro or FlexLink. No AT-mode
+  // handshake is needed for this one — it's plain ASCII commands, one per
+  // line, at a fixed 115200 8N1, confirmed or not depending on the section
+  // (see the banner and Connection guide on this page).
+  // =====================================================================
+
+  // ---------- FieldTrack sidebar nav ----------
+  function ftShowConfigContent(){
+    $('ft-content-configuration').style.display = '';
+    $('ft-content-guide').style.display = 'none';
+    $('ft-section-index').style.display = '';
+  }
+  function ftShowGuideContent(){
+    $('ft-content-configuration').style.display = 'none';
+    $('ft-content-guide').style.display = '';
+    $('ft-section-index').style.display = 'none';
+  }
+  function ftSetNavActive(id){
+    ['ft-nav-configuration', 'ft-nav-info', 'ft-nav-guide'].forEach(n => $(n).classList.toggle('active', n === id));
+  }
+  function ftScrollToSection(targetId){
+    const el = $(targetId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  $('ft-nav-configuration').addEventListener('click', () => {
+    ftShowConfigContent();
+    ftSetNavActive('ft-nav-configuration');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('ft-nav-info').addEventListener('click', () => {
+    ftShowConfigContent();
+    ftSetNavActive('ft-nav-info');
+    ftScrollToSection('ft-sec-info');
+  });
+  $('ft-nav-guide').addEventListener('click', () => {
+    ftShowGuideContent();
+    ftSetNavActive('ft-nav-guide');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.querySelectorAll('#ft-section-index [data-target]').forEach((el) => {
+    el.addEventListener('click', () => {
+      ftShowConfigContent();
+      ftSetNavActive('ft-nav-configuration');
+      ftScrollToSection(el.dataset.target);
+    });
+  });
+
+  // ---------- FieldTrack Web Serial plumbing ----------
+  let ftPort = null;
+  let ftReader = null;
+  let ftReadableClosed = null;
+  let ftLineBuffer = '';
+  const ftLineListeners = new Set(); // callback(line)
+
+  if (!('serial' in navigator)) {
+    $('ft-serial-unsupported').style.display = 'block';
+    $('ft-btn-connect').disabled = true;
+  }
+
+  function ftLog(text, cls){
+    const el = document.createElement('div');
+    if (cls) el.className = cls;
+    const ts = new Date().toLocaleTimeString('en-GB', { hour12:false }) + '.' + String(new Date().getMilliseconds()).padStart(3,'0');
+    el.textContent = `[${ts}] ${text}`;
+    $('ft-log').appendChild(el);
+    $('ft-log').scrollTop = $('ft-log').scrollHeight;
+  }
+
+  function ftSetOpStatus(text, kind){ // kind: 'ok' | 'idle' | 'err'
+    const el = $('ft-op-msg');
+    el.className = 'msg ' + (kind || 'idle');
+    el.textContent = text;
+  }
+
+  async function ftStopReadLoop(){
+    if (ftReader) {
+      try { await ftReader.cancel(); } catch(e){}
+      try { await ftReadableClosed; } catch(e){}
+      ftReader = null;
+    }
+  }
+
+  async function ftStartReadLoop(){
+    const textDecoder = new TextDecoderStream();
+    ftReadableClosed = ftPort.readable.pipeTo(textDecoder.writable).catch(() => {});
+    ftReader = textDecoder.readable.getReader();
+    (async () => {
+      try {
+        while (true) {
+          const { value, done } = await ftReader.read();
+          if (done) break;
+          if (value) ftHandleIncoming(value);
+        }
+      } catch (e) {
+        // port likely closed/cancelled — expected during disconnect
+      }
+    })();
+  }
+
+  function ftHandleIncoming(chunk){
+    ftLineBuffer += chunk;
+    let idx;
+    while ((idx = ftLineBuffer.indexOf('\n')) >= 0) {
+      let line = ftLineBuffer.slice(0, idx).replace(/\r$/, '');
+      ftLineBuffer = ftLineBuffer.slice(idx + 1);
+      if (line.length) {
+        ftLog(line, 'rx');
+        ftLineListeners.forEach(fn => fn(line));
+      }
+    }
+  }
+
+  function ftLineTerminator(){
+    switch ($('ft-line-ending').value) {
+      case 'crlf': return '\r\n';
+      case 'lf': return '\n';
+      case 'cr': return '\r';
+      default: return '';
+    }
+  }
+
+  async function ftSendRaw(str, { withTerminator = true } = {}){
+    if (!ftPort || !ftPort.writable) { ftLog('Not connected — nothing sent', 'muted'); return; }
+    const payload = str + (withTerminator ? ftLineTerminator() : '');
+    const w = ftPort.writable.getWriter();
+    try { await w.write(new TextEncoder().encode(payload)); }
+    finally { w.releaseLock(); }
+    ftLog(str, 'tx');
+  }
+
+  function ftSleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  function ftSetConnected(on){
+    $('ft-conn-chip').textContent = on ? 'Connected' : 'Not yet connected';
+    $('ft-conn-chip').classList.toggle('ok', !!on);
+    $('ft-btn-connect').disabled = on;
+    $('ft-btn-disconnect').disabled = !on;
+    $('ft-btn-refresh').disabled = !on;
+    $('ft-btn-wifi-check').disabled = !on;
+    $('ft-btn-wifi-clear').disabled = !on;
+    $('ft-btn-wifi-set').disabled = !on;
+    $('ft-btn-report-check').disabled = !on;
+    $('ft-btn-motion-check').disabled = !on;
+    $('ft-btn-server-check').disabled = !on;
+    $('ft-btn-server-set').disabled = !on;
+  }
+
+  $('ft-btn-connect').addEventListener('click', async () => {
+    try {
+      ftPort = await navigator.serial.requestPort();
+      await ftPort.open({ baudRate: 115200, dataBits: 8, stopBits: 1, parity: 'none' });
+      ftStartReadLoop();
+      ftSetConnected(true);
+      ftLog('Connected · 115200 8N1', 'sys');
+      ftSetOpStatus('Connected. No mode switch needed — send a command below.', 'ok');
+    } catch (e) {
+      ftLog('Connect failed: ' + e.message, 'muted');
+      ftSetOpStatus('Connect failed: ' + e.message, 'err');
+    }
+  });
+
+  $('ft-btn-disconnect').addEventListener('click', async () => {
+    try {
+      await ftStopReadLoop();
+      if (ftPort) await ftPort.close();
+    } catch(e){ ftLog('Disconnect error: ' + e.message, 'muted'); }
+    ftPort = null;
+    ftSetConnected(false);
+    ftLog('Disconnected', 'sys');
+    ftSetOpStatus('Disconnected.', 'idle');
+  });
+
+  $('ft-btn-clear-log').addEventListener('click', () => { $('ft-log').innerHTML = ''; });
+  $('ft-btn-send-raw').addEventListener('click', () => {
+    const v = $('ft-raw-input').value.trim();
+    if (v) ftSendRaw(v);
+    $('ft-raw-input').value = '';
+  });
+  $('ft-raw-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('ft-btn-send-raw').click(); });
+
+  $('ft-btn-password-show').addEventListener('click', () => {
+    const input = $('ft-f-password');
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    $('ft-btn-password-show').textContent = showing ? 'Show' : 'Hide';
+  });
+
+  // Every command below is sent immediately on its own button, per the
+  // design — there's no staged diff/preview like LevelPro's or FlexLink's
+  // Configuration cards. No reply format has been confirmed for any of
+  // these, so none of them are auto-parsed back into the fields — the raw
+  // log is the source of truth until one is confirmed on real hardware.
+  async function ftSendAndReport(cmd, label){
+    await ftSendRaw(cmd);
+    ftSetOpStatus(`${label} sent (${cmd}) — check the raw log for the reply (format not yet confirmed).`, 'idle');
+  }
+
+  $('ft-btn-refresh').addEventListener('click', async () => {
+    $('ft-btn-refresh').disabled = true;
+    ftSetOpStatus('Refreshing device info…', 'idle');
+    await ftSendRaw('qry infos');
+    await ftSleep(300);
+    await ftSendRaw('qry ip');
+    await ftSleep(300);
+    await ftSendRaw('qry sdkver');
+    ftSetOpStatus('qry infos / qry ip / qry sdkver sent — check the raw log for replies (format not yet confirmed); the fields above are still the example values shown by design.', 'idle');
+    $('ft-btn-refresh').disabled = !ftPort;
+  });
+
+  $('ft-btn-wifi-check').addEventListener('click', () => ftSendAndReport('wifi get', 'Check Wi-Fi'));
+  $('ft-btn-wifi-clear').addEventListener('click', () => ftSendAndReport('wifi crl', 'Clear Wi-Fi'));
+  $('ft-btn-wifi-set').addEventListener('click', () => {
+    const ssid = $('ft-f-ssid').value.trim();
+    const pass = $('ft-f-password').value;
+    if (!ssid) { ftSetOpStatus('Enter an SSID before setting Wi-Fi.', 'err'); return; }
+    ftSendAndReport(`wifi save ${ssid} ${pass}`, 'Set Wi-Fi');
+  });
+
+  $('ft-btn-report-check').addEventListener('click', () => ftSendAndReport('get report', 'Check Reporting Interval'));
+
+  $('ft-btn-motion-check').addEventListener('click', () => ftSendAndReport('get motion', 'Check Motion'));
+
+  $('ft-btn-server-check').addEventListener('click', () => {
+    const id = $('ft-f-server-id').value.trim();
+    if (id === '') { ftSetOpStatus('Enter a Server ID (0–4) before checking a server slot.', 'err'); return; }
+    ftSendAndReport(`get server ${id}`, 'Check Server');
+  });
+  $('ft-btn-server-set').addEventListener('click', () => {
+    const id = $('ft-f-server-id').value.trim();
+    const addr = $('ft-f-server-addr').value.trim();
+    const port = $('ft-f-server-port').value.trim();
+    const ptype = $('ft-f-ptype').value;
+    if (id === '') { ftSetOpStatus('Enter a Server ID (0–4) before setting a server slot.', 'err'); return; }
+    if (!addr) { ftSetOpStatus('Enter a server address before setting it.', 'err'); return; }
+    if (port === '') { ftSetOpStatus('Enter a port before setting the server.', 'err'); return; }
+    ftSendAndReport(`set server ${id} ${addr} ${port} ${ptype}`, 'Set Server');
   });
 
 })();
