@@ -672,10 +672,8 @@
     </div>
 
     <div class="banner" id="fl-design-banner">
-      DESIGN PREVIEW · FlexLink profile built from the USR-DR502-E manual (transparent-mode AT command set) plus the MQTT-firmware command names shown on this screen.
-      Connecting and entering AT command mode are now <b>confirmed on real hardware</b>, at either of two settings depending on whether the unit has already been provisioned — <b>115200 8N1</b> factory-fresh, <b>19200 8E1</b> once configured (pick it below before connecting). The gateway prints continuous boot/status chatter on its own the moment the port opens — that's normal — and the handshake is the manual's original shape: send "+++" once, wait for "a" to show up in that chatter, send "a" back once, and "+ok" follows shortly after. AT+IMEI is also confirmed, replying "+IMEI:&lt;number&gt;" then "OK".
-      The MQTT broker, serial-port and APN command syntax (AT+MQTTSVR, AT+UART, AT+APN, etc.) and every reply format below are still <b>not yet verified on hardware</b> —
-      send one change at a time and read the raw log. The topic and Last Will commands (AT+MQTTSUBTP, AT+MQTTPUBTP, AT+MQTTWILL, AT+WKMOD) aren't from the Figma design or the device's own manual — this device's manual doesn't document MQTT mode at all — but are now taken verbatim from the client's own provisioning SOP, which earlier testing already confirmed is more reliable here than the manual (it caught the real connect baud/parity and handshake). That SOP is also what revealed the gateway rejects the earlier guessed AT+MQTTWILLEN/AT+MQTTWILLTP pair (+CME ERROR:58) — replaced below with its single AT+MQTTWILL command — and that AT+MQTTSUBTP/AT+MQTTPUBTP need a leading slot number, which this screen's single-topic model fixes at 1.
+      DESIGN PREVIEW · FlexLink profile built from the USR-DR502-E manual plus the client's own provisioning SOP. Connecting, AT mode, AT+IMEI and the MQTT topic/Will commands are confirmed on real hardware or the client's own working procedure; broker/serial-port/APN syntax is still unverified — change one field at a time and check the raw log.
+      See <b>Connection guide</b> for the full connect/AT-mode story and <b>Help reference</b> for what every field and command does.
     </div>
 
     <div class="topcards">
@@ -723,7 +721,7 @@
                 </div>
               </div>
             </div>
-            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">A factory-fresh, never-configured gateway answers at <b>115200, None</b>; a gateway that's already been provisioned keeps whatever it was last set to — for the units configured so far for this client, that's <b>19200, Even</b> (confirmed on real hardware). Different clients' units may end up on a different value after provisioning, so this is picked per-connection rather than assumed. Data bits stay at 8 and stop bits at 1 either way. The gateway prints its own boot/status chatter continuously once connected — that's normal, not an error. On Connect the host first sends a bare "AT" to check whether the gateway is already in AT mode (e.g. left there from an earlier session) — if so it skips straight to AT mode. Otherwise it waits briefly, sends "+++" once, waits for "a" to appear in that chatter, sends "a" back once, and the gateway replies "+ok". If a step times out (e.g. the gateway was still booting, or the baud/parity above don't match this unit), click "Enter AT mode" to try again — it only ever sends each byte once per attempt, never spams.</p>
+            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">Factory-fresh gateways answer at <b>115200, None</b>; this client's already-provisioned units answer at <b>19200, Even</b> (both confirmed) — pick whichever matches your unit. See <b>Connection guide</b> for the full connect/AT-mode handshake.</p>
             <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--muted); max-width:70ch; cursor:pointer;">
               <input type="checkbox" id="fl-rts-toggle" style="margin-top:2px;" />
               <span>Toggle RTS around every send (half-duplex RS485 direction control). Shouldn't be needed now that baud/parity turned out to be the real issue, but leave this available in case your adapter also needs its transmit-enable line driven manually.</span>
@@ -743,6 +741,7 @@
         <div class="nav-item active" id="fl-nav-configuration">Configuration</div>
         <div class="nav-item" id="fl-nav-info">Device info &amp; status</div>
         <div class="nav-item" id="fl-nav-guide">Connection guide</div>
+        <div class="nav-item" id="fl-nav-help">Help reference</div>
         <div class="section-index" id="fl-section-index">
           <div class="hdr">FLEXLINK</div>
           <div data-target="fl-sec-info">Device info &amp; status</div>
@@ -833,7 +832,7 @@
                     </select>
                     <span class="chev">▾</span>
                   </div>
-                  <div class="hint">1200–230400 per the manual · factory-fresh units answer at 115200 (confirmed); this field reflects whatever the connected unit is actually on, not a fixed assumption</div>
+                  <div class="hint">1200–230400 per the manual · see Help reference</div>
                 </div>
                 <div class="field">
                   <div class="k">Data bits</div>
@@ -861,7 +860,7 @@
                     </select>
                     <span class="chev">▾</span>
                   </div>
-                  <div class="hint">None, Odd or Even — factory-fresh units answer at None (confirmed); this field reflects whatever the connected unit is actually on, not a fixed assumption</div>
+                  <div class="hint">None, Odd or Even · see Help reference</div>
                 </div>
               </div>
             </div>
@@ -944,7 +943,7 @@
                   <div class="field" style="max-width:140px;">
                     <div class="k">Last Will</div>
                     <div class="toggle-row"><button class="switch on" id="fl-f-will-enable" role="switch" aria-checked="true"></button><span class="state" id="fl-f-will-enable-state">On</span></div>
-                    <div class="hint">Lets the broker mark this gateway offline if it drops off without a clean disconnect. Turning this off is UI-only for now — the SOP only ever sets a Will, so there's no confirmed command to remove one already on the gateway.</div>
+                    <div class="hint">Marks this gateway offline on an unclean disconnect · see Help reference</div>
                   </div>
                   <div class="field">
                     <div class="k">Will topic</div>
@@ -1117,6 +1116,95 @@
                 <p style="margin:0; font-size:13px; color:var(--warn-text);">Change one field at a time, send it, and read what comes back in the raw log — that's how LevelPro's commands went from "design preview" to confirmed, too.</p>
               </div>
             </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="fl-content-help" style="display:none;">
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>FlexLink · Help reference</h2>
+              <p>Full content behind every (?) button on the Configuration screen, in sidebar order.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Device info &amp; status</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Signal</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Radio signal strength as CSQ (0–31). Higher is better reception. Confirmed via AT+CSQ.</p></div>
+              <div><b>Firmware</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The firmware version running on the gateway, via AT+VER — documented in the manual but hasn't actually been seen to reply yet.</p></div>
+              <div><b>MQTT broker</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Whether the gateway currently has an active session with the configured broker, via AT+MQTTSTA.</p></div>
+              <div><b>IMEI</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The modem's unique hardware identifier. Confirmed, via AT+IMEI, replying "+IMEI:&lt;number&gt;" then "OK".</p></div>
+              <div><b>SIM ICCID / Serial number (SN)</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The inserted SIM's serial number and the gateway's own manufacturing serial, via AT+ICCID / AT+SN — same reply pattern as AT+IMEI is assumed, but not yet confirmed.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>AT+CSQ · AT+VER · AT+MQTTSTA · AT+IMEI · AT+ICCID · AT+SN</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Serial port (RS485)</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Baud rate</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">1200–230400 per the manual. Confirmed on real hardware: a factory-fresh gateway answers at 115200; once provisioned it keeps whatever it was last set to — 19200 for the units configured so far for this client. A different client's units may end up elsewhere after their own provisioning, so this is picked per-connection rather than assumed.</p></div>
+              <div><b>Data bits</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Fixed at 8 — not configurable on this gateway.</p></div>
+              <div><b>Stop bits</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">1 or 2. Must match the field device.</p></div>
+              <div><b>Parity</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">None, Odd or Even. Confirmed on real hardware: factory-fresh is None; this client's provisioned units are Even.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>AT+UART · syntax shown on the design, not yet confirmed on hardware</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>MQTT broker</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Broker host / Port</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Domain name or IP and TCP port of the MQTT broker (default 1883, the standard unencrypted MQTT port).</p></div>
+              <div><b>Client ID</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Identifies this gateway to the broker. Must be unique — two devices sharing a client ID will repeatedly knock each other offline.</p></div>
+              <div><b>Username / Password</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Credentials for brokers that require authentication. Leave both blank for anonymous connections.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>AT+MQTTSVR · AT+MQTTCID · AT+MQTTUSER / AT+MQTTPSW — syntax shown on the design, not yet confirmed on hardware. AT+WKMOD=MQTT,NOR (MQTT work mode) is sent automatically right before any of these, per the client's own provisioning SOP — a required step this app previously skipped entirely.</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Topics &amp; Last Will</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Subscribe topic</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Messages the broker publishes here are written out the RS485 port to the field device.</p></div>
+              <div><b>Publish topic</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Data read from the RS485 port is published here.</p></div>
+              <div><b>QoS / Retain</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">QoS is the MQTT delivery guarantee (0/1/2). Retain (publish topic only) keeps the last message for any new subscriber.</p></div>
+              <div><b>Last Will</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Published by the broker itself if the gateway drops off without a clean disconnect — how other subscribers notice it went offline. Turning this off is UI-only for now: the client's SOP only ever sets a Will, so there's no confirmed command to remove one already on the gateway.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>AT+MQTTSUBTP / AT+MQTTPUBTP (slot 1 only on this screen — the gateway itself supports up to 10 of each) · AT+MQTTWILL=&lt;slot&gt;,&lt;topic&gt;,&lt;qos&gt;,&lt;retain&gt;,&lt;payload&gt;, taken from the client's provisioning SOP after the earlier guessed AT+MQTTWILLEN/AT+MQTTWILLTP pair turned out not to exist on this gateway (+CME ERROR:58)</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Cellular (APN)</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>APN</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Access Point Name from your SIM provider. The factory default "CMNET" only works on China Mobile SIMs.</p></div>
+              <div><b>Authentication type</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">0 (None), 1 (PAP), 2 (CHAP) or 3 (PAP or CHAP) — whichever your provider requires. Default 0.</p></div>
+              <div><b>APN username / password</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Only needed if your provider's APN requires authentication.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>AT+APN · syntax shown on the design, not yet confirmed on hardware</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Maintenance</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Restart gateway</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Restarts without changing any saved settings.</p></div>
+              <div><b>Factory reset</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Erases ALL saved settings, including the APN and MQTT broker configuration. Asks for confirmation first — this can't be undone from the configurator.</p></div>
+              <div><b>Applying Configuration changes</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Only changed fields are sent, one at a time; AT+S then saves everything and restarts the gateway.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>AT+Z (restart, confirmed in the manual) · AT+CLEAR (factory reset, confirmed in the manual) · AT+S (save &amp; restart, confirmed in the manual)</p></div>
           </div>
         </div>
 
@@ -2016,15 +2104,23 @@
   function flShowConfigContent(){
     $('fl-content-configuration').style.display = '';
     $('fl-content-guide').style.display = 'none';
+    $('fl-content-help').style.display = 'none';
     $('fl-section-index').style.display = '';
   }
   function flShowGuideContent(){
     $('fl-content-configuration').style.display = 'none';
     $('fl-content-guide').style.display = '';
+    $('fl-content-help').style.display = 'none';
+    $('fl-section-index').style.display = 'none';
+  }
+  function flShowHelpContent(){
+    $('fl-content-configuration').style.display = 'none';
+    $('fl-content-guide').style.display = 'none';
+    $('fl-content-help').style.display = '';
     $('fl-section-index').style.display = 'none';
   }
   function flSetNavActive(id){
-    ['fl-nav-configuration', 'fl-nav-info', 'fl-nav-guide'].forEach(n => $(n).classList.toggle('active', n === id));
+    ['fl-nav-configuration', 'fl-nav-info', 'fl-nav-guide', 'fl-nav-help'].forEach(n => $(n).classList.toggle('active', n === id));
   }
   function flScrollToSection(targetId){
     const el = $(targetId);
@@ -2043,6 +2139,11 @@
   $('fl-nav-guide').addEventListener('click', () => {
     flShowGuideContent();
     flSetNavActive('fl-nav-guide');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('fl-nav-help').addEventListener('click', () => {
+    flShowHelpContent();
+    flSetNavActive('fl-nav-help');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
   document.querySelectorAll('#fl-section-index [data-target]').forEach((el) => {
