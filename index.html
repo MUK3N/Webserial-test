@@ -720,7 +720,7 @@
                 </div>
               </div>
             </div>
-            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">A factory-fresh, never-configured gateway answers at <b>115200, None</b>; a gateway that's already been provisioned keeps whatever it was last set to — for the units configured so far for this client, that's <b>19200, Even</b> (confirmed on real hardware). Different clients' units may end up on a different value after provisioning, so this is picked per-connection rather than assumed. Data bits stay at 8 and stop bits at 1 either way. The gateway prints its own boot/status chatter continuously once connected — that's normal, not an error. On Connect the host waits briefly, then sends "+++" once, waits for "a" to appear in that chatter, sends "a" back once, and the gateway replies "+ok". If either step times out (e.g. the gateway was still booting, or the baud/parity above don't match this unit), click "Enter AT mode" to try the pair again — it only ever sends "+++" and "a" once each per attempt, never spams.</p>
+            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">A factory-fresh, never-configured gateway answers at <b>115200, None</b>; a gateway that's already been provisioned keeps whatever it was last set to — for the units configured so far for this client, that's <b>19200, Even</b> (confirmed on real hardware). Different clients' units may end up on a different value after provisioning, so this is picked per-connection rather than assumed. Data bits stay at 8 and stop bits at 1 either way. The gateway prints its own boot/status chatter continuously once connected — that's normal, not an error. On Connect the host first sends a bare "AT" to check whether the gateway is already in AT mode (e.g. left there from an earlier session) — if so it skips straight to AT mode. Otherwise it waits briefly, sends "+++" once, waits for "a" to appear in that chatter, sends "a" back once, and the gateway replies "+ok". If a step times out (e.g. the gateway was still booting, or the baud/parity above don't match this unit), click "Enter AT mode" to try again — it only ever sends each byte once per attempt, never spams.</p>
             <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--muted); max-width:70ch; cursor:pointer;">
               <input type="checkbox" id="fl-rts-toggle" style="margin-top:2px;" />
               <span>Toggle RTS around every send (half-duplex RS485 direction control). Shouldn't be needed now that baud/parity turned out to be the real issue, but leave this available in case your adapter also needs its transmit-enable line driven manually.</span>
@@ -1039,13 +1039,14 @@
               <div class="section-body">
                 <p style="margin:0 0 10px; font-size:13px; color:var(--ink-soft);">Connect at <b>8 data bits, 1 stop bit</b>, and whichever baud/parity the unit is actually on — <b>115200, None</b> for a factory-fresh unit (the manual's own default), or <b>19200, Even</b> for one that's already been provisioned (confirmed on the units configured so far for this client; a different client's units may end up on a different value after their own provisioning). Pick it in the connection card before clicking Connect. The gateway prints its own continuous boot/status chatter from the moment the port opens, mixed characters with no reliable line breaks — that's normal and happens regardless of anything sent to it. Once baud/parity match the unit, the manual's original handshake shape turns out to be correct after all:</p>
                 <ol style="margin:0; padding-left:20px; font-size:13px; color:var(--ink-soft); line-height:1.9;">
-                  <li>Wait a moment after the connection opens — not an instant <code>+++</code>. The chatter continuing in the background is fine.</li>
+                  <li>First, send a bare <code>AT</code> and check for a reply ("<code>OK</code>" or any "<code>+CME ERROR</code>") — those only happen in AT mode, so seeing one means the gateway is already there (e.g. an earlier session left it in AT mode and it never left). If so, skip straight to AT mode — no <code>+++</code> needed.</li>
+                  <li>Otherwise, wait a moment after the connection opens — not an instant <code>+++</code>. The chatter continuing in the background is fine.</li>
                   <li>Send <code>+++</code> once.</li>
                   <li>Watch for <code>a</code> to show up, mixed in with more chatter — confirmed to arrive well under a second later.</li>
                   <li>Within that same second or so, send <code>a</code> back once.</li>
                   <li><code>+ok</code> follows shortly after, mixed into the stream the same way — that's AT command mode.</li>
                 </ol>
-                <p style="margin:10px 0 0; font-size:13px; color:var(--ink-soft);">This app does exactly that automatically on Connect, watching the raw byte stream rather than waiting for a clean line. It sends <code>+++</code> and <code>a</code> once each — no spamming — and if either step times out it stops and reports it rather than retrying on its own; click "Enter AT mode" to try the pair again by hand. To leave AT mode and resume normal MQTT/transparent operation, send <code>AT+ENTM</code> (confirmed in the manual). Disconnecting does this for you.</p>
+                <p style="margin:10px 0 0; font-size:13px; color:var(--ink-soft);">This app does exactly that automatically on Connect, watching the raw byte stream rather than waiting for a clean line. It sends <code>AT</code> (the already-in-AT-mode check), then <code>+++</code> and <code>a</code> once each if needed — no spamming — and if a step times out it stops and reports it rather than retrying on its own; click "Enter AT mode" to try again by hand. If you ever see "+CME ERROR:58" right after "+++" instead of "a", that's this exact already-in-AT-mode case, not a wrong baud/parity. To leave AT mode and resume normal MQTT/transparent operation, send <code>AT+ENTM</code> (confirmed in the manual). Disconnecting does this for you.</p>
               </div>
             </div>
           </div>
@@ -2172,6 +2173,20 @@
     $('fl-btn-factory-reset').disabled = !on || !flAtMode;
   }
 
+  // Whatever baud/parity we just connected with is, by definition, what the
+  // gateway is currently set to — reflect that in the Configuration tab's
+  // Serial port fields and baseline so the staged-diff doesn't show a false
+  // "change" for a value we never actually altered.
+  function flSyncSerialBaselineFromConnection(){
+    const connBaud = $('fl-connect-baud').value;
+    const connParity = $('fl-connect-parity').value.toUpperCase();
+    $('fl-f-baud').value = connBaud;
+    $('fl-f-parity').value = connParity;
+    flBaseline.baud = connBaud;
+    flBaseline.parity = connParity;
+    flRefreshCmdPreview();
+  }
+
   // Confirmed on real hardware (19200 baud / 8 data bits / Even parity / 1
   // stop bit): the gateway constantly prints its own boot/status chatter —
   // a stream of mixed characters — from the moment the port opens, on its
@@ -2184,14 +2199,38 @@
   // mode. No spamming: one "+++", one "a", each sent once. If either step
   // times out, this stops and reports it rather than retrying on its own —
   // "Enter AT mode" is there to try again by hand.
+  //
+  // One real wrinkle found on hardware: AT mode is a state the gateway
+  // itself holds, not something tied to our host's connection — if it was
+  // already left in AT mode (an earlier session, or clicking Connect again
+  // without a clean Disconnect/AT+ENTM in between), "+++" arrives as plain
+  // input to a device that's already past the escape-sequence stage, which
+  // a real modem just reports as an unrecognized command ("+CME ERROR:58")
+  // instead of replying "a" — the handshake then times out for a reason
+  // that has nothing to do with wrong timing or wrong baud. So before
+  // trying "+++" at all, send a bare "AT" and see if the gateway answers
+  // like a command-mode AT device already would ("OK" or any "+CME ERROR"
+  // — both only happen in AT mode, never in transparent/boot noise).
   let flHandshakeBusy = false;
   async function flEnterAtMode(){
     flHandshakeBusy = true;
     flSetConnected(true);
     flSetOpStatus('Entering AT command mode…', 'idle');
-    flLog('Waiting briefly before "+++" (boot chatter in the meantime is normal)…', 'sys');
-    await flSleep(1200); // wait a bit from when the connection started, not an instant "+++"
     try {
+      flLog('Checking whether the gateway is already in AT command mode ("AT")…', 'sys');
+      const alreadyPromise = flWaitForRaw((acc) => /\bOK\b|\+CME ERROR/i.test(acc), 800);
+      await flSendRaw('AT');
+      const already = await alreadyPromise;
+      if (already) {
+        flAtMode = true;
+        flLog('Already in AT command mode (replied to a bare "AT") — no need for "+++".', 'sys');
+        flSetOpStatus('Connected — gateway was already in AT command mode.', 'ok');
+        flSyncSerialBaselineFromConnection();
+        return true;
+      }
+
+      flLog('Not in AT mode yet. Waiting briefly before "+++" (boot chatter in the meantime is normal)…', 'sys');
+      await flSleep(1200); // wait a bit from when the connection started, not an instant "+++"
       flLog('Sending "+++" once…', 'sys');
       const aPromise = flWaitForRaw((acc) => /a/i.test(acc), 1500);
       await flSendRaw('+++', { withTerminator: false });
@@ -2211,17 +2250,7 @@
       flAtMode = true;
       flLog('AT command mode active ("+ok" seen).', 'sys');
       flSetOpStatus('Connected and in AT command mode.', 'ok');
-      // Whatever baud/parity we just connected with is, by definition, what
-      // the gateway is currently set to — reflect that in the Configuration
-      // tab's Serial port fields and baseline so the staged-diff doesn't
-      // show a false "change" for a value we never actually altered.
-      const connBaud = $('fl-connect-baud').value;
-      const connParity = $('fl-connect-parity').value.toUpperCase();
-      $('fl-f-baud').value = connBaud;
-      $('fl-f-parity').value = connParity;
-      flBaseline.baud = connBaud;
-      flBaseline.parity = connParity;
-      flRefreshCmdPreview();
+      flSyncSerialBaselineFromConnection();
       return true;
     } finally {
       flHandshakeBusy = false;
