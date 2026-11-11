@@ -674,8 +674,8 @@
     <div class="banner" id="fl-design-banner">
       DESIGN PREVIEW · FlexLink profile built from the USR-DR502-E manual (transparent-mode AT command set) plus the MQTT-firmware command names shown on this screen.
       Connecting and entering AT command mode are now <b>confirmed on real hardware</b>, at either of two settings depending on whether the unit has already been provisioned — <b>115200 8N1</b> factory-fresh, <b>19200 8E1</b> once configured (pick it below before connecting). The gateway prints continuous boot/status chatter on its own the moment the port opens — that's normal — and the handshake is the manual's original shape: send "+++" once, wait for "a" to show up in that chatter, send "a" back once, and "+ok" follows shortly after. AT+IMEI is also confirmed, replying "+IMEI:&lt;number&gt;" then "OK".
-      The MQTT broker, topic, serial-port and APN command syntax (AT+MQTTSVR, AT+UART, AT+APN, etc.) and every reply format below are still <b>not yet verified on hardware</b> —
-      send one change at a time and read the raw log. The Last Will fields (AT+MQTTWILLEN, AT+MQTTWILLTP) go a step further: this device's own manual doesn't document MQTT mode at all, so unlike the rest of this screen they aren't even sourced from the Figma design — the fields themselves come from the client's own provisioning SOP, and the command syntax is a guess following this screen's other MQTT command names.
+      The MQTT broker, serial-port and APN command syntax (AT+MQTTSVR, AT+UART, AT+APN, etc.) and every reply format below are still <b>not yet verified on hardware</b> —
+      send one change at a time and read the raw log. The topic and Last Will commands (AT+MQTTSUBTP, AT+MQTTPUBTP, AT+MQTTWILL, AT+WKMOD) aren't from the Figma design or the device's own manual — this device's manual doesn't document MQTT mode at all — but are now taken verbatim from the client's own provisioning SOP, which earlier testing already confirmed is more reliable here than the manual (it caught the real connect baud/parity and handshake). That SOP is also what revealed the gateway rejects the earlier guessed AT+MQTTWILLEN/AT+MQTTWILLTP pair (+CME ERROR:58) — replaced below with its single AT+MQTTWILL command — and that AT+MQTTSUBTP/AT+MQTTPUBTP need a leading slot number, which this screen's single-topic model fixes at 1.
     </div>
 
     <div class="topcards">
@@ -904,8 +904,8 @@
 
             <div class="section-box" id="fl-sec-topics">
               <div class="section-hd">
-                <div class="t"><b>Topics &amp; Last Will</b><span>AT+MQTTSUBTP, AT+MQTTPUBTP, AT+MQTTWILLEN/MQTTWILLTP · topic 1 only</span></div>
-                <span class="help-btn sm" title="Subscribe = sent to the RS485 port. Publish = data read from the RS485 port. Last Will = published by the broker itself if the gateway drops off without a clean disconnect — how FlexIoT/other subscribers notice a gateway went offline.">?</span>
+                <div class="t"><b>Topics &amp; Last Will</b><span>AT+MQTTSUBTP, AT+MQTTPUBTP, AT+MQTTWILL (slot 1 only) · AT+WKMOD sent automatically</span></div>
+                <span class="help-btn sm" title="Subscribe = sent to the RS485 port. Publish = data read from the RS485 port. Last Will = published by the broker itself if the gateway drops off without a clean disconnect — how FlexIoT/other subscribers notice a gateway went offline. Command syntax for all three, plus the AT+WKMOD=MQTT,NOR mode switch sent ahead of them, comes from the client's own provisioning SOP — it also replaces the earlier AT+MQTTWILLEN/AT+MQTTWILLTP guess, which the gateway rejected with +CME ERROR:58.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
                 <div class="field-row">
@@ -944,7 +944,7 @@
                   <div class="field" style="max-width:140px;">
                     <div class="k">Last Will</div>
                     <div class="toggle-row"><button class="switch on" id="fl-f-will-enable" role="switch" aria-checked="true"></button><span class="state" id="fl-f-will-enable-state">On</span></div>
-                    <div class="hint">Lets the broker mark this gateway offline if it drops off without a clean disconnect</div>
+                    <div class="hint">Lets the broker mark this gateway offline if it drops off without a clean disconnect. Turning this off is UI-only for now — the SOP only ever sets a Will, so there's no confirmed command to remove one already on the gateway.</div>
                   </div>
                   <div class="field">
                     <div class="k">Will topic</div>
@@ -1104,10 +1104,16 @@
                 <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;">Connecting at <b>115200 8N1</b> (factory-fresh) or <b>19200 8E1</b> (already provisioned, this client) · entering AT mode with <code>+++</code> → wait for <code>a</code> → send <code>a</code> → <code>+ok</code>, matched against the raw byte stream rather than a clean line · exiting with <code>AT+ENTM</code> (manual) · <b>AT+S</b> save &amp; restart (manual) · <b>AT+Z</b> restart without saving (manual) · <b>AT+CLEAR</b> factory reset (manual) · <b>AT+CSQ</b> signal quality (standard on virtually all cellular modems) · <b>AT+IMEI</b> replying <code>+IMEI:&lt;number&gt;</code> then <code>OK</code>. <b>AT+VER</b> is documented in the manual but hasn't actually been seen to reply yet.</p>
               </div>
             </div>
+            <div class="section-box" style="margin-top:14px;">
+              <div class="section-hd"><div class="t"><b>From the client's own provisioning SOP</b></div></div>
+              <div class="section-body">
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;"><b>AT+WKMOD=MQTT,NOR</b> (MQTT work mode, sent automatically ahead of any other MQTT field) · <b>AT+MQTTSUBTP</b>/<b>AT+MQTTPUBTP</b> with a leading slot number (<code>1,&lt;qos&gt;,&lt;topic&gt;,&lt;flag&gt;</code>) · <b>AT+MQTTWILL=&lt;slot&gt;,&lt;topic&gt;,&lt;qos&gt;,&lt;retain&gt;,&lt;payload&gt;</b>, replacing the earlier guessed AT+MQTTWILLEN/AT+MQTTWILLTP pair the gateway rejected with <code>+CME ERROR:58</code>. These are copied verbatim from the client's own working procedure rather than the manual or Figma design, but still haven't been sent by this app against real hardware yet — send them one at a time and check the raw log, same as anything else here.</p>
+              </div>
+            </div>
             <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
               <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Not yet verified on hardware</b></div></div>
               <div class="section-body">
-                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">AT+UART (serial settings), AT+MQTTSVR/MQTTCID/MQTTUSER/MQTTPSW (broker), AT+MQTTSUBTP/MQTTPUBTP (topics), AT+APN (cellular), and AT+MQTTSTA (broker status) are the command names shown on this screen's design — the parameter order, and the gateway's reply format for all of them, haven't been checked against real hardware yet. Given the manual was already wrong about the connection baud and the handshake, treat its documented syntax for these as a starting guess too, not a guarantee.</p>
+                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">AT+UART (serial settings), AT+MQTTSVR/MQTTCID/MQTTUSER/MQTTPSW (broker), AT+APN (cellular), and AT+MQTTSTA (broker status) are the command names shown on this screen's design — the parameter order, and the gateway's reply format for all of them, haven't been checked against real hardware yet. Given the manual was already wrong about the connection baud and the handshake, treat its documented syntax for these as a starting guess too, not a guarantee.</p>
                 <p style="margin:0; font-size:13px; color:var(--warn-text);">Change one field at a time, send it, and read what comes back in the raw log — that's how LevelPro's commands went from "design preview" to confirmed, too.</p>
               </div>
             </div>
@@ -2428,7 +2434,7 @@
   $('fl-btn-read').addEventListener('click', async () => {
     $('fl-btn-read').disabled = true;
     flSetOpStatus('Reading configuration — watch the raw log for replies (reply format not yet confirmed).', 'idle');
-    const queries = ['AT+UART?', 'AT+MQTTSVR?', 'AT+MQTTCID?', 'AT+MQTTUSER?', 'AT+MQTTSUBTP?', 'AT+MQTTPUBTP?', 'AT+MQTTWILLEN?', 'AT+MQTTWILLTP?', 'AT+APN?'];
+    const queries = ['AT+UART?', 'AT+MQTTSVR?', 'AT+MQTTCID?', 'AT+MQTTUSER?', 'AT+MQTTSUBTP?', 'AT+MQTTPUBTP?', 'AT+MQTTWILL?', 'AT+APN?'];
     for (const q of queries) {
       await flSendRaw(q);
       await flSleep(400);
@@ -2498,26 +2504,47 @@
       const cmd = `AT+MQTTPSW=${v.mqttPass}`;
       cmds.push({ label: 'MQTT password → (changed)', cmd, previewCmd: `AT+MQTTPSW=${flMask(v.mqttPass)}` });
     }
+    let mqttTouched = cmds.length > 0; // broker/cid/user/pass pushed above
     if (v.subTopic !== flBaseline.subTopic || v.subQos !== flBaseline.subQos) {
-      const cmd = `AT+MQTTSUBTP=${v.subTopic},${v.subQos}`;
+      // Confirmed slot-prefixed form per the client's own provisioning SOP
+      // (AT+MQTTSUBTP=1,1,<topic>,0) and matching the real AT+MQTTSUBTP? reply
+      // shape (<slot>,<qos>,<topic>,<flag>) seen on hardware — slot fixed at 1
+      // since this screen only exposes one subscribe topic. Trailing flag's
+      // meaning isn't documented; the SOP always sends 0, so we do too.
+      const cmd = `AT+MQTTSUBTP=1,${v.subQos},${v.subTopic},0`;
       cmds.push({ label: `Subscribe topic → ${v.subTopic || '(empty)'} (QoS ${v.subQos})`, cmd, previewCmd: cmd });
+      mqttTouched = true;
     }
     if (v.pubTopic !== flBaseline.pubTopic || v.pubQos !== flBaseline.pubQos || v.retain !== flBaseline.retain) {
-      const cmd = `AT+MQTTPUBTP=${v.pubTopic},${v.pubQos},${v.retain ? 1 : 0}`;
+      // Same slot-prefixed fix as above; the SOP's AT+MQTTPUBTP example has two
+      // trailing flags (it always sends 0,0). Neither is documented, so the
+      // Retain switch is a best guess for the first one.
+      const cmd = `AT+MQTTPUBTP=1,${v.pubQos},${v.pubTopic},${v.retain ? 1 : 0},0`;
       cmds.push({ label: `Publish topic → ${v.pubTopic || '(empty)'} (QoS ${v.pubQos}, retain ${v.retain ? 'on' : 'off'})`, cmd, previewCmd: cmd });
+      mqttTouched = true;
     }
-    if (v.willEnable !== flBaseline.willEnable) {
-      const cmd = `AT+MQTTWILLEN=${v.willEnable ? 1 : 0}`;
-      cmds.push({ label: `Last Will → ${v.willEnable ? 'enabled' : 'disabled'}`, cmd, previewCmd: cmd });
-    }
-    if (v.willTopic !== flBaseline.willTopic || v.willQos !== flBaseline.willQos || v.willPayload !== flBaseline.willPayload || v.willRetain !== flBaseline.willRetain) {
-      const cmd = `AT+MQTTWILLTP=${v.willTopic},${v.willQos},${v.willRetain ? 1 : 0},${v.willPayload}`;
-      cmds.push({ label: `Will topic → ${v.willTopic || '(empty)'} (QoS ${v.willQos}, retain ${v.willRetain ? 'on' : 'off'}, payload "${v.willPayload}")`, cmd, previewCmd: cmd });
+    if (v.willEnable && (v.willTopic !== flBaseline.willTopic || v.willQos !== flBaseline.willQos || v.willPayload !== flBaseline.willPayload || v.willRetain !== flBaseline.willRetain || v.willEnable !== flBaseline.willEnable)) {
+      // Replaces the earlier guessed AT+MQTTWILLEN/AT+MQTTWILLTP pair, which
+      // the gateway confirmed it doesn't support (+CME ERROR:58). This single
+      // command — AT+MQTTWILL=<slot>,<topic>,<qos>,<retain>,<payload> — is
+      // taken verbatim from the client's own provisioning SOP, so treat it as
+      // confirmed syntax rather than a guess (not yet tried on hardware by us).
+      const cmd = `AT+MQTTWILL=1,${v.willTopic},${v.willQos},${v.willRetain ? 1 : 0},${v.willPayload}`;
+      cmds.push({ label: `Last Will → ${v.willTopic || '(empty)'} (QoS ${v.willQos}, retain ${v.willRetain ? 'on' : 'off'}, payload "${v.willPayload}")`, cmd, previewCmd: cmd });
+      mqttTouched = true;
     }
     if (v.apn !== flBaseline.apn || v.apnAuth !== flBaseline.apnAuth || v.apnUser !== flBaseline.apnUser || v.apnPass !== flBaseline.apnPass) {
       const cmd = `AT+APN=${v.apn},${v.apnAuth},${v.apnUser},${v.apnPass}`;
       const previewCmd = `AT+APN=${v.apn},${v.apnAuth},${v.apnUser},${flMask(v.apnPass)}`;
       cmds.push({ label: `APN → ${v.apn || '(empty)'}`, cmd, previewCmd });
+    }
+    if (mqttTouched) {
+      // Step 4 of the SOP, before any MQTT field: puts the gateway into MQTT
+      // normal work mode. Sent whenever an MQTT-related field changes rather
+      // than only on first provisioning, since resending it on an
+      // already-provisioned unit should be harmless and we'd rather not guess
+      // at when it's "already set".
+      cmds.unshift({ label: 'MQTT work mode → MQTT, normal', cmd: 'AT+WKMOD=MQTT,NOR', previewCmd: 'AT+WKMOD=MQTT,NOR' });
     }
     return cmds;
   }
