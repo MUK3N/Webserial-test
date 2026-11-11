@@ -2375,7 +2375,17 @@
       $('fl-v-signal').textContent = csq ? `${csq}/31` : '—';
       $('fl-v-signal-sub').textContent = csq ? 'AT+CSQ' : 'AT+CSQ · no reply';
 
-      const mqttPromise = flWaitForLine((line) => /mqtt/i.test(line) ? line : null, 2000);
+      // The device echoes back whatever we send before its real reply (seen
+      // on real hardware: sending "AT+MQTTSTA" comes back as its own echo
+      // line first, THEN the actual "+MQTTSTA:<status>" reply). A plain
+      // /mqtt/i match matches the echo too — "AT+MQTTSTA" itself contains
+      // "mqtt" — so it resolved on our own echoed command instead of the
+      // real status, which also fired the next query early, overlapping
+      // the tail of this reply still arriving and corrupting it. Requiring
+      // the "+MQTTSTA:" reply prefix (colon included, never present in the
+      // echo of a bare command) excludes the echo, same as AT+IMEI/SN/ICCID
+      // below already do.
+      const mqttPromise = flWaitForLine((line) => { const m = line.match(/\+MQTTSTA\s*:\s*(.+)/i); return m ? m[1].trim() : null; }, 2000);
       await flSendRaw('AT+MQTTSTA');
       const mqttLine = await mqttPromise;
       const mqttOk = !!mqttLine && /connect(ed)?|ok|1/i.test(mqttLine) && !/disconnect|fail|0/i.test(mqttLine);
