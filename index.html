@@ -672,7 +672,7 @@
 
     <div class="banner" id="fl-design-banner">
       DESIGN PREVIEW · FlexLink profile built from the USR-DR502-E manual (transparent-mode AT command set) plus the MQTT-firmware command names shown on this screen.
-      Connecting and entering AT command mode are now <b>confirmed on real hardware at 19200 baud, 8E1</b> (not the manual's claimed 115200 8N1 default). The gateway prints continuous boot/status chatter on its own the moment the port opens — that's normal — and the handshake is the manual's original shape: send "+++" once, wait for "a" to show up in that chatter, send "a" back once, and "+ok" follows shortly after.
+      Connecting and entering AT command mode are now <b>confirmed on real hardware</b>, at either of two settings depending on whether the unit has already been provisioned — <b>115200 8N1</b> factory-fresh, <b>19200 8E1</b> once configured (pick it below before connecting). The gateway prints continuous boot/status chatter on its own the moment the port opens — that's normal — and the handshake is the manual's original shape: send "+++" once, wait for "a" to show up in that chatter, send "a" back once, and "+ok" follows shortly after. AT+IMEI is also confirmed, replying "+IMEI:&lt;number&gt;" then "OK".
       The MQTT broker, topic, serial-port and APN command syntax (AT+MQTTSVR, AT+UART, AT+APN, etc.) and every reply format below are still <b>not yet verified on hardware</b> —
       send one change at a time and read the raw log.
     </div>
@@ -694,10 +694,36 @@
         <div class="kv-row" style="align-items:flex-end;">
           <div style="flex:1;">
             <div class="label-bold" style="margin-bottom:6px;">RS485-to-USB adapter</div>
-            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring. Connects at <b>19200 baud, 8E1</b> — confirmed on real hardware, not the manual's claimed 115200 8N1 default. The gateway prints its own boot/status chatter continuously once connected — that's normal, not an error. On Connect the host waits briefly, then sends "+++" once, waits for "a" to appear in that chatter, sends "a" back once, and the gateway replies "+ok". If either step times out (e.g. the gateway was still booting), click "Enter AT mode" to try the pair again — it only ever sends "+++" and "a" once each per attempt, never spams.</p>
+            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">Wire A↔A and B↔B, and power the gateway (9–36 V). Disconnect the field device from the RS485 terminals while configuring.</p>
+            <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:8px; flex-wrap:wrap;">
+              <div class="field" style="min-width:0;">
+                <div class="k">Connect at (baud)</div>
+                <div class="input-box select">
+                  <select id="fl-connect-baud">
+                    <option value="9600">9600</option>
+                    <option value="19200" selected>19200</option>
+                    <option value="38400">38400</option>
+                    <option value="57600">57600</option>
+                    <option value="115200">115200</option>
+                    <option value="230400">230400</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field" style="min-width:0;">
+                <div class="k">Parity</div>
+                <div class="input-box select">
+                  <select id="fl-connect-parity">
+                    <option value="none">None</option>
+                    <option value="odd">Odd</option>
+                    <option value="even" selected>Even</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">A factory-fresh, never-configured gateway answers at <b>115200, None</b>; a gateway that's already been provisioned keeps whatever it was last set to — for the units configured so far for this client, that's <b>19200, Even</b> (confirmed on real hardware). Different clients' units may end up on a different value after provisioning, so this is picked per-connection rather than assumed. Data bits stay at 8 and stop bits at 1 either way. The gateway prints its own boot/status chatter continuously once connected — that's normal, not an error. On Connect the host waits briefly, then sends "+++" once, waits for "a" to appear in that chatter, sends "a" back once, and the gateway replies "+ok". If either step times out (e.g. the gateway was still booting, or the baud/parity above don't match this unit), click "Enter AT mode" to try the pair again — it only ever sends "+++" and "a" once each per attempt, never spams.</p>
             <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--muted); max-width:70ch; cursor:pointer;">
               <input type="checkbox" id="fl-rts-toggle" style="margin-top:2px;" />
-              <span>Toggle RTS around every send (half-duplex RS485 direction control). Shouldn't be needed now that 19200 8E1 turned out to be the real issue, but leave this available in case your adapter also needs its transmit-enable line driven manually.</span>
+              <span>Toggle RTS around every send (half-duplex RS485 direction control). Shouldn't be needed now that baud/parity turned out to be the real issue, but leave this available in case your adapter also needs its transmit-enable line driven manually.</span>
             </label>
           </div>
           <div style="display:flex; gap:18px; flex:none; align-items:center;">
@@ -736,7 +762,7 @@
               <h2>Device Info &amp; Status</h2>
               <p>Read-only values reported by the gateway. Refresh to update signal and connection status.</p>
             </div>
-            <span class="help-btn" title="Signal: AT+CSQ. Firmware: AT+VER (confirmed). MQTT status: AT+MQTTSTA (unverified). Network/Local IP/ICCID/SN have no confirmed command yet.">?</span>
+            <span class="help-btn" title="Signal: AT+CSQ. Firmware: AT+VER (unverified — hasn't actually replied yet). MQTT status: AT+MQTTSTA (unverified). IMEI: AT+IMEI (confirmed, replies +IMEI:<number> then OK). SN: AT+SN and ICCID: AT+ICCID (same reply pattern assumed, not yet confirmed). Network/Local IP have no confirmed command yet.">?</span>
           </div>
           <div class="panel-body">
             <div class="tile-row">
@@ -769,7 +795,7 @@
             </div>
           </div>
           <div class="panel-footer">
-            <p>Sends AT+CSQ, AT+VER and AT+MQTTSTA and shows what comes back in the raw log. IMEI/ICCID/SN aren't queried yet — no confirmed command for them.</p>
+            <p>Sends AT+CSQ, AT+VER, AT+MQTTSTA, AT+IMEI, AT+SN and AT+ICCID and shows what comes back in the raw log. AT+IMEI is confirmed on real hardware; AT+SN and AT+ICCID are tried on the same reply pattern but aren't confirmed yet.</p>
             <button class="primary" id="fl-btn-refresh" disabled>Refresh</button>
           </div>
         </div>
@@ -803,7 +829,7 @@
                       <option value="230400">230400</option>
                     </select>
                   </div>
-                  <div class="hint">1200–230400 per the manual · the gateway's actual default is 19200, not the manual's claimed 115200</div>
+                  <div class="hint">1200–230400 per the manual · factory-fresh units answer at 115200 (confirmed); this field reflects whatever the connected unit is actually on, not a fixed assumption</div>
                 </div>
                 <div class="field">
                   <div class="k">Data bits</div>
@@ -829,7 +855,7 @@
                       <option value="EVEN" selected>Even</option>
                     </select>
                   </div>
-                  <div class="hint">None, Odd or Even — the gateway's actual default is Even, not the manual's claimed None</div>
+                  <div class="hint">None, Odd or Even — factory-fresh units answer at None (confirmed); this field reflects whatever the connected unit is actually on, not a fixed assumption</div>
                 </div>
               </div>
             </div>
@@ -1011,7 +1037,7 @@
             <div class="section-box">
               <div class="section-hd"><div class="t"><b>What actually works</b><span>confirmed on real hardware</span></div></div>
               <div class="section-body">
-                <p style="margin:0 0 10px; font-size:13px; color:var(--ink-soft);">Connect at <b>19200 baud, 8 data bits, Even parity, 1 stop bit</b> — not the manual's claimed 115200 8N1 default. The gateway prints its own continuous boot/status chatter from the moment the port opens, mixed characters with no reliable line breaks — that's normal and happens regardless of anything sent to it. Once baud/parity are right, the manual's original handshake shape turns out to be correct after all:</p>
+                <p style="margin:0 0 10px; font-size:13px; color:var(--ink-soft);">Connect at <b>8 data bits, 1 stop bit</b>, and whichever baud/parity the unit is actually on — <b>115200, None</b> for a factory-fresh unit (the manual's own default), or <b>19200, Even</b> for one that's already been provisioned (confirmed on the units configured so far for this client; a different client's units may end up on a different value after their own provisioning). Pick it in the connection card before clicking Connect. The gateway prints its own continuous boot/status chatter from the moment the port opens, mixed characters with no reliable line breaks — that's normal and happens regardless of anything sent to it. Once baud/parity match the unit, the manual's original handshake shape turns out to be correct after all:</p>
                 <ol style="margin:0; padding-left:20px; font-size:13px; color:var(--ink-soft); line-height:1.9;">
                   <li>Wait a moment after the connection opens — not an instant <code>+++</code>. The chatter continuing in the background is fine.</li>
                   <li>Send <code>+++</code> once.</li>
@@ -1036,7 +1062,7 @@
             <div class="section-box">
               <div class="section-hd"><div class="t"><b>Confirmed on real hardware</b></div></div>
               <div class="section-body">
-                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;"><b>19200 baud, 8E1</b> connection · entering AT mode with <code>+++</code> → wait for <code>a</code> → send <code>a</code> → <code>+ok</code>, matched against the raw byte stream rather than a clean line · exiting with <code>AT+ENTM</code> (manual) · <b>AT+S</b> save &amp; restart (manual) · <b>AT+Z</b> restart without saving (manual) · <b>AT+CLEAR</b> factory reset (manual) · <b>AT+CSQ</b> signal quality (standard on virtually all cellular modems). <b>AT+VER</b> is documented in the manual but hasn't actually been seen to reply yet.</p>
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;">Connecting at <b>115200 8N1</b> (factory-fresh) or <b>19200 8E1</b> (already provisioned, this client) · entering AT mode with <code>+++</code> → wait for <code>a</code> → send <code>a</code> → <code>+ok</code>, matched against the raw byte stream rather than a clean line · exiting with <code>AT+ENTM</code> (manual) · <b>AT+S</b> save &amp; restart (manual) · <b>AT+Z</b> restart without saving (manual) · <b>AT+CLEAR</b> factory reset (manual) · <b>AT+CSQ</b> signal quality (standard on virtually all cellular modems) · <b>AT+IMEI</b> replying <code>+IMEI:&lt;number&gt;</code> then <code>OK</code>. <b>AT+VER</b> is documented in the manual but hasn't actually been seen to reply yet.</p>
               </div>
             </div>
             <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
@@ -2185,6 +2211,17 @@
       flAtMode = true;
       flLog('AT command mode active ("+ok" seen).', 'sys');
       flSetOpStatus('Connected and in AT command mode.', 'ok');
+      // Whatever baud/parity we just connected with is, by definition, what
+      // the gateway is currently set to — reflect that in the Configuration
+      // tab's Serial port fields and baseline so the staged-diff doesn't
+      // show a false "change" for a value we never actually altered.
+      const connBaud = $('fl-connect-baud').value;
+      const connParity = $('fl-connect-parity').value.toUpperCase();
+      $('fl-f-baud').value = connBaud;
+      $('fl-f-parity').value = connParity;
+      flBaseline.baud = connBaud;
+      flBaseline.parity = connParity;
+      flRefreshCmdPreview();
       return true;
     } finally {
       flHandshakeBusy = false;
@@ -2192,13 +2229,17 @@
     }
   }
 
+  function flParityLetter(parity){ return parity === 'even' ? 'E' : parity === 'odd' ? 'O' : 'N'; }
+
   $('fl-btn-connect').addEventListener('click', async () => {
     try {
+      const baud = Number($('fl-connect-baud').value);
+      const parity = $('fl-connect-parity').value; // 'none' | 'odd' | 'even'
       flPort = await navigator.serial.requestPort();
-      await flPort.open({ baudRate: 19200, dataBits: 8, stopBits: 1, parity: 'even' });
+      await flPort.open({ baudRate: baud, dataBits: 8, stopBits: 1, parity });
       flStartReadLoop();
       flSetConnected(true);
-      flLog('Connected · 19200 8E1', 'sys');
+      flLog(`Connected · ${baud} 8${flParityLetter(parity)}1`, 'sys');
       await flEnterAtMode();
     } catch (e) {
       flLog('Connect failed: ' + e.message, 'muted');
@@ -2266,6 +2307,25 @@
       const mqttOk = !!mqttLine && /connect(ed)?|ok|1/i.test(mqttLine) && !/disconnect|fail|0/i.test(mqttLine);
       $('fl-v-mqtt-dot').classList.toggle('ok', mqttOk);
       $('fl-v-mqtt-text').textContent = mqttLine ? (mqttOk ? 'Connected' : mqttLine) : 'No reply (unverified command)';
+
+      // AT+IMEI is confirmed on real hardware: replies "+IMEI:<number>" then "OK".
+      const imeiPromise = flWaitForLine((line) => { const m = line.match(/\+IMEI:\s*(\S+)/i); return m ? m[1] : null; }, 2000);
+      await flSendRaw('AT+IMEI');
+      const imei = await imeiPromise;
+      $('fl-v-imei').textContent = imei || 'No reply';
+
+      // AT+SN / AT+ICCID aren't confirmed yet — tried on the same "+<LABEL>:value"
+      // pattern as AT+IMEI, since that's the device's own convention, but this
+      // is a guess until actually seen to reply.
+      const snPromise = flWaitForLine((line) => { const m = line.match(/\+SN:\s*(\S+)/i); return m ? m[1] : null; }, 1500);
+      await flSendRaw('AT+SN');
+      const sn = await snPromise;
+      $('fl-v-sn').textContent = sn || 'No reply (unconfirmed command)';
+
+      const iccidPromise = flWaitForLine((line) => { const m = line.match(/\+ICCID:\s*(\S+)/i); return m ? m[1] : null; }, 1500);
+      await flSendRaw('AT+ICCID');
+      const iccid = await iccidPromise;
+      $('fl-v-iccid').textContent = iccid || 'No reply (unconfirmed command)';
 
       flSetOpStatus('Refresh done — check the raw log for the exact replies.', 'ok');
     } catch (e) {
