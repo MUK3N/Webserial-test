@@ -674,8 +674,9 @@
     <div class="banner" id="fl-design-banner">
       DESIGN PREVIEW · FlexLink profile built from the USR-DR502-E manual (transparent-mode AT command set) plus the MQTT-firmware command names shown on this screen.
       Connecting and entering AT command mode are now <b>confirmed on real hardware</b>, at either of two settings depending on whether the unit has already been provisioned — <b>115200 8N1</b> factory-fresh, <b>19200 8E1</b> once configured (pick it below before connecting). The gateway prints continuous boot/status chatter on its own the moment the port opens — that's normal — and the handshake is the manual's original shape: send "+++" once, wait for "a" to show up in that chatter, send "a" back once, and "+ok" follows shortly after. AT+IMEI is also confirmed, replying "+IMEI:&lt;number&gt;" then "OK".
-      The MQTT broker, topic, serial-port and APN command syntax (AT+MQTTSVR, AT+UART, AT+APN, etc.) and every reply format below are still <b>not yet verified on hardware</b> —
-      send one change at a time and read the raw log. The Last Will fields (AT+MQTTWILLEN, AT+MQTTWILLTP) go a step further: this device's own manual doesn't document MQTT mode at all, so unlike the rest of this screen they aren't even sourced from the Figma design — the fields themselves come from the client's own provisioning SOP, and the command syntax is a guess following this screen's other MQTT command names.
+      The <b>query (?) form is now confirmed on real hardware</b> for AT+UART, AT+MQTTSVR, AT+MQTTCID, AT+MQTTUSER, AT+MQTTSUBTP, AT+MQTTPUBTP and AT+APN — Read from Device fills the fields in from these directly. Their <b>write form is still unverified</b> — same command name and the same field order the query replies with, but actually setting a value and having it stick hasn't itself been tested, so Apply still sends one change at a time and reports each reply.
+      AT+MQTTSUBTP?/AT+MQTTPUBTP? also revealed the gateway actually holds <b>10 topic slots each</b>, not the single pair this screen models — Read from Device only reads/writes slot 1; slots 2–10 aren't exposed here.
+      The Last Will fields are a different story: this device's own manual doesn't document MQTT mode at all, so unlike the rest of this screen they were never Figma-sourced either — just inferred from the client's provisioning SOP. Querying them on real hardware came back <b>"+CME ERROR:58" for both AT+MQTTWILLEN? and AT+MQTTWILLTP?</b> — so these exact command names are now confirmed <b>not to exist</b> on this device, not merely unverified. The fields are left in place in case the real command turns up later, but Apply sending them will fail the same way.
     </div>
 
     <div class="topcards">
@@ -869,7 +870,7 @@
             <div class="section-box" id="fl-sec-mqtt">
               <div class="section-hd">
                 <div class="t"><b>MQTT broker</b><span>AT+MQTTSVR, MQTTCID, MQTTUSER, MQTTPSW</span></div>
-                <span class="help-btn sm" title="Broker host/port, client ID and login. Unverified command syntax.">?</span>
+                <span class="help-btn sm" title="Broker host/port, client ID and login. AT+MQTTSVR?/MQTTCID?/MQTTUSER? queries confirmed on real hardware (Read from Device uses them); their write form is inferred to take the same field order, not yet confirmed. There's no query for the password, so it's never auto-filled.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
                 <div class="field-row">
@@ -905,7 +906,7 @@
             <div class="section-box" id="fl-sec-topics">
               <div class="section-hd">
                 <div class="t"><b>Topics &amp; Last Will</b><span>AT+MQTTSUBTP, AT+MQTTPUBTP, AT+MQTTWILLEN/MQTTWILLTP · topic 1 only</span></div>
-                <span class="help-btn sm" title="Subscribe = sent to the RS485 port. Publish = data read from the RS485 port. Last Will = published by the broker itself if the gateway drops off without a clean disconnect — how FlexIoT/other subscribers notice a gateway went offline.">?</span>
+                <span class="help-btn sm" title="Subscribe = sent to the RS485 port. Publish = data read from the RS485 port. AT+MQTTSUBTP?/MQTTPUBTP? queries confirmed on real hardware — and revealed the gateway holds 10 topic slots each, not just one; this screen only reads/writes slot 1. Last Will = published by the broker if the gateway drops off without a clean disconnect, but AT+MQTTWILLEN?/MQTTWILLTP? both confirmed to reply +CME ERROR:58 on this device — these command names don't exist here.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
                 <div class="field-row">
@@ -940,6 +941,7 @@
                     <div class="toggle-row"><button class="switch" id="fl-f-retain" role="switch" aria-checked="false"></button><span class="state" id="fl-f-retain-state">Off</span></div>
                   </div>
                 </div>
+                <p style="margin:0; padding:8px 12px; font-size:12px; color:var(--warn-text); background:var(--warn-bg); border:1px solid var(--warn-border); border-radius:4px;"><b>Confirmed not to work as written:</b> querying AT+MQTTWILLEN?/AT+MQTTWILLTP? on real hardware replied "+CME ERROR:58" for both — these exact command names don't exist on this device. Read from Device can't fill these in, and Apply sending them will fail the same way. Left in place in case the real command turns up later.</p>
                 <div class="field-row">
                   <div class="field" style="max-width:140px;">
                     <div class="k">Last Will</div>
@@ -975,7 +977,7 @@
             <div class="section-box" id="fl-sec-apn">
               <div class="section-hd">
                 <div class="t"><b>Cellular (APN)</b><span>AT+APN</span></div>
-                <span class="help-btn sm" title="From your SIM provider. Factory value CMNET only works in China.">?</span>
+                <span class="help-btn sm" title="From your SIM provider. Factory value CMNET only works in China. AT+APN? confirmed on real hardware, replying apn,user,pass,authtype in that order — Read from Device uses it, and Apply's AT+APN= now sends fields in that same confirmed order (it was originally guessed as apn,authtype,user,pass).">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
                 <div class="field-row">
@@ -1013,7 +1015,7 @@
 
           </div>
           <div class="panel-footer">
-            <p>Only changed fields are sent, each one waits for a reply, then AT+S saves and restarts the gateway.</p>
+            <p>Read from Device fills the fields in from the gateway's confirmed query replies (slot 1 of 10 for topics; Last Will can't be read — see above). Save &amp; Restart only sends fields you've changed since the last read, each waiting for a reply, then AT+S saves and restarts the gateway.</p>
             <div style="display:flex; gap:12px;">
               <button class="secondary" id="fl-btn-read" disabled>Read from Device</button>
               <button class="primary" id="fl-btn-apply" disabled>Save &amp; Restart</button>
@@ -2420,21 +2422,127 @@
   });
 
   // ---------- Read from Device ----------
-  // Reply format for these isn't confirmed on hardware, so this only sends
-  // the "?" query form (the same query convention confirmed for AT+CCLK? on
-  // this device family) and logs whatever comes back — it does not try to
-  // parse replies into the fields above, to avoid silently showing a wrong
-  // guess as if it were the device's real configuration.
+  // Reply formats below are confirmed on real hardware (a full Read from
+  // Device pass, raw log checked line by line) — so unlike earlier, this
+  // now parses each reply and fills the fields in directly instead of
+  // asking you to copy values out of the raw log by hand.
+  //
+  // Two things the real replies revealed that this app didn't know before:
+  // - AT+MQTTSUBTP?/AT+MQTTPUBTP? each return TEN topic slots (one per
+  //   line, "index,qos,topic,..."), not the single topic this screen's
+  //   Subscribe/Publish fields model — this reads back slot 1 only, same
+  //   as what Apply can actually write, and leaves slots 2–10 alone.
+  // - AT+MQTTWILLEN?/AT+MQTTWILLTP? both reply "+CME ERROR:58" — these
+  //   guessed command names are now confirmed NOT to exist on this device,
+  //   not just "unverified." Sent anyway so the error is visible in the
+  //   raw log, but nothing is parsed from them (see the Will section's own
+  //   note for what this means for Apply).
+  function flSetSwitch(id, stateId, on){
+    $(id).classList.toggle('on', on);
+    $(id).setAttribute('aria-checked', String(on));
+    $(stateId).textContent = on ? 'On' : 'Off';
+  }
+
+  async function flReadQuery(cmd, test, timeoutMs = 2500){
+    const p = flWaitForLine(test, timeoutMs);
+    await flSendRaw(cmd);
+    return await p;
+  }
+
   $('fl-btn-read').addEventListener('click', async () => {
     $('fl-btn-read').disabled = true;
-    flSetOpStatus('Reading configuration — watch the raw log for replies (reply format not yet confirmed).', 'idle');
-    const queries = ['AT+UART?', 'AT+MQTTSVR?', 'AT+MQTTCID?', 'AT+MQTTUSER?', 'AT+MQTTSUBTP?', 'AT+MQTTPUBTP?', 'AT+MQTTWILLEN?', 'AT+MQTTWILLTP?', 'AT+APN?'];
-    for (const q of queries) {
-      await flSendRaw(q);
-      await flSleep(400);
+    flSetOpStatus('Reading configuration from the gateway…', 'idle');
+    try {
+      const uart = await flReadQuery('AT+UART?', (line) => {
+        const m = line.match(/\+UART\s*:\s*(\d+),(\d+),(\d+),(\w+)/i);
+        return m ? m : null;
+      });
+      if (uart) {
+        $('fl-f-baud').value = uart[1];
+        $('fl-f-stopbits').value = uart[3];
+        $('fl-f-parity').value = uart[4].toUpperCase();
+      }
+
+      const mqttsvr = await flReadQuery('AT+MQTTSVR?', (line) => {
+        const m = line.match(/\+MQTTSVR\s*:\s*([^,]*),(\d+)/i);
+        return m ? m : null;
+      });
+      if (mqttsvr) {
+        $('fl-f-mqtt-host').value = mqttsvr[1];
+        $('fl-f-mqtt-port').value = mqttsvr[2];
+      }
+
+      const mqttcid = await flReadQuery('AT+MQTTCID?', (line) => {
+        const m = line.match(/\+MQTTCID\s*:\s*(\S+)/i);
+        return m ? m[1] : null;
+      });
+      if (mqttcid) $('fl-f-mqtt-cid').value = mqttcid;
+
+      const mqttuser = await flReadQuery('AT+MQTTUSER?', (line) => {
+        const m = line.match(/\+MQTTUSER\s*:\s*(.*)/i);
+        return m ? m[1].trim() : null;
+      });
+      if (mqttuser !== null && mqttuser !== undefined) $('fl-f-mqtt-user').value = mqttuser;
+
+      // Slot 1 only — see the note above.
+      const subtp = await flReadQuery('AT+MQTTSUBTP?', (line) => {
+        const m = line.match(/^1,(\d+),([^,]*),\S+/);
+        return m ? m : null;
+      }, 3000);
+      if (subtp) {
+        $('fl-f-sub-topic').value = subtp[2];
+        $('fl-f-sub-qos').value = subtp[1];
+      }
+
+      const pubtp = await flReadQuery('AT+MQTTPUBTP?', (line) => {
+        const m = line.match(/^1,(\d+),([^,]*),(\d+)/);
+        return m ? m : null;
+      }, 3000);
+      if (pubtp) {
+        $('fl-f-pub-topic').value = pubtp[2];
+        $('fl-f-pub-qos').value = pubtp[1];
+        flSetSwitch('fl-f-retain', 'fl-f-retain-state', pubtp[3] !== '0');
+      }
+
+      // Confirmed non-functional — wait for the error so it doesn't
+      // collide with AT+APN? right after, but there's nothing to parse.
+      await flReadQuery('AT+MQTTWILLEN?', (line) => /\+cme error|^ok$/i.test(line) ? true : null, 1500);
+      await flReadQuery('AT+MQTTWILLTP?', (line) => /\+cme error|^ok$/i.test(line) ? true : null, 1500);
+
+      const apn = await flReadQuery('AT+APN?', (line) => {
+        const m = line.match(/\+APN\s*:\s*([^,]*),([^,]*),([^,]*),(\S+)/i);
+        return m ? m : null;
+      });
+      if (apn) {
+        $('fl-f-apn').value = apn[1];
+        $('fl-f-apn-user').value = apn[2];
+        $('fl-f-apn-pass').value = apn[3];
+        $('fl-f-apn-auth').value = apn[4];
+      }
+
+      // Whatever was just read back is, by definition, the gateway's
+      // current configuration — fold it into the baseline so Apply's
+      // staged-diff only shows fields you actually change from here,
+      // not every field this Read just populated.
+      Object.assign(flBaseline, flCurrentValues());
+      flRefreshCmdPreview();
+
+      const missing = [];
+      if (!uart) missing.push('serial port');
+      if (!mqttsvr) missing.push('MQTT broker');
+      if (!mqttcid) missing.push('client ID');
+      if (mqttuser === null || mqttuser === undefined) missing.push('MQTT username');
+      if (!subtp) missing.push('subscribe topic');
+      if (!pubtp) missing.push('publish topic');
+      if (!apn) missing.push('APN');
+      flSetOpStatus(missing.length
+        ? `Read done, but no reply for: ${missing.join(', ')} — those fields were left as-is.`
+        : 'Read done — fields updated from the gateway\'s current configuration.', missing.length ? 'err' : 'ok');
+    } catch (e) {
+      flSetOpStatus('Read failed: ' + e.message, 'err');
+    } finally {
+      $('fl-btn-read').disabled = !flPort;
     }
-    flSetOpStatus('Read commands sent — check the raw log for replies, then update the fields by hand.', 'ok');
-    $('fl-btn-read').disabled = !flPort;
   });
 
   // ---------- staged-changes / command preview / Save & Restart ----------
@@ -2515,8 +2623,13 @@
       cmds.push({ label: `Will topic → ${v.willTopic || '(empty)'} (QoS ${v.willQos}, retain ${v.willRetain ? 'on' : 'off'}, payload "${v.willPayload}")`, cmd, previewCmd: cmd });
     }
     if (v.apn !== flBaseline.apn || v.apnAuth !== flBaseline.apnAuth || v.apnUser !== flBaseline.apnUser || v.apnPass !== flBaseline.apnPass) {
-      const cmd = `AT+APN=${v.apn},${v.apnAuth},${v.apnUser},${v.apnPass}`;
-      const previewCmd = `AT+APN=${v.apn},${v.apnAuth},${v.apnUser},${flMask(v.apnPass)}`;
+      // Field order confirmed on real hardware from AT+APN? (replied
+      // "+APN:CMNET,,,0" = apn,user,pass,authtype) — not apn,authtype,
+      // user,pass as this was originally guessed. Assuming AT+APN= takes
+      // the same order as AT+APN? replies with, which held true for every
+      // other confirmed command on this screen.
+      const cmd = `AT+APN=${v.apn},${v.apnUser},${v.apnPass},${v.apnAuth}`;
+      const previewCmd = `AT+APN=${v.apn},${v.apnUser},${flMask(v.apnPass)},${v.apnAuth}`;
       cmds.push({ label: `APN → ${v.apn || '(empty)'}`, cmd, previewCmd });
     }
     return cmds;
