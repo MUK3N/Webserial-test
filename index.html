@@ -59,6 +59,16 @@
 
   /* ---------- header / chrome ---------- */
   .brand-bar{height:4px; background:var(--brand-gradient);}
+
+  /* ---------- FieldTrack: multi-slot pick lists (Wi-Fi APs / Server slots) ---------- */
+  .ft-pick-list{display:flex; flex-direction:column; gap:6px;}
+  .ft-pick-row{display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border-soft); border-radius:4px; cursor:pointer; font-size:13px; background:#fff;}
+  .ft-pick-row:hover{border-color:var(--border-input-strong);}
+  .ft-pick-row.picked{border-color:var(--primary); background:var(--bg-nav-active);}
+  .ft-pick-row .slot{font-weight:700; color:var(--ink-soft); min-width:84px; flex:none;}
+  .ft-pick-row .val{flex:1; color:var(--ink);}
+  .ft-pick-row .val.empty{color:var(--muted); font-style:italic;}
+  .ft-pick-empty{font-size:13px; color:var(--muted); padding:4px 2px;}
   header.app{
     display:flex; align-items:center; justify-content:space-between;
     padding:18px 32px; background:#fff; border-bottom:1px solid var(--border-soft);
@@ -1318,7 +1328,7 @@
           <div class="panel-header">
             <div>
               <h2>Device Info &amp; Status</h2>
-              <p>Parsed from qry infos, qry ip and qry sdkver. Refresh to re-read from the connected device.</p>
+              <p>Read automatically from qry infos, qry ip and qry sdkver as soon as you connect. Press Refresh any time to re-read.</p>
             </div>
             <span class="help-btn" title="qry infos replies [QRY]ver:… imsi:… imei:… iccid:… phnum:… — fills Firmware, IMSI, IMEI, ICCID and Phone number in one go. qry ip replies [QRY]ip:… for Local IP; qry sdkver replies [QRY]sdk_ver:… for SDK version. Reply format is confirmed in the device's own instruction manual (USB serial is a listed delivery channel for all three) but not yet independently checked against real hardware.">?</span>
           </div>
@@ -1334,7 +1344,7 @@
             </div>
           </div>
           <div class="panel-footer">
-            <p>Not yet read from hardware — press Refresh.</p>
+            <p>Values stay blank (—) until the device has actually replied.</p>
             <button class="primary" id="ft-btn-refresh" disabled>Refresh</button>
           </div>
         </div>
@@ -1353,9 +1363,12 @@
             <div class="section-box" id="ft-sec-wifi">
               <div class="section-hd">
                 <div class="t"><b>Wi-Fi</b><span>wifi get · wifi save · wifi crl</span></div>
-                <span class="help-btn sm" title="Check reads the current Wi-Fi config (wifi get). Clear wipes it (wifi crl). Set writes the SSID and password below (wifi save <ssid> <password>). All three are documented in the W0x instruction manual as supported over USB serial, not just the team's own macro workflow — but the reply format still hasn't been independently checked against real hardware.">?</span>
+                <span class="help-btn sm" title="Check reads all APs saved on the device (wifi get can reply with up to 3 — the device stores that many). Pick one below to load it into the SSID/Password fields. Clear wipes the whole list (wifi crl). Set writes the SSID and password below (wifi save <ssid> <password>) — the command has no slot number, so the device appends it and drops the oldest of 3 when full; there's no way to overwrite one specific slot directly. All three are documented in the W0x instruction manual as supported over USB serial, not just the team's own macro workflow — but the reply format still hasn't been independently checked against real hardware.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="ft-pick-list" id="ft-wifi-list">
+                  <div class="ft-pick-empty">Press Check Wi-Fi to list the APs saved on the device (up to 3).</div>
+                </div>
                 <div class="field-row">
                   <div class="field">
                     <div class="k">SSID</div>
@@ -1374,6 +1387,7 @@
                   <button class="primary" id="ft-btn-wifi-set" disabled>Set Wi-Fi</button>
                   <span class="chip" id="ft-wifi-status">Not checked</span>
                 </div>
+                <div class="hint">Set always adds a new AP (wifi save has no slot number) — the device drops the oldest of 3 when full. There's no command to overwrite one chosen slot directly.</div>
               </div>
             </div>
 
@@ -1436,9 +1450,12 @@
             <div class="section-box" id="ft-sec-server">
               <div class="section-hd">
                 <div class="t"><b>Server</b><span>set server [id server port ptype] · get server [id]</span></div>
-                <span class="help-btn sm" title="Server address: domain or IP of the platform server. Protocol type (ptype): 0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart — the platform's own protocol doc only documents option 1. Server ID (id): which of the device's 5 server slots this writes to — 0 ServerM, 1 ServerS, 2 Server3, 3 Server4, 4 Server5. Port: the server's listening TCP port, 1–65535. Documented in the W0x instruction manual as supported over USB serial (previously only SMS/Platform), but the reply format hasn't been independently checked against real hardware yet.">?</span>
+                <span class="help-btn sm" title="Server address: domain or IP of the platform server. Protocol type (ptype): 0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart — the platform's own protocol doc only documents option 1. Server ID (id): which of the device's server slots this writes to — 0 ServerM, 1 ServerS, 2 Server3, 3 Server4, 4 Server5. Check Servers queries every slot (0–4) and lists whichever reply; pick one below to load it into the fields and its ID. Port: the server's listening TCP port, 1–65535. Documented in the W0x instruction manual as supported over USB serial (previously only SMS/Platform), but the reply format hasn't been independently checked against real hardware yet.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="ft-pick-list" id="ft-server-list">
+                  <div class="ft-pick-empty">Press Check Servers to list the configured slots (queries 0–4).</div>
+                </div>
                 <div class="field-row">
                   <div class="field">
                     <div class="k">Server address</div>
@@ -1464,7 +1481,7 @@
                   <div class="field" style="max-width:220px;">
                     <div class="k">Server ID (id)</div>
                     <div class="input-box"><input type="number" id="ft-f-server-id" min="0" max="4" placeholder="e.g. 1" /></div>
-                    <div class="hint">0–4 · selects which of 5 server slots to use</div>
+                    <div class="hint">0–4 · selects which slot Set Server writes to — filled in automatically when you pick a slot above</div>
                   </div>
                   <div class="field" style="max-width:220px;">
                     <div class="k">Port</div>
@@ -1473,10 +1490,11 @@
                   </div>
                 </div>
                 <div style="display:flex; gap:12px; align-items:center;">
-                  <button class="secondary" id="ft-btn-server-check" disabled>Check Server</button>
+                  <button class="secondary" id="ft-btn-server-check" disabled>Check Servers</button>
                   <button class="primary" id="ft-btn-server-set" disabled>Set Server</button>
                   <span class="chip" id="ft-server-status">Not checked</span>
                 </div>
+                <div class="hint">Set server IS slot-addressable — it writes to whichever Server ID is in the field above, so picking a slot above and editing its fields replaces just that one. Checking doesn't clear the others.</div>
               </div>
             </div>
 
@@ -2806,6 +2824,8 @@
   let ftReadableClosed = null;
   let ftLineBuffer = '';
   const ftLineListeners = new Set(); // callback(line)
+  let ftWifiEntries = []; // [{slot, ssid, passw}, …] from the last "wifi get"
+  let ftServerEntries = []; // [{id, server, port, ptype}, …] from the last Check Servers
 
   if (!('serial' in navigator)) {
     $('ft-serial-unsupported').style.display = 'block';
@@ -2901,6 +2921,22 @@
     });
   }
 
+  // Like ftWaitForLine, but for a reply that can be more than one line (e.g.
+  // "wifi get" answering with one line per stored AP) — listens for the
+  // whole windowMs instead of resolving on the first match, and returns
+  // every non-null result from `test`, in the order the lines arrived.
+  function ftCollectLines(test, windowMs = 700){
+    return new Promise((resolve) => {
+      const results = [];
+      const onLine = (line) => {
+        const m = test(line);
+        if (m !== null && m !== undefined && m !== false) results.push(m);
+      };
+      ftLineListeners.add(onLine);
+      setTimeout(() => { ftLineListeners.delete(onLine); resolve(results); }, windowMs);
+    });
+  }
+
   // This device's "GET:"/"SET:"/"CLR:"/"[QRY]" replies are "key:value" tokens
   // after that prefix, per the W0x instruction manual (e.g. "GET:ths:200 mg
   // act_deb:200 ms dis_deb:20000 ms" or "[QRY]ver:xxx imsi:xxx imei:xxx
@@ -2938,6 +2974,104 @@
     else if (ok === false) el.classList.add('err');
   }
 
+  // Renders the list of stored Wi-Fi APs under ft-wifi-list, each as a radio
+  // row. Picking one loads its SSID/password into the editable fields below
+  // — it does NOT send anything, since "wifi save" has no slot number, so
+  // there's no device-side notion of a selected slot to write back to.
+  function ftRenderWifiList(entries){
+    ftWifiEntries = entries;
+    const list = $('ft-wifi-list');
+    list.textContent = '';
+    if (!entries.length) {
+      const empty = document.createElement('div');
+      empty.className = 'ft-pick-empty';
+      empty.textContent = 'No reply — nothing to list. Check the raw log.';
+      list.appendChild(empty);
+      return;
+    }
+    entries.forEach((entry, i) => {
+      const row = document.createElement('label');
+      row.className = 'ft-pick-row' + (i === 0 ? ' picked' : '');
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'ft-wifi-pick';
+      radio.value = String(i);
+      radio.checked = i === 0;
+      const slot = document.createElement('span');
+      slot.className = 'slot';
+      slot.textContent = `AP ${entry.slot}`;
+      const val = document.createElement('span');
+      val.className = 'val' + (entry.ssid ? '' : ' empty');
+      val.textContent = entry.ssid || '(empty)';
+      radio.addEventListener('change', () => {
+        list.querySelectorAll('.ft-pick-row').forEach(r => r.classList.remove('picked'));
+        row.classList.add('picked');
+        $('ft-f-ssid').value = entry.ssid || '';
+        $('ft-f-password').value = entry.passw || '';
+      });
+      row.appendChild(radio);
+      row.appendChild(slot);
+      row.appendChild(val);
+      list.appendChild(row);
+    });
+    // Load the first entry into the editable fields by default, same as
+    // picking it, so Check Wi-Fi still "fills the fields" like before.
+    $('ft-f-ssid').value = entries[0].ssid || '';
+    $('ft-f-password').value = entries[0].passw || '';
+  }
+
+  // Renders the list of server slots under ft-server-list, each as a radio
+  // row. Picking one loads its address/port/ptype AND its Server ID into
+  // the editable fields — unlike Wi-Fi, "set server" IS slot-addressable,
+  // so Set Server then writes back to exactly the picked slot.
+  const FT_SERVER_NAMES = { 0: 'ServerM', 1: 'ServerS', 2: 'Server3', 3: 'Server4', 4: 'Server5' };
+  function ftRenderServerList(entries){
+    ftServerEntries = entries;
+    const list = $('ft-server-list');
+    list.textContent = '';
+    if (!entries.length) {
+      const empty = document.createElement('div');
+      empty.className = 'ft-pick-empty';
+      empty.textContent = 'No reply from any slot — nothing to list. Check the raw log.';
+      list.appendChild(empty);
+      return;
+    }
+    entries.forEach((entry, i) => {
+      const row = document.createElement('label');
+      row.className = 'ft-pick-row' + (i === 0 ? ' picked' : '');
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'ft-server-pick';
+      radio.value = String(i);
+      radio.checked = i === 0;
+      const slot = document.createElement('span');
+      slot.className = 'slot';
+      slot.textContent = `${entry.id} (${FT_SERVER_NAMES[entry.id] || '?'})`;
+      const val = document.createElement('span');
+      val.className = 'val' + (entry.server ? '' : ' empty');
+      val.textContent = entry.server ? `${entry.server}:${entry.port || '—'} · ptype ${entry.ptype ?? '—'}` : '(not set)';
+      const loadEntry = () => {
+        $('ft-f-server-id').value = entry.id;
+        $('ft-f-server-addr').value = entry.server || '';
+        $('ft-f-server-port').value = entry.port || '';
+        if (entry.ptype !== undefined && entry.ptype !== '') $('ft-f-ptype').value = entry.ptype;
+      };
+      radio.addEventListener('change', () => {
+        list.querySelectorAll('.ft-pick-row').forEach(r => r.classList.remove('picked'));
+        row.classList.add('picked');
+        loadEntry();
+      });
+      row.appendChild(radio);
+      row.appendChild(slot);
+      row.appendChild(val);
+      list.appendChild(row);
+    });
+    $('ft-f-server-id').value = entries[0].id;
+    $('ft-f-server-addr').value = entries[0].server || '';
+    $('ft-f-server-port').value = entries[0].port || '';
+    if (entries[0].ptype !== undefined && entries[0].ptype !== '') $('ft-f-ptype').value = entries[0].ptype;
+  }
+
   function ftSetConnected(on){
     $('ft-conn-chip').textContent = on ? 'Connected' : 'Not yet connected';
     $('ft-conn-chip').classList.toggle('ok', !!on);
@@ -2963,7 +3097,8 @@
       ftStartReadLoop();
       ftSetConnected(true);
       ftLog('Connected · 115200 8N1', 'sys');
-      ftSetOpStatus('Connected. No mode switch needed — send a command below.', 'ok');
+      ftSetOpStatus('Connected. Reading device info…', 'ok');
+      await ftRefreshDeviceInfo(); // auto-read Device Info & Status — no need to press Refresh
     } catch (e) {
       ftLog('Connect failed: ' + e.message, 'muted');
       ftSetOpStatus('Connect failed: ' + e.message, 'err');
@@ -3007,7 +3142,10 @@
     ftSetOpStatus(`${label} sent (${cmd}) — check the raw log for the reply (format not yet confirmed).`, 'idle');
   }
 
-  $('ft-btn-refresh').addEventListener('click', async () => {
+  // Reads qry infos / qry ip / qry sdkver and fills Device Info & Status.
+  // Called automatically right after connecting, and again by the Refresh
+  // button for a manual re-read (e.g. after the IP changes).
+  async function ftRefreshDeviceInfo(){
     $('ft-btn-refresh').disabled = true;
     ftSetOpStatus('Refreshing device info…', 'idle');
     try {
@@ -3033,30 +3171,36 @@
       const sdk = await sdkPromise;
       $('ft-v-sdk').textContent = sdk || 'No reply';
 
-      ftSetOpStatus('Refresh done — check the raw log for the exact replies.', 'ok');
+      ftSetOpStatus('Device info read — check the raw log for the exact replies.', 'ok');
     } catch (e) {
-      ftSetOpStatus('Refresh failed: ' + e.message, 'err');
+      ftSetOpStatus('Reading device info failed: ' + e.message, 'err');
     } finally {
       $('ft-btn-refresh').disabled = !ftPort;
     }
-  });
+  }
+  $('ft-btn-refresh').addEventListener('click', ftRefreshDeviceInfo);
 
   $('ft-btn-wifi-check').addEventListener('click', async () => {
     $('ft-btn-wifi-check').disabled = true;
     // "wifi get" can reply with up to 3 lines, one per stored AP ("wifi
-    // 1:ssid:... passw:...", "wifi 2:...", "wifi 3:..."); this app only
-    // edits slot 1, so only that line is waited for.
-    const replyPromise = ftWaitForLine((line) => /^\s*wifi\s*1\s*:/i.test(line) ? ftParseKeys(line, ['ssid','passw']) : null, 2000);
+    // 1:ssid:... passw:...", "wifi 2:...", "wifi 3:..."); collect all of
+    // them for the window below rather than stopping at the first line.
+    const collectPromise = ftCollectLines((line) => {
+      const m = line.match(/^\s*wifi\s*(\d+)\s*:/i);
+      if (!m) return null;
+      const kv = ftParseKeys(line, ['ssid','passw']);
+      return { slot: Number(m[1]), ssid: kv.ssid || '', passw: kv.passw || '' };
+    }, 700);
     await ftSendRaw('wifi get');
-    const kv = await replyPromise;
-    if (kv) {
-      $('ft-f-ssid').value = kv.ssid || '';
-      $('ft-f-password').value = kv.passw || '';
-      ftSetChip('ft-wifi-status', kv.ssid ? `Connected: ${kv.ssid}` : 'No Wi-Fi saved', true);
-      ftSetOpStatus(kv.ssid ? `Wi-Fi read: SSID "${kv.ssid}".` : 'Wi-Fi read: no AP saved in slot 1.', 'ok');
+    const entries = await collectPromise;
+    ftRenderWifiList(entries);
+    if (entries.length) {
+      const named = entries.filter(e => e.ssid).map(e => e.ssid).join(', ');
+      ftSetChip('ft-wifi-status', `${entries.length} AP${entries.length > 1 ? 's' : ''} found`, true);
+      ftSetOpStatus(named ? `Wi-Fi read: ${entries.length} AP(s) — ${named}.` : `Wi-Fi read: ${entries.length} AP(s), all empty.`, 'ok');
     } else {
-      ftSetChip('ft-wifi-status', 'No reply within 2s', false);
-      ftSetOpStatus('wifi get sent — no reply seen within 2s. Check the raw log.', 'err');
+      ftSetChip('ft-wifi-status', 'No reply within 700ms', false);
+      ftSetOpStatus('wifi get sent — no reply seen. Check the raw log.', 'err');
     }
     $('ft-btn-wifi-check').disabled = !ftPort;
   });
@@ -3068,6 +3212,13 @@
     if (reply) {
       $('ft-f-ssid').value = '';
       $('ft-f-password').value = '';
+      ftWifiEntries = [];
+      const list = $('ft-wifi-list');
+      list.textContent = '';
+      const empty = document.createElement('div');
+      empty.className = 'ft-pick-empty';
+      empty.textContent = 'Cleared — no APs stored.';
+      list.appendChild(empty);
       ftSetChip('ft-wifi-status', 'Cleared', true);
       ftSetOpStatus('All stored Wi-Fi APs cleared.', 'ok');
     } else {
@@ -3167,24 +3318,26 @@
   });
 
   $('ft-btn-server-check').addEventListener('click', async () => {
-    const id = $('ft-f-server-id').value.trim();
-    if (id === '') { ftSetOpStatus('Enter a Server ID (0–4) before checking a server slot.', 'err'); return; }
     $('ft-btn-server-check').disabled = true;
-    // "GET:[id] server:... port:... ptype:..." — the "[id]" right after
-    // "GET:" is not a key:value pair, so it's just ignored by the
-    // keys-anchored scan rather than mis-parsed as part of a value.
-    const replyPromise = ftWaitForLine((line) => /^GET:/i.test(line) ? ftParseKeys(line, ['server','port','ptype']) : null, 2000);
-    await ftSendRaw(`get server ${id}`);
-    const kv = await replyPromise;
-    if (kv && kv.server !== undefined) {
-      $('ft-f-server-addr').value = kv.server || '';
-      $('ft-f-server-port').value = ftNum(kv.port);
-      if (kv.ptype !== undefined && kv.ptype !== '') $('ft-f-ptype').value = ftNum(kv.ptype);
-      ftSetChip('ft-server-status', kv.server ? `Connected: ${kv.server}` : 'No server saved', true);
-      ftSetOpStatus(kv.server ? `Server slot ${id} read: ${kv.server}:${ftNum(kv.port)}.` : `Server slot ${id} read: not set.`, 'ok');
+    ftSetChip('ft-server-status', 'Checking…', null);
+    ftSetOpStatus('Checking server slots 0–4…', 'idle');
+    const results = [];
+    for (let id = 0; id <= 4; id++) {
+      // "GET:[id] server:... port:... ptype:..." — the "[id]" right after
+      // "GET:" is not a key:value pair, so it's just ignored by the
+      // keys-anchored scan rather than mis-parsed as part of a value.
+      const replyPromise = ftWaitForLine((line) => /^GET:/i.test(line) ? ftParseKeys(line, ['server','port','ptype']) : null, 600);
+      await ftSendRaw(`get server ${id}`);
+      const kv = await replyPromise;
+      if (kv && kv.server !== undefined) results.push({ id, server: kv.server || '', port: ftNum(kv.port), ptype: ftNum(kv.ptype) });
+    }
+    ftRenderServerList(results);
+    if (results.length) {
+      ftSetChip('ft-server-status', `${results.length} slot${results.length > 1 ? 's' : ''} found`, true);
+      ftSetOpStatus(`Server check done — ${results.length} slot(s) replied. Check the raw log for the exact replies.`, 'ok');
     } else {
-      ftSetChip('ft-server-status', 'No reply within 2s', false);
-      ftSetOpStatus('get server sent — no reply seen within 2s. Check the raw log.', 'err');
+      ftSetChip('ft-server-status', 'No reply from any slot', false);
+      ftSetOpStatus('get server sent for slots 0–4 — no reply seen. Check the raw log.', 'err');
     }
     $('ft-btn-server-check').disabled = !ftPort;
   });
@@ -3202,7 +3355,7 @@
     const kv = await replyPromise;
     if (kv && kv.server !== undefined) {
       ftSetChip('ft-server-status', `Saved: ${kv.server || addr}`, true);
-      ftSetOpStatus(`Server slot ${id} set to ${kv.server || addr}:${ftNum(kv.port) || port}.`, 'ok');
+      ftSetOpStatus(`Server slot ${id} set to ${kv.server || addr}:${ftNum(kv.port) || port}. Press Check Servers to refresh the list.`, 'ok');
     } else {
       ftSetChip('ft-server-status', 'No reply within 2s', false);
       ftSetOpStatus('set server sent — no reply seen within 2s. Check the raw log.', 'err');
