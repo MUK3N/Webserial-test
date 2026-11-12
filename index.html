@@ -1550,17 +1550,88 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <h2>Wiring</h2>
-              <p>USB TTL / data interface at a fixed 115200 baud, 8N1.</p>
+              <h2>FieldTrack · Help reference</h2>
+              <p>Full content behind every (?) button on the Configuration screen, plus wiring and the raw command set, in sidebar order.</p>
             </div>
           </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Wiring</h2></div></div>
           <div class="panel-body">
-            <div class="section-box">
-              <div class="section-hd"><div class="t"><b>Connection</b></div></div>
-              <div class="section-body">
-                <p style="margin:0; font-size:13px; color:var(--ink-soft);">Connect to the tracker's USB Serial / data interface at 115200 baud, 8N1 — no handshake or mode switch needed, unlike LevelPro or FlexLink. Commands are plain ASCII text, one per line.</p>
-              </div>
-            </div>
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Connection</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Connect to the tracker's USB Serial / data interface at a fixed 115200 baud, 8N1 — no handshake or mode switch needed, unlike LevelPro or FlexLink. Confirmed on real hardware.</p></div>
+              <div><b>Command format</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Plain ASCII text, one command per line, CRLF-terminated. Replies are prefixed <code>GET:</code>, <code>SET:</code> or <code>CLR:</code> for commands of that name, or <code>[QRY]</code> for the <code>qry</code> info commands; Wi-Fi replies are prefixed <code>wifi &lt;n&gt;:</code> per stored AP.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>115200 8N1, CRLF — confirmed on real hardware</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Device info &amp; status</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>IMEI / IMSI / ICCID</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The modem's hardware identifier (IMEI), the inserted SIM's subscriber identifier (IMSI) and the SIM's serial number (ICCID). All three come back in one <code>qry infos</code> reply. On a unit with no SIM inserted, IMSI/ICCID/phone number reply empty — shown here as "No reply" rather than being misread as the next field over.</p></div>
+              <div><b>Firmware</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The tracker's firmware version string, e.g. <code>W02D_A2V0.0.1</code>, from the same <code>qry infos</code> reply.</p></div>
+              <div><b>SDK version</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The onboard SDK/module version, via its own <code>qry sdkver</code> query.</p></div>
+              <div><b>Phone number</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The SIM's MSISDN, if the carrier provisions one — from <code>qry infos</code>. Often blank even with a SIM inserted.</p></div>
+              <div><b>Local IP</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The tracker's current IP on its cellular/Wi-Fi data connection, via its own <code>qry ip</code> query. Shows "No reply" if the tracker has no active data connection.</p></div>
+              <div><b>Refresh</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">All of the above is read automatically as soon as you connect — there's no need to press Refresh first. Press it any time to re-read.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>qry infos · qry ip · qry sdkver — confirmed on real hardware, including the auto-read on connect and the empty-field parsing fix</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Wi-Fi</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>AP 1 / AP 2 / AP 3</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Up to 3 stored access points. All 3 the tracker knows about can be configured as fallbacks by signal, at the same time — there's no single "active" one to select.</p></div>
+              <div><b>Check Wi-Fi</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Sends <code>wifi get</code>, which replies with one line per stored AP (<code>wifi 1:ssid:… passw:…</code>, etc.), and fills whichever of the 3 rows reply. Rows the device has nothing stored for stay blank.</p></div>
+              <div><b>Set Wi-Fi</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Sends one <code>wifi save &lt;ssid&gt; &lt;password&gt;</code> for every row with an SSID filled in. The 3 slots are <b>FIFO</b> — confirmed on real hardware: there's no slot number in the command, a save always just appends, and the device drops the oldest of the 3 stored APs once it's full. There is no way to target or overwrite one specific slot from this screen or from the device itself.</p></div>
+              <div><b>SSID restriction</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The SSID can't contain a space — confirmed on real hardware: the device splits the <code>wifi save</code> command on whitespace, so a spaced SSID gets cut at the first word. Up to 32 characters for SSID, 64 for password, sent in plain text over serial (there's no encrypted-credential option on this interface).</p></div>
+              <div><b>Clear Wi-Fi / Show passwords</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Clear wipes all 3 stored APs at once (<code>wifi crl</code>) — there's no per-slot clear. Show passwords just toggles all 3 password fields to plain text locally; it doesn't touch the device.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>wifi get · wifi save &lt;ssid&gt; &lt;password&gt; · wifi crl — confirmed on real hardware, including the FIFO behavior and the no-space SSID restriction</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Reporting interval</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>ACC-on interval (ontv)</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">How often the tracker uploads its position while ignition/ACC is on, in seconds, 0–1000.</p></div>
+              <div><b>ACC-off interval (offtv)</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">How often it uploads while ACC is off, in seconds, 0–80000 — typically set much longer than ontv to save battery.</p></div>
+              <div><b>Check / Set</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Check reads both at once (<code>get report</code>) and fills the two fields; Set writes whatever is currently in them (<code>set report &lt;ontv&gt; &lt;offtv&gt;</code>).</p></div>
+            </div></div>
+            <div class="panel-footer"><p>get report · set report &lt;ontv&gt; &lt;offtv&gt; — documented in the W0x instruction manual as supported over USB serial, not yet independently checked against real hardware</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Motion alarm</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Threshold (ths)</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">How hard a movement must be, in mg (0–5000), before the built-in accelerometer counts it as motion.</p></div>
+              <div><b>Activation debounce (act_deb)</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">How long motion above the threshold must persist, in ms (0–9999), before the tracker raises a motion alarm.</p></div>
+              <div><b>Deactivation debounce (dis_deb)</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">How long it must stay calm, in ms (0–9999), before the alarm clears.</p></div>
+              <div><b>Check / Clear / Set</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Check reads the current setpoint (<code>get motion</code>) and fills the 3 fields; Set writes them (<code>set motion &lt;ths&gt; &lt;act_deb&gt; &lt;dis_deb&gt;</code>); Clear resets to the firmware default of 50 mg / 100 ms / 300 ms (<code>clr motion</code>).</p></div>
+            </div></div>
+            <div class="panel-footer"><p>get motion · set motion &lt;ths&gt; &lt;act_deb&gt; &lt;dis_deb&gt; · clr motion — documented in the W0x instruction manual as supported over USB serial, not yet independently checked against real hardware</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Server</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Slots 0–4</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Unlike Wi-Fi, the server list IS addressable by slot: 0 ServerM, 1 ServerS, 2 Server3, 3 Server4, 4 Server5. Each row below is one slot — writing one never touches the others.</p></div>
+              <div><b>Address / Port</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Domain name or IP, and TCP listening port (1–65535), of the platform server for that slot.</p></div>
+              <div><b>Protocol type (ptype)</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart. The platform's own protocol documentation only covers option 1 (Wialon IPS) in detail.</p></div>
+              <div><b>Check Servers</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Queries all 5 slots in turn (<code>get server &lt;id&gt;</code>) and fills in whichever rows reply. Slots the device has nothing configured for stay blank.</p></div>
+              <div><b>Per-row Set</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Each row's own Set button writes only that slot (<code>set server &lt;id&gt; &lt;addr&gt; &lt;port&gt; &lt;ptype&gt;</code>) — the other 4 are left exactly as they were.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>get server &lt;id&gt; · set server &lt;id&gt; &lt;addr&gt; &lt;port&gt; &lt;ptype&gt; — confirmed on real hardware, including per-slot addressing and the fill-on-success behavior for Check</p></div>
           </div>
         </div>
 
@@ -1568,23 +1639,32 @@
           <div class="panel-header">
             <div>
               <h2>What's confirmed, what isn't</h2>
-              <p>The W0x instruction manual and W02d parameter-configuration manual (both supplied by the client) now back this whole screen — the open question is only whether this app's own serial handling matches them.</p>
+              <p>The W0x instruction manual and W02d parameter-configuration manual (both supplied by the client) back this whole screen. Real-hardware testing across several revisions has since confirmed most of it directly — the rest is still manual-documented only.</p>
             </div>
           </div>
           <div class="panel-body">
             <div class="section-box">
-              <div class="section-hd"><div class="t"><b>Documented for USB serial, by the device's own manual</b></div></div>
+              <div class="section-hd"><div class="t"><b>Confirmed on real hardware</b></div></div>
               <div class="section-body">
-                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;">Every command on this screen — <b>wifi get/save/crl</b>, <b>set/get report</b>, <b>set/get/clr motion</b>, and <b>set/get server</b> — is listed in the W0x instruction manual with instruction type "SMS/Platform/USB serial", i.e. USB serial is an explicitly supported delivery channel for all of them, not just a team macro-workflow guess. The parameter-configuration manual also confirms 115200 baud and a CRLF line ending for this interface — both already this screen's defaults.</p>
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;">115200 8N1 wiring · Device info &amp; status auto-read on connect, including the IMEI/IMSI empty-field parsing fix · Check Wi-Fi / Check Server filling their fields and showing a connection indicator on success · Wi-Fi's 3-slot FIFO behavior and the no-space SSID restriction · Server's per-slot addressing (slots 0–4, independent Set per row).</p>
               </div>
             </div>
             <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
-              <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Not yet verified on this app's own hardware</b></div></div>
+              <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Documented in the manual, not yet independently checked</b></div></div>
               <div class="section-body">
-                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">Being in the manual means the vendor says the command and reply format work over USB serial — it doesn't mean this app has actually seen that reply on real hardware yet. None of the parsing above (Device info, Reporting interval, Motion) has been checked against a real W03 tracker.</p>
-                <p style="margin:0; font-size:13px; color:var(--warn-text);">Send one command at a time and read the raw log, the same way LevelPro's and FlexLink's command sets went from design preview to confirmed.</p>
+                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">Reporting interval (<code>get/set report</code>) and Motion alarm (<code>get/set/clr motion</code>) are both listed in the W0x instruction manual with instruction type "SMS/Platform/USB serial" — USB serial is an explicitly supported delivery channel for them, not a team guess — but neither the commands nor their reply format have been checked against a real W03 tracker yet.</p>
+                <p style="margin:0; font-size:13px; color:var(--warn-text);">Send one command at a time and read the raw log, the same way Device info, Wi-Fi and Server went from design preview to confirmed.</p>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Source documents</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body">
+              <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.8;">W0x instruction manual — command list, instruction types (SMS/Platform/USB serial) and reply formats for every command on this screen.<br/>W02d parameter-configuration manual — confirms 115200 baud and CRLF line ending for the USB serial interface, plus step-by-step serial-tool instructions.<br/>Both supplied by the client; neither is this app's own guess.</p>
+            </div></div>
           </div>
         </div>
 
