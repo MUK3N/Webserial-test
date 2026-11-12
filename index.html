@@ -1329,7 +1329,6 @@
           <div class="panel-header">
             <div>
               <h2>Device Info &amp; Status</h2>
-              <p>Read automatically from qry infos, qry ip and qry sdkver as soon as you connect. Press Refresh any time to re-read.</p>
             </div>
             <span class="help-btn" title="qry infos replies [QRY]ver:… imsi:… imei:… iccid:… phnum:… — fills Firmware, IMSI, IMEI, ICCID and Phone number in one go. qry ip replies [QRY]ip:… for Local IP; qry sdkver replies [QRY]sdk_ver:… for SDK version. Reply format is confirmed in the device's own instruction manual (USB serial is a listed delivery channel for all three) but not yet independently checked against real hardware.">?</span>
           </div>
@@ -1344,8 +1343,7 @@
               <div class="cred-field"><div class="k">Local IP</div><div class="cred-value"><span class="v" id="ft-v-ip">—</span><button class="copy" data-copy="ft-v-ip">Copy</button></div></div>
             </div>
           </div>
-          <div class="panel-footer">
-            <p>Values stay blank (—) until the device has actually replied.</p>
+          <div class="panel-footer" style="justify-content:flex-end;">
             <button class="primary" id="ft-btn-refresh" disabled>Refresh</button>
           </div>
         </div>
@@ -1355,7 +1353,6 @@
           <div class="panel-header">
             <div>
               <h2>Configuration</h2>
-              <p>Each section below sends its own command directly — there's no staged form to fill in and apply. Fields marked — are read-only until you press Check.</p>
             </div>
             <span class="help-btn" title="Commands and reply formats below come from the W03 tracker's own instruction and parameter-configuration manuals, which list USB serial as a supported delivery channel for Wi-Fi, Reporting interval, Motion and Server alike — none of that is this app's own guess anymore, but none of it has been independently checked against real hardware yet either.">?</span>
           </div>
@@ -1389,13 +1386,13 @@
                   <button class="primary" id="ft-btn-wifi-set" disabled>Set Wi-Fi</button>
                   <span class="chip" id="ft-wifi-status">Not checked</span>
                 </div>
-                <div class="hint">SSID can't contain a space (the device splits "wifi save" on whitespace) · up to 32 characters for SSID, 64 for password, sent in plain text over serial. Set sends one "wifi save" per row with an SSID filled in — the 3 slots are FIFO, so it always just appends and the device drops the oldest when full; there's no picking which slot a save goes to. Clear wipes all three together.</div>
+                <div class="hint" style="font-size:11px; opacity:.6;">SSID can't contain a space (the device splits "wifi save" on whitespace) · up to 32 characters for SSID, 64 for password, sent in plain text over serial. Set sends one "wifi save" per row with an SSID filled in — the 3 slots are FIFO, so it always just appends and the device drops the oldest when full; there's no picking which slot a save goes to. Clear wipes all three together.</div>
               </div>
             </div>
 
             <div class="section-box" id="ft-sec-reporting">
               <div class="section-hd">
-                <div class="t"><b>Reporting interval</b><span>set report [ontv offtv] · get report</span></div>
+                <div class="t"><b>Reporting interval</b></div>
                 <span class="help-btn sm" title="ACC-on interval (ontv): how often the tracker uploads position while ignition is on, 0–1000 seconds. ACC-off interval (offtv): how often it uploads while ACC is off, typically longer to save battery, 0–80000 seconds. Check reads both at once (get report) and fills the fields below; Set writes whatever is currently in them (set report <ontv> <offtv>). Both commands are documented in the W0x instruction manual as supported over USB serial, but the reply format hasn't been independently checked against real hardware yet.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
@@ -1420,7 +1417,7 @@
 
             <div class="section-box" id="ft-sec-motion">
               <div class="section-hd">
-                <div class="t"><b>Motion alarm</b><span>set motion [ths act_deb dis_deb] · get motion · clr motion</span></div>
+                <div class="t"><b>Motion alarm</b></div>
                 <span class="help-btn sm" title="A motion/vibration alarm setpoint, tied to the tracker's built-in accelerometer: once movement stays above the Threshold for longer than the Activation debounce, the tracker raises a motion alarm; once it's been calm for longer than the Deactivation debounce, the alarm clears. Threshold 0–5000 mg, both debounce times 0–9999 ms. Check reads the current setpoint (get motion) and fills the fields below; Set writes them (set motion); Clear resets to the firmware default (50 mg / 100 ms / 300 ms). All three commands are documented in the W0x instruction manual as supported over USB serial, but the reply format hasn't been independently checked against real hardware yet.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
@@ -1451,7 +1448,7 @@
 
             <div class="section-box" id="ft-sec-server">
               <div class="section-hd">
-                <div class="t"><b>Server</b><span>set server [id server port ptype] · get server [id]</span></div>
+                <div class="t"><b>Server</b></div>
                 <span class="help-btn sm" title="Server address: domain or IP of the platform server. Protocol type (ptype): 0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart — the platform's own protocol doc only documents option 1. Each row below is one of the device's 5 server slots — ServerM(0), ServerS(1), Server3(2), Server4(3), Server5(4). Check Servers queries all 5 (get server [id]) and fills in whichever reply. Each row's own Set button writes only that slot (set server [id server port ptype]) — the others are untouched. Port: the server's listening TCP port, 1–65535. Documented in the W0x instruction manual as supported over USB serial (previously only SMS/Platform), but the reply format hasn't been independently checked against real hardware yet.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
@@ -1539,13 +1536,10 @@
                   <button class="secondary" id="ft-btn-server-check" disabled>Check Servers</button>
                   <span class="chip" id="ft-server-status">Not checked</span>
                 </div>
-                <div class="hint">Port 1–65535 · ptype 0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart. Check fills in whichever of the 5 rows reply; each row's own Set writes only that slot, the others are untouched.</div>
+                <div class="hint" style="font-size:11px; opacity:.6;">Port 1–65535 · ptype 0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart. Check fills in whichever of the 5 rows reply; each row's own Set writes only that slot, the others are untouched.</div>
               </div>
             </div>
 
-          </div>
-          <div class="panel-footer">
-            <p>Each action above is sent immediately — there's nothing to batch or apply.</p>
           </div>
         </div>
 
