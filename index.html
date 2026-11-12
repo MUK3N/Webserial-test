@@ -4,10 +4,16 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>XCAMP Device Configurator — Test Build</title>
+<link rel="icon" type="image/png" href="assets/logo.png" />
+<link rel="apple-touch-icon" href="assets/logo.png" />
 <style>
   :root{
     --primary:#1E22AA;
     --primary-text:#ffffff;
+    /* Brand gradient, sampled from the XCAMP logo (indigo → violet → magenta). */
+    --brand-purple:#7A1296;
+    --brand-pink:#E21273;
+    --brand-gradient:linear-gradient(135deg, var(--primary) 0%, var(--brand-purple) 55%, var(--brand-pink) 100%);
     --ink:#20252D;
     --ink-soft:#3B434D;
     --muted:#65707E;
@@ -52,11 +58,13 @@
   .view.active{display:block;}
 
   /* ---------- header / chrome ---------- */
+  .brand-bar{height:4px; background:var(--brand-gradient);}
   header.app{
     display:flex; align-items:center; justify-content:space-between;
     padding:18px 32px; background:#fff; border-bottom:1px solid var(--border-soft);
   }
   header.app .brand{display:flex; align-items:center; gap:22px; font-size:21px; color:var(--ink);}
+  header.app .brand .logo{height:34px; width:34px; display:block;}
   header.app .brand b{font-weight:800; font-size:26px;}
   header.app .brand .sep{width:1px; height:28px; background:#C7CDD6;}
   header.app .right{display:flex; align-items:center; gap:18px;}
@@ -77,7 +85,7 @@
     border:1px solid var(--border-input-strong); background:var(--bg-card); color:var(--ink);
   }
   button.secondary{background:var(--bg-chip); border-color:var(--border-soft); color:var(--ink-soft);}
-  button.primary{background:var(--primary); border-color:var(--primary); color:var(--primary-text);}
+  button.primary{background:var(--brand-gradient); border-color:var(--primary); color:var(--primary-text);}
   button.primary:hover{opacity:.92;}
   button.danger{background:#fff; border-color:#B42318; color:#B42318;}
   button:disabled{opacity:.5; cursor:not-allowed;}
@@ -247,8 +255,9 @@
 </head>
 <body>
 
+<div class="brand-bar"></div>
 <header class="app">
-  <div class="brand"><b>XCAMP</b><span class="sep"></span><span>Device Configurator</span></div>
+  <div class="brand"><img class="logo" src="assets/logo.png" alt="XCAMP logo" /><b>XCAMP</b><span class="sep"></span><span>Device Configurator</span></div>
   <div class="right">
     <span class="pill">TEST BUILD · no login</span>
     <span class="acct">Approved account</span>
