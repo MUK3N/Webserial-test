@@ -114,6 +114,7 @@
   .kv-row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
   .chip{display:inline-flex; font-size:12px; font-weight:500; padding:4px 10px; border-radius:3px; background:var(--bg-chip); color:var(--ink-soft);}
   .chip.ok{background:var(--ok-bg-strong); color:var(--ok-text);}
+  .chip.err{background:#FBEAE9; color:#8C241C;}
   .label-bold{font-weight:700; font-size:14px;}
 
   /* ---------- config layout ---------- */
@@ -1358,10 +1359,11 @@
                     <div class="hint">Up to 64 characters · sent in plain text over serial</div>
                   </div>
                 </div>
-                <div style="display:flex; gap:12px;">
+                <div style="display:flex; gap:12px; align-items:center;">
                   <button class="secondary" id="ft-btn-wifi-check" disabled>Check Wi-Fi</button>
                   <button class="secondary" id="ft-btn-wifi-clear" disabled>Clear Wi-Fi</button>
                   <button class="primary" id="ft-btn-wifi-set" disabled>Set Wi-Fi</button>
+                  <span class="chip" id="ft-wifi-status">Not checked</span>
                 </div>
               </div>
             </div>
@@ -1461,9 +1463,10 @@
                     <div class="hint">1–65535</div>
                   </div>
                 </div>
-                <div style="display:flex; gap:12px;">
+                <div style="display:flex; gap:12px; align-items:center;">
                   <button class="secondary" id="ft-btn-server-check" disabled>Check Server</button>
                   <button class="primary" id="ft-btn-server-set" disabled>Set Server</button>
+                  <span class="chip" id="ft-server-status">Not checked</span>
                 </div>
               </div>
             </div>
@@ -2889,18 +2892,25 @@
     });
   }
 
-  // This device's "GET:"/"SET:"/"CLR:"/"[QRY]" replies are all space-separated
-  // "key:value" tokens after that prefix (e.g. "GET:ths:200 mg act_deb:200 ms
-  // dis_deb:20000 ms" or "[QRY]ver:xxx imsi:xxx imei:xxx iccid:xxx phnum:xxx"),
-  // per the W0x instruction manual. Units like "mg"/"ms"/"S" that follow a
-  // value with a space are plain words with no colon, so this simply skips
-  // them rather than mis-parsing them as keys.
-  function ftParseKV(line){
-    const body = line.replace(/^\s*\[QRY\]|^\s*(GET|SET|CLR):\s*/i, '');
+  // This device's "GET:"/"SET:"/"CLR:"/"[QRY]" replies are "key:value" tokens
+  // after that prefix, per the W0x instruction manual (e.g. "GET:ths:200 mg
+  // act_deb:200 ms dis_deb:20000 ms" or "[QRY]ver:xxx imsi:xxx imei:xxx
+  // iccid:xxx phnum:xxx"). On real hardware an empty field's value is often
+  // followed by the next key with NO separating space at all (seen on a real
+  // qry infos reply: "imsi:imei:202444356629956" — imsi is actually empty,
+  // not "imei:202444356629956" as its value) — a plain whitespace-delimited
+  // split swallows the next key into the empty one's value and shifts every
+  // field after it by one, which is exactly what made IMEI/IMSI/ICCID/phone
+  // number look "switched". Anchoring on the known key names themselves
+  // (passed in `keys`) instead of on whitespace avoids that: a value capture
+  // always stops as soon as the next expected key appears, space or not.
+  function ftParseKeys(line, keys){
+    const body = line.replace(/^\s*\[QRY\]|^\s*(GET|SET|CLR):\s*|^\s*wifi\s*\d+\s*:\s*/i, '');
+    const pattern = keys.join('|');
+    const re = new RegExp(`(${pattern})\\s*:\\s*([^]*?)(?=\\s*(?:${pattern})\\s*:|$)`, 'gi');
     const map = {};
-    const re = /(\w+)\s*:\s*(\S+)/g;
     let m;
-    while ((m = re.exec(body))) { map[m[1].toLowerCase()] = m[2]; }
+    while ((m = re.exec(body))) { map[m[1].toLowerCase()] = m[2].trim(); }
     return map;
   }
 
@@ -2909,6 +2919,15 @@
   // value capture takes whichever variant arrives, so anything headed into a
   // number input is run through this first to strip a trailing unit.
   function ftNum(v){ const m = String(v ?? '').match(/-?\d+/); return m ? m[0] : ''; }
+
+  // Small ok/err status chip, matching the style of ft-conn-chip/fl-conn-chip.
+  function ftSetChip(id, text, ok){
+    const el = $(id);
+    el.textContent = text;
+    el.classList.remove('ok', 'err');
+    if (ok === true) el.classList.add('ok');
+    else if (ok === false) el.classList.add('err');
+  }
 
   function ftSetConnected(on){
     $('ft-conn-chip').textContent = on ? 'Connected' : 'Not yet connected';
@@ -2968,13 +2987,12 @@
     $('ft-btn-password-show').textContent = showing ? 'Show' : 'Hide';
   });
 
-  // Wi-Fi and Server below still just send-and-log — their replies (a
-  // 3-line "wifi N:ssid:... passw:..." list, and a single "GET:[id]
-  // server:... port:... ptype:..." line) aren't parsed back into fields in
-  // this release. Device info, Reporting interval and Motion below do parse
-  // their replies, using the "key:value" shape the W0x instruction manual
-  // documents for GET:/SET:/CLR:/[QRY] — see ftParseKV above — though none
-  // of it has been checked against real hardware yet.
+  // Device info, Wi-Fi, Reporting interval, Motion and Server below all wait
+  // for and parse their reply, using the "key:value" shape the W0x
+  // instruction manual documents for GET:/SET:/CLR:/[QRY]/wifi — see
+  // ftParseKeys above — though none of it has been checked against real
+  // hardware yet. ftSendAndReport remains for actions with no reply worth
+  // parsing back into a field (Clear Wi-Fi, which only confirms success).
   async function ftSendAndReport(cmd, label){
     await ftSendRaw(cmd);
     ftSetOpStatus(`${label} sent (${cmd}) — check the raw log for the reply (format not yet confirmed).`, 'idle');
@@ -2985,7 +3003,7 @@
     ftSetOpStatus('Refreshing device info…', 'idle');
     try {
       // qry infos: "[QRY]ver:... imsi:... imei:... iccid:... phnum:..."
-      const infosPromise = ftWaitForLine((line) => /\[QRY\].*imei/i.test(line) ? ftParseKV(line) : null, 2000);
+      const infosPromise = ftWaitForLine((line) => /\[QRY\].*imei/i.test(line) ? ftParseKeys(line, ['ver','imsi','imei','iccid','phnum']) : null, 2000);
       await ftSendRaw('qry infos');
       const infos = await infosPromise;
       $('ft-v-fw').textContent = infos?.ver || 'No reply';
@@ -3014,19 +3032,63 @@
     }
   });
 
-  $('ft-btn-wifi-check').addEventListener('click', () => ftSendAndReport('wifi get', 'Check Wi-Fi'));
-  $('ft-btn-wifi-clear').addEventListener('click', () => ftSendAndReport('wifi crl', 'Clear Wi-Fi'));
-  $('ft-btn-wifi-set').addEventListener('click', () => {
+  $('ft-btn-wifi-check').addEventListener('click', async () => {
+    $('ft-btn-wifi-check').disabled = true;
+    // "wifi get" can reply with up to 3 lines, one per stored AP ("wifi
+    // 1:ssid:... passw:...", "wifi 2:...", "wifi 3:..."); this app only
+    // edits slot 1, so only that line is waited for.
+    const replyPromise = ftWaitForLine((line) => /^\s*wifi\s*1\s*:/i.test(line) ? ftParseKeys(line, ['ssid','passw']) : null, 2000);
+    await ftSendRaw('wifi get');
+    const kv = await replyPromise;
+    if (kv) {
+      $('ft-f-ssid').value = kv.ssid || '';
+      $('ft-f-password').value = kv.passw || '';
+      ftSetChip('ft-wifi-status', kv.ssid ? `Connected: ${kv.ssid}` : 'No Wi-Fi saved', true);
+      ftSetOpStatus(kv.ssid ? `Wi-Fi read: SSID "${kv.ssid}".` : 'Wi-Fi read: no AP saved in slot 1.', 'ok');
+    } else {
+      ftSetChip('ft-wifi-status', 'No reply within 2s', false);
+      ftSetOpStatus('wifi get sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-wifi-check').disabled = !ftPort;
+  });
+  $('ft-btn-wifi-clear').addEventListener('click', async () => {
+    $('ft-btn-wifi-clear').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^\s*wifi\s*crl\s*success/i.test(line) ? true : null, 2000);
+    await ftSendRaw('wifi crl');
+    const reply = await replyPromise;
+    if (reply) {
+      $('ft-f-ssid').value = '';
+      $('ft-f-password').value = '';
+      ftSetChip('ft-wifi-status', 'Cleared', true);
+      ftSetOpStatus('All stored Wi-Fi APs cleared.', 'ok');
+    } else {
+      ftSetChip('ft-wifi-status', 'No reply within 2s', false);
+      ftSetOpStatus('wifi crl sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-wifi-clear').disabled = !ftPort;
+  });
+  $('ft-btn-wifi-set').addEventListener('click', async () => {
     const ssid = $('ft-f-ssid').value.trim();
     const pass = $('ft-f-password').value;
     if (!ssid) { ftSetOpStatus('Enter an SSID before setting Wi-Fi.', 'err'); return; }
-    ftSendAndReport(`wifi save ${ssid} ${pass}`, 'Set Wi-Fi');
+    $('ft-btn-wifi-set').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^\s*wifi\s*save\s*:/i.test(line) ? ftParseKeys(line, ['ssid','passw']) : null, 2000);
+    await ftSendRaw(`wifi save ${ssid} ${pass}`);
+    const kv = await replyPromise;
+    if (kv) {
+      ftSetChip('ft-wifi-status', `Saved: ${kv.ssid || ssid}`, true);
+      ftSetOpStatus(`Wi-Fi saved: SSID "${kv.ssid || ssid}".`, 'ok');
+    } else {
+      ftSetChip('ft-wifi-status', 'No reply within 2s', false);
+      ftSetOpStatus('wifi save sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-wifi-set').disabled = !ftPort;
   });
 
   // ---------- Reporting interval ----------
   $('ft-btn-report-check').addEventListener('click', async () => {
     $('ft-btn-report-check').disabled = true;
-    const replyPromise = ftWaitForLine((line) => /^(GET|SET):/i.test(line) ? ftParseKV(line) : null, 2000);
+    const replyPromise = ftWaitForLine((line) => /^(GET|SET):/i.test(line) ? ftParseKeys(line, ['ontv','offtv']) : null, 2000);
     await ftSendRaw('get report');
     const kv = await replyPromise;
     if (kv && kv.ontv !== undefined) {
@@ -3053,7 +3115,7 @@
   // ---------- Motion alarm ----------
   $('ft-btn-motion-check').addEventListener('click', async () => {
     $('ft-btn-motion-check').disabled = true;
-    const replyPromise = ftWaitForLine((line) => /^(GET|SET|CLR):/i.test(line) ? ftParseKV(line) : null, 2000);
+    const replyPromise = ftWaitForLine((line) => /^(GET|SET|CLR):/i.test(line) ? ftParseKeys(line, ['ths','act_deb','dis_deb']) : null, 2000);
     await ftSendRaw('get motion');
     const kv = await replyPromise;
     if (kv && kv.ths !== undefined) {
@@ -3081,7 +3143,7 @@
   $('ft-btn-motion-clear').addEventListener('click', async () => {
     if (!confirm('Reset the motion alarm to the firmware default (50 mg / 100 ms / 300 ms, per the instruction manual)?')) return;
     $('ft-btn-motion-clear').disabled = true;
-    const replyPromise = ftWaitForLine((line) => /^CLR:/i.test(line) ? ftParseKV(line) : null, 2000);
+    const replyPromise = ftWaitForLine((line) => /^CLR:/i.test(line) ? ftParseKeys(line, ['ths','act_deb','dis_deb']) : null, 2000);
     await ftSendRaw('clr motion');
     const kv = await replyPromise;
     if (kv && kv.ths !== undefined) {
@@ -3095,12 +3157,29 @@
     $('ft-btn-motion-clear').disabled = !ftPort;
   });
 
-  $('ft-btn-server-check').addEventListener('click', () => {
+  $('ft-btn-server-check').addEventListener('click', async () => {
     const id = $('ft-f-server-id').value.trim();
     if (id === '') { ftSetOpStatus('Enter a Server ID (0–4) before checking a server slot.', 'err'); return; }
-    ftSendAndReport(`get server ${id}`, 'Check Server');
+    $('ft-btn-server-check').disabled = true;
+    // "GET:[id] server:... port:... ptype:..." — the "[id]" right after
+    // "GET:" is not a key:value pair, so it's just ignored by the
+    // keys-anchored scan rather than mis-parsed as part of a value.
+    const replyPromise = ftWaitForLine((line) => /^GET:/i.test(line) ? ftParseKeys(line, ['server','port','ptype']) : null, 2000);
+    await ftSendRaw(`get server ${id}`);
+    const kv = await replyPromise;
+    if (kv && kv.server !== undefined) {
+      $('ft-f-server-addr').value = kv.server || '';
+      $('ft-f-server-port').value = ftNum(kv.port);
+      if (kv.ptype !== undefined && kv.ptype !== '') $('ft-f-ptype').value = ftNum(kv.ptype);
+      ftSetChip('ft-server-status', kv.server ? `Connected: ${kv.server}` : 'No server saved', true);
+      ftSetOpStatus(kv.server ? `Server slot ${id} read: ${kv.server}:${ftNum(kv.port)}.` : `Server slot ${id} read: not set.`, 'ok');
+    } else {
+      ftSetChip('ft-server-status', 'No reply within 2s', false);
+      ftSetOpStatus('get server sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-server-check').disabled = !ftPort;
   });
-  $('ft-btn-server-set').addEventListener('click', () => {
+  $('ft-btn-server-set').addEventListener('click', async () => {
     const id = $('ft-f-server-id').value.trim();
     const addr = $('ft-f-server-addr').value.trim();
     const port = $('ft-f-server-port').value.trim();
@@ -3108,7 +3187,18 @@
     if (id === '') { ftSetOpStatus('Enter a Server ID (0–4) before setting a server slot.', 'err'); return; }
     if (!addr) { ftSetOpStatus('Enter a server address before setting it.', 'err'); return; }
     if (port === '') { ftSetOpStatus('Enter a port before setting the server.', 'err'); return; }
-    ftSendAndReport(`set server ${id} ${addr} ${port} ${ptype}`, 'Set Server');
+    $('ft-btn-server-set').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^SET:/i.test(line) ? ftParseKeys(line, ['server','port','ptype']) : null, 2000);
+    await ftSendRaw(`set server ${id} ${addr} ${port} ${ptype}`);
+    const kv = await replyPromise;
+    if (kv && kv.server !== undefined) {
+      ftSetChip('ft-server-status', `Saved: ${kv.server || addr}`, true);
+      ftSetOpStatus(`Server slot ${id} set to ${kv.server || addr}:${ftNum(kv.port) || port}.`, 'ok');
+    } else {
+      ftSetChip('ft-server-status', 'No reply within 2s', false);
+      ftSetOpStatus('set server sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-server-set').disabled = !ftPort;
   });
 
 })();
