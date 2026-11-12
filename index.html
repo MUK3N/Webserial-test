@@ -62,7 +62,6 @@
 
   /* ---------- FieldTrack: multi-slot field rows (Wi-Fi APs / Server slots) ---------- */
   .ft-wifi-row{display:flex; align-items:center; gap:10px;}
-  .ft-wifi-row input[type=checkbox]{width:16px; height:16px; flex:none; accent-color:var(--primary); cursor:pointer;}
   .ft-wifi-row .ft-row-label{font-weight:700; color:var(--ink-soft); min-width:40px; flex:none; font-size:13px;}
   .ft-wifi-row .ft-wifi-ssid-box{flex:1;}
   .ft-wifi-row .ft-wifi-pass-box{flex:0 0 240px;}
@@ -1365,23 +1364,20 @@
             <div class="section-box" id="ft-sec-wifi">
               <div class="section-hd">
                 <div class="t"><b>Wi-Fi</b><span>wifi get · wifi save · wifi crl</span></div>
-                <span class="help-btn sm" title="Check fills the 3 rows below from the device (wifi get replies with one line per stored AP). All 3 run on the device at once — it's not a single 'selected' AP, the device falls back between them by signal, not a manual pick. Check the box next to whichever row(s) you want to (re)write, then press Set — each checked row sends its own wifi save <ssid> <password>, one at a time. That command has no slot number, so the device appends it and drops the oldest of 3 when full; there's no way to overwrite one specific slot directly. Clear wipes all three at once (wifi crl). All three commands are documented in the W0x instruction manual as supported over USB serial, but the reply format still hasn't been independently checked against real hardware.">?</span>
+                <span class="help-btn sm" title="Check fills the 3 rows below from the device (wifi get replies with one line per stored AP). All 3 run on the device at once as fallbacks by signal — not a single 'selected' AP. The 3 slots are FIFO: wifi save <ssid> <password> has no slot number, it always just appends, and the device drops the oldest of the 3 when full. Set sends one wifi save for every row with an SSID filled in. The SSID can't contain a space — the device splits the command on whitespace, so a spaced SSID gets cut at the first word. Clear wipes all three at once (wifi crl). All three commands are documented in the W0x instruction manual as supported over USB serial, but the reply format still hasn't been independently checked against real hardware.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
                 <div class="ft-wifi-row">
-                  <input type="checkbox" id="ft-f-wifi-chk-1" />
                   <span class="ft-row-label">AP 1</span>
                   <div class="input-box ft-wifi-ssid-box"><input type="text" id="ft-f-wifi-ssid-1" placeholder="e.g. FieldTrack" maxlength="32" /></div>
                   <div class="input-box ft-wifi-pass-box"><input type="password" class="ft-wifi-pass" id="ft-f-wifi-pass-1" placeholder="e.g. FieldTrack2026" maxlength="64" /></div>
                 </div>
                 <div class="ft-wifi-row">
-                  <input type="checkbox" id="ft-f-wifi-chk-2" />
                   <span class="ft-row-label">AP 2</span>
                   <div class="input-box ft-wifi-ssid-box"><input type="text" id="ft-f-wifi-ssid-2" placeholder="e.g. FieldTrack-Spare" maxlength="32" /></div>
                   <div class="input-box ft-wifi-pass-box"><input type="password" class="ft-wifi-pass" id="ft-f-wifi-pass-2" placeholder="e.g. FieldTrack2026" maxlength="64" /></div>
                 </div>
                 <div class="ft-wifi-row">
-                  <input type="checkbox" id="ft-f-wifi-chk-3" />
                   <span class="ft-row-label">AP 3</span>
                   <div class="input-box ft-wifi-ssid-box"><input type="text" id="ft-f-wifi-ssid-3" placeholder="e.g. FieldTrack-Backup" maxlength="32" /></div>
                   <div class="input-box ft-wifi-pass-box"><input type="password" class="ft-wifi-pass" id="ft-f-wifi-pass-3" placeholder="e.g. FieldTrack2026" maxlength="64" /></div>
@@ -1393,7 +1389,7 @@
                   <button class="primary" id="ft-btn-wifi-set" disabled>Set Wi-Fi</button>
                   <span class="chip" id="ft-wifi-status">Not checked</span>
                 </div>
-                <div class="hint">Up to 32 characters for SSID, 64 for password, sent in plain text over serial. Check a row to include it when you press Set (one "wifi save" per checked row). All 3 slots are active on the device at once, as fallbacks by signal — there's no single "in use" slot to pick, and Clear wipes all three together.</div>
+                <div class="hint">SSID can't contain a space (the device splits "wifi save" on whitespace) · up to 32 characters for SSID, 64 for password, sent in plain text over serial. Set sends one "wifi save" per row with an SSID filled in — the 3 slots are FIFO, so it always just appends and the device drops the oldest when full; there's no picking which slot a save goes to. Clear wipes all three together.</div>
               </div>
             </div>
 
@@ -3174,7 +3170,6 @@
       for (let slot = 1; slot <= 3; slot++) {
         $(`ft-f-wifi-ssid-${slot}`).value = '';
         $(`ft-f-wifi-pass-${slot}`).value = '';
-        $(`ft-f-wifi-chk-${slot}`).checked = false;
       }
       ftSetChip('ft-wifi-status', 'Cleared', true);
       ftSetOpStatus('All stored Wi-Fi APs cleared.', 'ok');
@@ -3185,15 +3180,15 @@
     $('ft-btn-wifi-clear').disabled = !ftPort;
   });
   $('ft-btn-wifi-set').addEventListener('click', async () => {
-    // "wifi save" has no slot number — one call per checked row, sent one
-    // at a time (the device appends each and drops the oldest of 3 when
-    // full), so there's no batching this into a single command.
+    // "wifi save" has no slot number — it's FIFO, always just appending
+    // and dropping the oldest of 3 when full, so there's no "which slot"
+    // to pick. Set just sends one call per row that has an SSID typed in.
     const rows = [1, 2, 3]
-      .filter(slot => $(`ft-f-wifi-chk-${slot}`).checked)
-      .map(slot => ({ slot, ssid: $(`ft-f-wifi-ssid-${slot}`).value.trim(), pass: $(`ft-f-wifi-pass-${slot}`).value }));
-    const missingSsid = rows.find(r => !r.ssid);
-    if (!rows.length) { ftSetOpStatus('Check the box next to an AP row before setting it.', 'err'); return; }
-    if (missingSsid) { ftSetOpStatus(`AP ${missingSsid.slot} is checked but has no SSID.`, 'err'); return; }
+      .map(slot => ({ slot, ssid: $(`ft-f-wifi-ssid-${slot}`).value.trim(), pass: $(`ft-f-wifi-pass-${slot}`).value }))
+      .filter(r => r.ssid);
+    if (!rows.length) { ftSetOpStatus('Enter an SSID in at least one AP row before setting Wi-Fi.', 'err'); return; }
+    const spacedSsid = rows.find(r => /\s/.test(r.ssid));
+    if (spacedSsid) { ftSetOpStatus(`AP ${spacedSsid.slot}'s SSID "${spacedSsid.ssid}" has a space — the device splits "wifi save" on whitespace, so this would be cut at the first word. Remove the space and try again.`, 'err'); return; }
     $('ft-btn-wifi-set').disabled = true;
     const results = [];
     for (const row of rows) {
