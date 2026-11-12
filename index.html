@@ -1250,9 +1250,8 @@
     </div>
 
     <div class="banner" id="ft-design-banner">
-      DESIGN PREVIEW · FieldTrack profile built from the W03 tracker command list. The available manuals document every command as SMS/Platform(WL) delivery only —
-      but the design calls out <b>Wi-Fi and Motion</b> as confirmed working over this serial port via the team's own macro workflow. Reporting interval and Server are documented for SMS/Platform
-      but not specifically confirmed over serial, and no reply format below has been verified — send one command at a time and read the raw log.
+      DESIGN PREVIEW · FieldTrack profile built from the W03 tracker's own instruction and parameter-configuration manuals, which list <b>USB serial</b> (CRLF-terminated, 115200 8N1) as a supported delivery channel for every command here — Wi-Fi, Reporting interval, Motion and Server alike — alongside SMS and the platform protocol.
+      None of the reply formats below have been checked against this app's own real hardware yet — send one command at a time and read the raw log. See <b>Connection guide</b> for what's manual-documented vs. independently confirmed.
     </div>
 
     <div class="topcards">
@@ -1275,7 +1274,7 @@
         <div class="kv-row" style="align-items:flex-end;">
           <div style="flex:1;">
             <div class="label-bold" style="margin-bottom:6px;">USB Serial / data interface</div>
-            <p style="margin:0; font-size:12px; color:var(--muted); max-width:70ch;">Connect to the device's data interface at 115200 baud, 8N1. Commands below are documented only for SMS/platform delivery in the manuals, but are confirmed working over this serial link via the team's standard macro workflow.</p>
+            <p style="margin:0; font-size:12px; color:var(--muted); max-width:70ch;">Connect to the device's data interface at 115200 baud, 8N1. The W0x instruction manual lists every command below as supported over USB serial, with CRLF line endings — matching this screen's defaults.</p>
           </div>
           <div style="display:flex; gap:18px; flex:none;">
             <button class="secondary" id="ft-btn-connect">Connect Device</button>
@@ -1309,23 +1308,23 @@
           <div class="panel-header">
             <div>
               <h2>Device Info &amp; Status</h2>
-              <p>Read-only values reported via qry infos, qry ip and qry sdkver. Refresh to re-read.</p>
+              <p>Parsed from qry infos, qry ip and qry sdkver. Refresh to re-read from the connected device.</p>
             </div>
-            <span class="help-btn" title="qry infos (version, IMSI, IMEI, ICCID, phone number) · qry ip · qry sdkver. Individual fields below are each also documented under their own qry command (qry imei, qry imsi, qry iccid, qry swver, qry sdkver, qry phnum, qry ip) — none of these have a confirmed reply format over serial yet.">?</span>
+            <span class="help-btn" title="qry infos replies [QRY]ver:… imsi:… imei:… iccid:… phnum:… — fills Firmware, IMSI, IMEI, ICCID and Phone number in one go. qry ip replies [QRY]ip:… for Local IP; qry sdkver replies [QRY]sdk_ver:… for SDK version. Reply format is confirmed in the device's own instruction manual (USB serial is a listed delivery channel for all three) but not yet independently checked against real hardware.">?</span>
           </div>
           <div class="panel-body">
             <div class="cred-grid">
-              <div class="cred-field"><div class="k">IMEI</div><div class="cred-value"><span class="v" id="ft-v-imei">864912050123456</span><button class="copy" data-copy="ft-v-imei">Copy</button></div></div>
-              <div class="cred-field"><div class="k">IMSI</div><div class="cred-value"><span class="v" id="ft-v-imsi">510011812345678</span><button class="copy" data-copy="ft-v-imsi">Copy</button></div></div>
-              <div class="cred-field"><div class="k">ICCID</div><div class="cred-value"><span class="v" id="ft-v-iccid">8962001812345678901</span><button class="copy" data-copy="ft-v-iccid">Copy</button></div></div>
-              <div class="cred-field"><div class="k">Firmware</div><div class="cred-value"><span class="v" id="ft-v-fw">V2.1.03</span><button class="copy" data-copy="ft-v-fw">Copy</button></div></div>
-              <div class="cred-field"><div class="k">SDK version</div><div class="cred-value"><span class="v" id="ft-v-sdk">SDK_V1.0.8</span><button class="copy" data-copy="ft-v-sdk">Copy</button></div></div>
-              <div class="cred-field"><div class="k">Phone number</div><div class="cred-value"><span class="v" id="ft-v-phone">+6281234567890</span><button class="copy" data-copy="ft-v-phone">Copy</button></div></div>
-              <div class="cred-field"><div class="k">Local IP</div><div class="cred-value"><span class="v" id="ft-v-ip">10.64.12.33</span><button class="copy" data-copy="ft-v-ip">Copy</button></div></div>
+              <div class="cred-field"><div class="k">IMEI</div><div class="cred-value"><span class="v" id="ft-v-imei">—</span><button class="copy" data-copy="ft-v-imei">Copy</button></div></div>
+              <div class="cred-field"><div class="k">IMSI</div><div class="cred-value"><span class="v" id="ft-v-imsi">—</span><button class="copy" data-copy="ft-v-imsi">Copy</button></div></div>
+              <div class="cred-field"><div class="k">ICCID</div><div class="cred-value"><span class="v" id="ft-v-iccid">—</span><button class="copy" data-copy="ft-v-iccid">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Firmware</div><div class="cred-value"><span class="v" id="ft-v-fw">—</span><button class="copy" data-copy="ft-v-fw">Copy</button></div></div>
+              <div class="cred-field"><div class="k">SDK version</div><div class="cred-value"><span class="v" id="ft-v-sdk">—</span><button class="copy" data-copy="ft-v-sdk">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Phone number</div><div class="cred-value"><span class="v" id="ft-v-phone">—</span><button class="copy" data-copy="ft-v-phone">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Local IP</div><div class="cred-value"><span class="v" id="ft-v-ip">—</span><button class="copy" data-copy="ft-v-ip">Copy</button></div></div>
             </div>
           </div>
           <div class="panel-footer">
-            <p>Example values · not yet read from hardware.</p>
+            <p>Not yet read from hardware — press Refresh.</p>
             <button class="primary" id="ft-btn-refresh" disabled>Refresh</button>
           </div>
         </div>
@@ -1337,25 +1336,25 @@
               <h2>Configuration</h2>
               <p>Each section below sends its own command directly — there's no staged form to fill in and apply. Fields marked — are read-only until you press Check.</p>
             </div>
-            <span class="help-btn" title="Commands come straight from the FieldTrack design: Wi-Fi and Motion are confirmed working over serial via the team's macro workflow even though they're absent from the manuals; Reporting interval and Server are in the manuals for SMS/Platform delivery but not specifically confirmed over this serial link.">?</span>
+            <span class="help-btn" title="Commands and reply formats below come from the W03 tracker's own instruction and parameter-configuration manuals, which list USB serial as a supported delivery channel for Wi-Fi, Reporting interval, Motion and Server alike — none of that is this app's own guess anymore, but none of it has been independently checked against real hardware yet either.">?</span>
           </div>
           <div class="panel-body">
 
             <div class="section-box" id="ft-sec-wifi">
               <div class="section-hd">
-                <div class="t"><b>Wi-Fi</b><span>wifi get · wifi save · wifi crl — not in the manual</span></div>
-                <span class="help-btn sm" title="Check reads the current Wi-Fi config (wifi get). Clear wipes it (wifi crl). Set writes the SSID and password below (wifi save <ssid> <password>). None of the three are in the supplied manuals, but all three are confirmed working over serial — this is the team's standard macro workflow.">?</span>
+                <div class="t"><b>Wi-Fi</b><span>wifi get · wifi save · wifi crl</span></div>
+                <span class="help-btn sm" title="Check reads the current Wi-Fi config (wifi get). Clear wipes it (wifi crl). Set writes the SSID and password below (wifi save <ssid> <password>). All three are documented in the W0x instruction manual as supported over USB serial, not just the team's own macro workflow — but the reply format still hasn't been independently checked against real hardware.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
                 <div class="field-row">
                   <div class="field">
                     <div class="k">SSID</div>
-                    <div class="input-box"><input type="text" id="ft-f-ssid" value="FieldTrack" maxlength="32" /></div>
+                    <div class="input-box"><input type="text" id="ft-f-ssid" placeholder="e.g. FieldTrack" maxlength="32" /></div>
                     <div class="hint">Up to 32 characters</div>
                   </div>
                   <div class="field" style="max-width:260px;">
                     <div class="k">Password</div>
-                    <div class="input-box"><input type="password" id="ft-f-password" value="FieldTrack2026" maxlength="64" /><button class="secondary sm" id="ft-btn-password-show">Show</button></div>
+                    <div class="input-box"><input type="password" id="ft-f-password" placeholder="e.g. FieldTrack2026" maxlength="64" /><button class="secondary sm" id="ft-btn-password-show">Show</button></div>
                     <div class="hint">Up to 64 characters · sent in plain text over serial</div>
                   </div>
                 </div>
@@ -1369,51 +1368,70 @@
 
             <div class="section-box" id="ft-sec-reporting">
               <div class="section-hd">
-                <div class="t"><b>Reporting interval</b><span>get report — read-only in this release</span></div>
-                <span class="help-btn sm" title="ACC-on interval (ontv): how often the tracker uploads position while ignition is on, 0–1000 seconds. ACC-off interval (offtv): how often it uploads while ACC is off, typically longer to save battery, 0–80000 seconds. get report returns both together — no set command is included in this release.">?</span>
+                <div class="t"><b>Reporting interval</b><span>set report [ontv offtv] · get report</span></div>
+                <span class="help-btn sm" title="ACC-on interval (ontv): how often the tracker uploads position while ignition is on, 0–1000 seconds. ACC-off interval (offtv): how often it uploads while ACC is off, typically longer to save battery, 0–80000 seconds. Check reads both at once (get report) and fills the fields below; Set writes whatever is currently in them (set report <ontv> <offtv>). Both commands are documented in the W0x instruction manual as supported over USB serial, but the reply format hasn't been independently checked against real hardware yet.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
                 <div class="field-row">
                   <div class="field">
                     <div class="k">ACC-on interval (ontv)</div>
-                    <div class="input-box disabled"><input type="text" id="ft-v-ontv" value="—" disabled /></div>
-                    <div class="hint">0–1000 seconds · press Check to read</div>
+                    <div class="input-box"><input type="number" id="ft-f-ontv" min="0" max="1000" placeholder="e.g. 10" /><span class="unit">s</span></div>
+                    <div class="hint">0–1000 seconds</div>
                   </div>
                   <div class="field">
                     <div class="k">ACC-off interval (offtv)</div>
-                    <div class="input-box disabled"><input type="text" id="ft-v-offtv" value="—" disabled /></div>
-                    <div class="hint">0–80000 seconds · press Check to read</div>
+                    <div class="input-box"><input type="number" id="ft-f-offtv" min="0" max="80000" placeholder="e.g. 30" /><span class="unit">s</span></div>
+                    <div class="hint">0–80000 seconds</div>
                   </div>
                 </div>
-                <button class="primary" id="ft-btn-report-check" disabled style="align-self:flex-start;">Check Reporting Interval</button>
+                <div style="display:flex; gap:12px;">
+                  <button class="secondary" id="ft-btn-report-check" disabled>Check Reporting Interval</button>
+                  <button class="primary" id="ft-btn-report-set" disabled>Set Reporting Interval</button>
+                </div>
               </div>
             </div>
 
             <div class="section-box" id="ft-sec-motion">
               <div class="section-hd">
-                <div class="t"><b>Motion</b><span>get motion — not in the manual</span></div>
-                <span class="help-btn sm" title="Reads the tracker's motion/vibration-alarm setting — likely tied to the built-in vibration sensor used for anti-theft detection, per the W03 user manual. Not documented in any of the available manuals, but confirmed working over serial as part of the team's standard macro set; whether a corresponding 'set motion' command exists is still unconfirmed.">?</span>
+                <div class="t"><b>Motion alarm</b><span>set motion [ths act_deb dis_deb] · get motion · clr motion</span></div>
+                <span class="help-btn sm" title="A motion/vibration alarm setpoint, tied to the tracker's built-in accelerometer: once movement stays above the Threshold for longer than the Activation debounce, the tracker raises a motion alarm; once it's been calm for longer than the Deactivation debounce, the alarm clears. Threshold 0–5000 mg, both debounce times 0–9999 ms. Check reads the current setpoint (get motion) and fills the fields below; Set writes them (set motion); Clear resets to the firmware default (50 mg / 100 ms / 300 ms). All three commands are documented in the W0x instruction manual as supported over USB serial, but the reply format hasn't been independently checked against real hardware yet.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
-                <div class="field">
-                  <div class="k">Motion</div>
-                  <div class="input-box disabled"><input type="text" id="ft-v-motion" value="—" disabled /></div>
-                  <div class="hint">Press Check to read the raw reply. No set command was given, so this is read-only.</div>
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Threshold (ths)</div>
+                    <div class="input-box"><input type="number" id="ft-f-motion-ths" min="0" max="5000" placeholder="e.g. 200" /><span class="unit">mg</span></div>
+                    <div class="hint">0–5000 mg · how hard a movement must be to count</div>
+                  </div>
+                  <div class="field">
+                    <div class="k">Activation debounce (act_deb)</div>
+                    <div class="input-box"><input type="number" id="ft-f-motion-act-deb" min="0" max="9999" placeholder="e.g. 200" /><span class="unit">ms</span></div>
+                    <div class="hint">0–9999 ms · how long motion must persist before the alarm fires</div>
+                  </div>
+                  <div class="field">
+                    <div class="k">Deactivation debounce (dis_deb)</div>
+                    <div class="input-box"><input type="number" id="ft-f-motion-dis-deb" min="0" max="9999" placeholder="e.g. 20000" /><span class="unit">ms</span></div>
+                    <div class="hint">0–9999 ms · how long it must stay calm before the alarm clears</div>
+                  </div>
                 </div>
-                <button class="secondary" id="ft-btn-motion-check" disabled style="align-self:flex-start;">Check Motion</button>
+                <div style="display:flex; gap:12px;">
+                  <button class="secondary" id="ft-btn-motion-check" disabled>Check Motion</button>
+                  <button class="secondary" id="ft-btn-motion-clear" disabled>Clear Motion</button>
+                  <button class="primary" id="ft-btn-motion-set" disabled>Set Motion</button>
+                </div>
               </div>
             </div>
 
             <div class="section-box" id="ft-sec-server">
               <div class="section-hd">
                 <div class="t"><b>Server</b><span>set server [id server port ptype] · get server [id]</span></div>
-                <span class="help-btn sm" title="Server address: domain or IP of the platform server. Protocol type (ptype): 0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart — the platform's own protocol doc only documents option 1. Server ID (id): which of the device's 5 server slots this writes to — 0 ServerM, 1 ServerS, 2 Server3, 3 Server4, 4 Server5. Port: the server's listening TCP port, 1–65535.">?</span>
+                <span class="help-btn sm" title="Server address: domain or IP of the platform server. Protocol type (ptype): 0 None, 1 Wialon IPS, 2 SPS, 3 TianQin, 4 RoadSmart — the platform's own protocol doc only documents option 1. Server ID (id): which of the device's 5 server slots this writes to — 0 ServerM, 1 ServerS, 2 Server3, 3 Server4, 4 Server5. Port: the server's listening TCP port, 1–65535. Documented in the W0x instruction manual as supported over USB serial (previously only SMS/Platform), but the reply format hasn't been independently checked against real hardware yet.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
                 <div class="field-row">
                   <div class="field">
                     <div class="k">Server address</div>
-                    <div class="input-box"><input type="text" id="ft-f-server-addr" value="fieldtrack-tcp.xiot.my.id" /></div>
+                    <div class="input-box"><input type="text" id="ft-f-server-addr" placeholder="e.g. fieldtrack-tcp.xiot.my.id" /></div>
                     <div class="hint">Domain name or IP</div>
                   </div>
                   <div class="field" style="max-width:220px;">
@@ -1481,20 +1499,20 @@
           <div class="panel-header">
             <div>
               <h2>What's confirmed, what isn't</h2>
-              <p>This page has no vendor manual behind it in this build — everything here comes from the design itself.</p>
+              <p>The W0x instruction manual and W02d parameter-configuration manual (both supplied by the client) now back this whole screen — the open question is only whether this app's own serial handling matches them.</p>
             </div>
           </div>
           <div class="panel-body">
             <div class="section-box">
-              <div class="section-hd"><div class="t"><b>Confirmed working over this serial port</b></div></div>
+              <div class="section-hd"><div class="t"><b>Documented for USB serial, by the device's own manual</b></div></div>
               <div class="section-body">
-                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;"><b>wifi get</b> / <b>wifi crl</b> / <b>wifi save &lt;ssid&gt; &lt;password&gt;</b> and <b>get motion</b> — none of these are in any of the available manuals, but the team's own macro workflow confirms they work over this serial link.</p>
+                <p style="margin:0; font-size:13px; color:var(--ink-soft); line-height:1.9;">Every command on this screen — <b>wifi get/save/crl</b>, <b>set/get report</b>, <b>set/get/clr motion</b>, and <b>set/get server</b> — is listed in the W0x instruction manual with instruction type "SMS/Platform/USB serial", i.e. USB serial is an explicitly supported delivery channel for all of them, not just a team macro-workflow guess. The parameter-configuration manual also confirms 115200 baud and a CRLF line ending for this interface — both already this screen's defaults.</p>
               </div>
             </div>
             <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
-              <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Not yet verified on hardware</b></div></div>
+              <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Not yet verified on this app's own hardware</b></div></div>
               <div class="section-body">
-                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">The <b>qry infos / qry ip / qry sdkver</b> (and per-field qry imei / qry imsi / qry iccid / qry swver / qry phnum) device-info queries, <b>get report</b> (reporting interval), and <b>set server</b> / <b>get server</b> are documented in the available manuals only for SMS/Platform(WL) delivery — they haven't specifically been confirmed over this serial port, and no reply format for any command here has been checked against real hardware.</p>
+                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">Being in the manual means the vendor says the command and reply format work over USB serial — it doesn't mean this app has actually seen that reply on real hardware yet. None of the parsing above (Device info, Reporting interval, Motion) has been checked against a real W03 tracker.</p>
                 <p style="margin:0; font-size:13px; color:var(--warn-text);">Send one command at a time and read the raw log, the same way LevelPro's and FlexLink's command sets went from design preview to confirmed.</p>
               </div>
             </div>
@@ -2855,6 +2873,43 @@
 
   function ftSleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
+  // Same idea as FlexLink's flWaitForLine: resolves with whatever `test`
+  // returns for the first incoming line that doesn't return null/undefined/
+  // false, or null after timeoutMs with nothing matching.
+  function ftWaitForLine(test, timeoutMs = 2000){
+    return new Promise((resolve) => {
+      let done = false;
+      const onLine = (line) => {
+        if (done) return;
+        const m = test(line);
+        if (m !== null && m !== undefined && m !== false) { done = true; ftLineListeners.delete(onLine); resolve(m === true ? line : m); }
+      };
+      ftLineListeners.add(onLine);
+      setTimeout(() => { if (!done) { done = true; ftLineListeners.delete(onLine); resolve(null); } }, timeoutMs);
+    });
+  }
+
+  // This device's "GET:"/"SET:"/"CLR:"/"[QRY]" replies are all space-separated
+  // "key:value" tokens after that prefix (e.g. "GET:ths:200 mg act_deb:200 ms
+  // dis_deb:20000 ms" or "[QRY]ver:xxx imsi:xxx imei:xxx iccid:xxx phnum:xxx"),
+  // per the W0x instruction manual. Units like "mg"/"ms"/"S" that follow a
+  // value with a space are plain words with no colon, so this simply skips
+  // them rather than mis-parsing them as keys.
+  function ftParseKV(line){
+    const body = line.replace(/^\s*\[QRY\]|^\s*(GET|SET|CLR):\s*/i, '');
+    const map = {};
+    const re = /(\w+)\s*:\s*(\S+)/g;
+    let m;
+    while ((m = re.exec(body))) { map[m[1].toLowerCase()] = m[2]; }
+    return map;
+  }
+
+  // The manual's own examples aren't consistent about a space before the unit
+  // ("ths:200 mg" in one reply, "ths:50mg" in another) — ftParseKV's \S+
+  // value capture takes whichever variant arrives, so anything headed into a
+  // number input is run through this first to strip a trailing unit.
+  function ftNum(v){ const m = String(v ?? '').match(/-?\d+/); return m ? m[0] : ''; }
+
   function ftSetConnected(on){
     $('ft-conn-chip').textContent = on ? 'Connected' : 'Not yet connected';
     $('ft-conn-chip').classList.toggle('ok', !!on);
@@ -2865,7 +2920,10 @@
     $('ft-btn-wifi-clear').disabled = !on;
     $('ft-btn-wifi-set').disabled = !on;
     $('ft-btn-report-check').disabled = !on;
+    $('ft-btn-report-set').disabled = !on;
     $('ft-btn-motion-check').disabled = !on;
+    $('ft-btn-motion-clear').disabled = !on;
+    $('ft-btn-motion-set').disabled = !on;
     $('ft-btn-server-check').disabled = !on;
     $('ft-btn-server-set').disabled = !on;
   }
@@ -2910,11 +2968,13 @@
     $('ft-btn-password-show').textContent = showing ? 'Show' : 'Hide';
   });
 
-  // Every command below is sent immediately on its own button, per the
-  // design — there's no staged diff/preview like LevelPro's or FlexLink's
-  // Configuration cards. No reply format has been confirmed for any of
-  // these, so none of them are auto-parsed back into the fields — the raw
-  // log is the source of truth until one is confirmed on real hardware.
+  // Wi-Fi and Server below still just send-and-log — their replies (a
+  // 3-line "wifi N:ssid:... passw:..." list, and a single "GET:[id]
+  // server:... port:... ptype:..." line) aren't parsed back into fields in
+  // this release. Device info, Reporting interval and Motion below do parse
+  // their replies, using the "key:value" shape the W0x instruction manual
+  // documents for GET:/SET:/CLR:/[QRY] — see ftParseKV above — though none
+  // of it has been checked against real hardware yet.
   async function ftSendAndReport(cmd, label){
     await ftSendRaw(cmd);
     ftSetOpStatus(`${label} sent (${cmd}) — check the raw log for the reply (format not yet confirmed).`, 'idle');
@@ -2923,13 +2983,35 @@
   $('ft-btn-refresh').addEventListener('click', async () => {
     $('ft-btn-refresh').disabled = true;
     ftSetOpStatus('Refreshing device info…', 'idle');
-    await ftSendRaw('qry infos');
-    await ftSleep(300);
-    await ftSendRaw('qry ip');
-    await ftSleep(300);
-    await ftSendRaw('qry sdkver');
-    ftSetOpStatus('qry infos / qry ip / qry sdkver sent — check the raw log for replies (format not yet confirmed); the fields above are still the example values shown by design.', 'idle');
-    $('ft-btn-refresh').disabled = !ftPort;
+    try {
+      // qry infos: "[QRY]ver:... imsi:... imei:... iccid:... phnum:..."
+      const infosPromise = ftWaitForLine((line) => /\[QRY\].*imei/i.test(line) ? ftParseKV(line) : null, 2000);
+      await ftSendRaw('qry infos');
+      const infos = await infosPromise;
+      $('ft-v-fw').textContent = infos?.ver || 'No reply';
+      $('ft-v-imsi').textContent = infos?.imsi || 'No reply';
+      $('ft-v-imei').textContent = infos?.imei || 'No reply';
+      $('ft-v-iccid').textContent = infos?.iccid || 'No reply';
+      $('ft-v-phone').textContent = infos?.phnum || 'No reply';
+
+      // qry ip: "[QRY]ip:..."
+      const ipPromise = ftWaitForLine((line) => { const m = line.match(/\[QRY\]\s*ip\s*:\s*(\S+)/i); return m ? m[1] : null; }, 2000);
+      await ftSendRaw('qry ip');
+      const ip = await ipPromise;
+      $('ft-v-ip').textContent = ip || 'No reply';
+
+      // qry sdkver: "[QRY]sdk_ver:..."
+      const sdkPromise = ftWaitForLine((line) => { const m = line.match(/\[QRY\]\s*sdk_ver\s*:\s*(\S+)/i); return m ? m[1] : null; }, 2000);
+      await ftSendRaw('qry sdkver');
+      const sdk = await sdkPromise;
+      $('ft-v-sdk').textContent = sdk || 'No reply';
+
+      ftSetOpStatus('Refresh done — check the raw log for the exact replies.', 'ok');
+    } catch (e) {
+      ftSetOpStatus('Refresh failed: ' + e.message, 'err');
+    } finally {
+      $('ft-btn-refresh').disabled = !ftPort;
+    }
   });
 
   $('ft-btn-wifi-check').addEventListener('click', () => ftSendAndReport('wifi get', 'Check Wi-Fi'));
@@ -2941,9 +3023,77 @@
     ftSendAndReport(`wifi save ${ssid} ${pass}`, 'Set Wi-Fi');
   });
 
-  $('ft-btn-report-check').addEventListener('click', () => ftSendAndReport('get report', 'Check Reporting Interval'));
+  // ---------- Reporting interval ----------
+  $('ft-btn-report-check').addEventListener('click', async () => {
+    $('ft-btn-report-check').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^(GET|SET):/i.test(line) ? ftParseKV(line) : null, 2000);
+    await ftSendRaw('get report');
+    const kv = await replyPromise;
+    if (kv && kv.ontv !== undefined) {
+      $('ft-f-ontv').value = ftNum(kv.ontv);
+      $('ft-f-offtv').value = ftNum(kv.offtv);
+      ftSetOpStatus(`Reporting interval read: ontv ${ftNum(kv.ontv)}s, offtv ${ftNum(kv.offtv) || '—'}s.`, 'ok');
+    } else {
+      ftSetOpStatus('get report sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-report-check').disabled = !ftPort;
+  });
+  $('ft-btn-report-set').addEventListener('click', async () => {
+    const ontv = $('ft-f-ontv').value.trim();
+    const offtv = $('ft-f-offtv').value.trim();
+    if (ontv === '' || offtv === '') { ftSetOpStatus('Enter both ontv and offtv before setting the reporting interval.', 'err'); return; }
+    $('ft-btn-report-set').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^SET:/i.test(line) ? true : null, 2000);
+    await ftSendRaw(`set report ${ontv} ${offtv}`);
+    const reply = await replyPromise;
+    ftSetOpStatus(reply ? `Reporting interval set to ontv ${ontv}s, offtv ${offtv}s.` : 'set report sent — no reply seen within 2s. Check the raw log.', reply ? 'ok' : 'err');
+    $('ft-btn-report-set').disabled = !ftPort;
+  });
 
-  $('ft-btn-motion-check').addEventListener('click', () => ftSendAndReport('get motion', 'Check Motion'));
+  // ---------- Motion alarm ----------
+  $('ft-btn-motion-check').addEventListener('click', async () => {
+    $('ft-btn-motion-check').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^(GET|SET|CLR):/i.test(line) ? ftParseKV(line) : null, 2000);
+    await ftSendRaw('get motion');
+    const kv = await replyPromise;
+    if (kv && kv.ths !== undefined) {
+      $('ft-f-motion-ths').value = ftNum(kv.ths);
+      $('ft-f-motion-act-deb').value = ftNum(kv.act_deb);
+      $('ft-f-motion-dis-deb').value = ftNum(kv.dis_deb);
+      ftSetOpStatus(`Motion setpoint read: ${ftNum(kv.ths)} mg, act ${ftNum(kv.act_deb) || '—'} ms, deact ${ftNum(kv.dis_deb) || '—'} ms.`, 'ok');
+    } else {
+      ftSetOpStatus('get motion sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-motion-check').disabled = !ftPort;
+  });
+  $('ft-btn-motion-set').addEventListener('click', async () => {
+    const ths = $('ft-f-motion-ths').value.trim();
+    const actDeb = $('ft-f-motion-act-deb').value.trim();
+    const disDeb = $('ft-f-motion-dis-deb').value.trim();
+    if (ths === '' || actDeb === '' || disDeb === '') { ftSetOpStatus('Enter threshold and both debounce times before setting the motion alarm.', 'err'); return; }
+    $('ft-btn-motion-set').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^SET:/i.test(line) ? true : null, 2000);
+    await ftSendRaw(`set motion ${ths} ${actDeb} ${disDeb}`);
+    const reply = await replyPromise;
+    ftSetOpStatus(reply ? `Motion alarm set to ${ths} mg, act ${actDeb} ms, deact ${disDeb} ms.` : 'set motion sent — no reply seen within 2s. Check the raw log.', reply ? 'ok' : 'err');
+    $('ft-btn-motion-set').disabled = !ftPort;
+  });
+  $('ft-btn-motion-clear').addEventListener('click', async () => {
+    if (!confirm('Reset the motion alarm to the firmware default (50 mg / 100 ms / 300 ms, per the instruction manual)?')) return;
+    $('ft-btn-motion-clear').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^CLR:/i.test(line) ? ftParseKV(line) : null, 2000);
+    await ftSendRaw('clr motion');
+    const kv = await replyPromise;
+    if (kv && kv.ths !== undefined) {
+      $('ft-f-motion-ths').value = ftNum(kv.ths);
+      $('ft-f-motion-act-deb').value = ftNum(kv.act_deb);
+      $('ft-f-motion-dis-deb').value = ftNum(kv.dis_deb);
+      ftSetOpStatus(`Motion alarm cleared to default: ${ftNum(kv.ths)} mg, act ${ftNum(kv.act_deb) || '—'} ms, deact ${ftNum(kv.dis_deb) || '—'} ms.`, 'ok');
+    } else {
+      ftSetOpStatus('clr motion sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-motion-clear').disabled = !ftPort;
+  });
 
   $('ft-btn-server-check').addEventListener('click', () => {
     const id = $('ft-f-server-id').value.trim();
