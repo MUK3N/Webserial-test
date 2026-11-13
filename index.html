@@ -123,6 +123,31 @@
   .modal-card button{width:100%;}
   .banner.warn{background:var(--warn-bg); border:1px solid var(--warn-border); color:#7A4A05;}
 
+  /* ---------- auth (login / register) ---------- */
+  .auth-wrap{display:flex; flex-direction:column; align-items:center; padding-top:70px;}
+  .auth-overline{font-weight:700; font-size:12px; letter-spacing:1.3px; color:var(--muted2); margin:0 0 12px; width:440px; max-width:100%;}
+  .auth-card{background:#fff; border:1px solid var(--border-section); border-radius:5px; padding:30px; width:440px; max-width:100%;}
+  .auth-card h1{font-size:25px; margin:0; font-weight:700; letter-spacing:-0.6px; color:var(--ink);}
+  .auth-card .sub{color:var(--muted); font-size:14px; margin:8px 0 0;}
+  .auth-fields{display:flex; flex-direction:column; gap:16px; margin-top:20px;}
+  .auth-field label{display:block; font-weight:500; font-size:13px; color:var(--ink); margin-bottom:8px;}
+  .auth-field input{width:100%; height:39px; padding:0 12px; border:1px solid var(--border-input); border-radius:4px; font:inherit; font-size:14px; background:linear-gradient(to bottom, #fff, #fafbfc); color:var(--ink);}
+  .auth-field input:focus{outline:none; border-color:var(--primary);}
+  .auth-error{margin-top:14px; padding:10px 12px; border-radius:4px; background:#FBEAE9; border:1px solid #F3C6C2; color:#8C241C; font-size:13px;}
+  .auth-success{margin-top:14px; padding:10px 12px; border-radius:4px; background:var(--ok-bg); border:1px solid var(--ok-border); color:var(--ok-text-strong); font-size:13px;}
+  .auth-submit{margin-top:22px;}
+  .auth-submit button{width:100%;}
+  .auth-divider{height:1px; background:#DCE1E7; margin-top:22px;}
+  .auth-footnote{margin-top:22px; font-size:12px; color:var(--muted); line-height:19px;}
+  .auth-footnote button.linklike{font-size:12px;}
+  .auth-tip{margin-top:20px; width:440px; max-width:100%; background:var(--bg-disabled-input); border-radius:5px; padding:16px; font-size:14px; color:var(--muted2); line-height:20px;}
+
+  /* ---------- admin: manage users ---------- */
+  .admin-user-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--border-soft); border-radius:4px; background:var(--bg-input-readonly);}
+  .admin-user-row + .admin-user-row{margin-top:10px;}
+  .admin-user-row .u{font-weight:600; font-size:14px; color:var(--ink);}
+  .admin-user-row .meta{display:flex; align-items:center; gap:10px; min-width:0;}
+
   /* ---------- breadcrumb / top cards ---------- */
   .breadcrumb{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
   .breadcrumb .path{font-size:12px; color:var(--muted2);}
@@ -270,18 +295,99 @@
 <header class="app">
   <div class="brand"><img class="logo" src="assets/logo.png" alt="XCAMP logo" /><b>XCAMP</b><span class="sep"></span><span>Device Configurator</span></div>
   <div class="right">
-    <span class="pill">TEST BUILD · no login</span>
-    <span class="acct">Approved account</span>
-    <button class="sm">Log out</button>
+    <span class="pill">TEST BUILD · demo accounts</span>
+    <span class="acct" id="acct-label"></span>
+    <button class="secondary sm" id="btn-manage-users" style="display:none;">Manage users</button>
+    <button class="sm" id="btn-logout" style="display:none;">Log out</button>
   </div>
 </header>
 
 <main>
 
+  <!-- ===================== LOGIN ===================== -->
+  <div id="view-login" class="view active">
+    <div class="auth-wrap">
+      <div class="auth-overline">XCAMP DEVICE CONFIGURATOR</div>
+      <div class="auth-card">
+        <h1>Sign in to configure devices</h1>
+        <p class="sub">Use your XCAMP account.</p>
+        <div class="auth-fields">
+          <div class="auth-field">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" autocomplete="username" placeholder="e.g. jane.doe" />
+          </div>
+          <div class="auth-field">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" autocomplete="current-password" placeholder="Enter your password" />
+          </div>
+        </div>
+        <div class="auth-error" id="login-error" style="display:none;"></div>
+        <div class="auth-submit"><button class="primary" id="btn-login">Sign in</button></div>
+        <div class="auth-divider"></div>
+        <div class="auth-footnote">
+          Demo build — accounts are created with Register and stored only in this browser.<br/>
+          New here? <button class="linklike" id="link-to-register">Create an account</button>
+        </div>
+      </div>
+      <div class="auth-tip">Use a desktop browser with Web Serial support, such as Chrome or Edge.</div>
+    </div>
+  </div>
+
+  <!-- ===================== REGISTER ===================== -->
+  <div id="view-register" class="view">
+    <div class="auth-wrap">
+      <div class="auth-overline">XCAMP DEVICE CONFIGURATOR</div>
+      <div class="auth-card">
+        <h1>Create an account</h1>
+        <p class="sub">Register with a username and password to configure devices.</p>
+        <div class="auth-fields">
+          <div class="auth-field">
+            <label for="register-username">Username</label>
+            <input type="text" id="register-username" autocomplete="username" placeholder="e.g. jane.doe" />
+          </div>
+          <div class="auth-field">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" autocomplete="new-password" placeholder="At least 4 characters" />
+          </div>
+          <div class="auth-field">
+            <label for="register-password-confirm">Confirm password</label>
+            <input type="password" id="register-password-confirm" autocomplete="new-password" placeholder="Re-enter your password" />
+          </div>
+        </div>
+        <div class="auth-error" id="register-error" style="display:none;"></div>
+        <div class="auth-submit"><button class="primary" id="btn-register">Register</button></div>
+        <div class="auth-divider"></div>
+        <div class="auth-footnote">
+          Already have an account? <button class="linklike" id="link-to-login">Sign in</button>
+        </div>
+      </div>
+      <div class="auth-tip">Use a desktop browser with Web Serial support, such as Chrome or Edge.</div>
+    </div>
+  </div>
+
+  <!-- ===================== ADMIN · MANAGE USERS ===================== -->
+  <div id="view-admin-users" class="view">
+    <div class="breadcrumb">
+      <span class="path">Admin / Manage users</span>
+      <button class="secondary sm" id="btn-admin-back">Back to products</button>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Manage users</h2>
+          <p>Accounts registered in this browser. Removing a user deletes their login — this can't be undone.</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="admin-users-list"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== PRODUCT SELECTION ===================== -->
-  <div id="view-products" class="view active">
+  <div id="view-products" class="view">
     <div class="banner warn" style="margin-top:20px;">
-      <b>Test build.</b> Login is skipped on purpose. This talks directly to real hardware over
+      <b>Test build.</b> Accounts above are hardcoded/stored in this browser only — not secure, demo purposes only. Device communication still talks directly to real hardware over
       <b>Web Serial</b> — Chrome, Edge or Opera only, served over HTTPS or http://localhost.
     </div>
     <h1>Select a product</h1>
@@ -1730,6 +1836,192 @@
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     $(id).classList.add('active');
   }
+
+  // ---------- Auth (demo build: hardcoded admin + localStorage-registered users) ----------
+  // This is a client-only prototype — there is no server, so "accounts" are
+  // just a JSON array in this browser's localStorage. It is NOT secure
+  // (passwords sit in plain text, anyone with devtools can edit it) and is
+  // meant only to gate the demo, per explicit instruction to hardcode this
+  // for now rather than build a real backend.
+  const AUTH_USERS_KEY = 'xcamp_users';
+  const AUTH_SESSION_KEY = 'xcamp_session';
+  const ADMIN_USER = { username: 'admin', password: 'xcamp1234', role: 'admin' };
+
+  function authLoadUsers(){
+    try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY)) || []; } catch(e){ return []; }
+  }
+  function authSaveUsers(list){
+    try { localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(list)); } catch(e){}
+  }
+  function authFindUser(username){
+    if (!username) return null;
+    if (username.toLowerCase() === ADMIN_USER.username) return ADMIN_USER;
+    return authLoadUsers().find(u => u.username.toLowerCase() === username.toLowerCase()) || null;
+  }
+  function authGetSession(){
+    try { return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY)); } catch(e){ return null; }
+  }
+  function authSetSession(user){
+    try { localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ username: user.username, role: user.role })); } catch(e){}
+  }
+  function authClearSession(){
+    try { localStorage.removeItem(AUTH_SESSION_KEY); } catch(e){}
+  }
+
+  function authRegister(username, password){
+    username = (username || '').trim();
+    password = password || '';
+    if (!username || !password) return { ok:false, error:'Enter a username and password.' };
+    if (username.length < 3) return { ok:false, error:'Username must be at least 3 characters.' };
+    if (/\s/.test(username)) return { ok:false, error:"Username can't contain a space." };
+    if (password.length < 4) return { ok:false, error:'Password must be at least 4 characters.' };
+    if (authFindUser(username)) return { ok:false, error:'That username is already taken.' };
+    const users = authLoadUsers();
+    users.push({ username, password, role:'user' });
+    authSaveUsers(users);
+    return { ok:true };
+  }
+
+  function authLogin(username, password){
+    username = (username || '').trim();
+    const user = authFindUser(username);
+    if (!user || user.password !== password) return { ok:false, error:'Incorrect username or password.' };
+    authSetSession(user);
+    return { ok:true, user };
+  }
+
+  function authLogout(){
+    authClearSession();
+    renderAuthHeader();
+    $('login-username').value = '';
+    $('login-password').value = '';
+    showView('view-login');
+  }
+
+  function renderAuthHeader(){
+    const session = authGetSession();
+    if (session){
+      $('acct-label').textContent = session.role === 'admin' ? `Admin · ${session.username}` : session.username;
+      $('btn-logout').style.display = '';
+      $('btn-manage-users').style.display = session.role === 'admin' ? '' : 'none';
+    } else {
+      $('acct-label').textContent = '';
+      $('btn-logout').style.display = 'none';
+      $('btn-manage-users').style.display = 'none';
+    }
+  }
+
+  function renderAdminUsers(){
+    const list = $('admin-users-list');
+    list.innerHTML = '';
+
+    const adminRow = document.createElement('div');
+    adminRow.className = 'admin-user-row';
+    const adminMeta = document.createElement('div');
+    adminMeta.className = 'meta';
+    const adminName = document.createElement('span');
+    adminName.className = 'u';
+    adminName.textContent = ADMIN_USER.username;
+    const adminChip = document.createElement('span');
+    adminChip.className = 'chip';
+    adminChip.textContent = 'admin · built-in';
+    adminMeta.append(adminName, adminChip);
+    adminRow.appendChild(adminMeta);
+    list.appendChild(adminRow);
+
+    const users = authLoadUsers();
+    if (users.length === 0){
+      const empty = document.createElement('p');
+      empty.style.cssText = 'margin:14px 0 0; font-size:13px; color:var(--muted);';
+      empty.textContent = 'No registered users yet.';
+      list.appendChild(empty);
+      return;
+    }
+    users.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'admin-user-row';
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const name = document.createElement('span');
+      name.className = 'u';
+      name.textContent = u.username;
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = 'user';
+      meta.append(name, chip);
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'danger sm';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => {
+        if (!confirm(`Remove user "${u.username}"? This can't be undone.`)) return;
+        authSaveUsers(authLoadUsers().filter(x => x.username !== u.username));
+        renderAdminUsers();
+      });
+      row.append(meta, removeBtn);
+      list.appendChild(row);
+    });
+  }
+
+  function showAuthError(id, message){
+    const el = $(id);
+    el.textContent = message;
+    el.style.display = '';
+  }
+  function hideAuthError(id){
+    $(id).style.display = 'none';
+  }
+
+  $('btn-login').addEventListener('click', () => {
+    const res = authLogin($('login-username').value, $('login-password').value);
+    if (!res.ok){ showAuthError('login-error', res.error); return; }
+    hideAuthError('login-error');
+    $('login-password').value = '';
+    renderAuthHeader();
+    showView('view-products');
+  });
+  ['login-username', 'login-password'].forEach(id => {
+    $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-login').click(); });
+  });
+  $('link-to-register').addEventListener('click', () => {
+    hideAuthError('login-error');
+    hideAuthError('register-error');
+    showView('view-register');
+  });
+
+  $('btn-register').addEventListener('click', () => {
+    const username = $('register-username').value;
+    const password = $('register-password').value;
+    const confirmPw = $('register-password-confirm').value;
+    if (password !== confirmPw){ showAuthError('register-error', 'Passwords do not match.'); return; }
+    const res = authRegister(username, password);
+    if (!res.ok){ showAuthError('register-error', res.error); return; }
+    hideAuthError('register-error');
+    authLogin(username, password);
+    $('register-password').value = '';
+    $('register-password-confirm').value = '';
+    renderAuthHeader();
+    showView('view-products');
+  });
+  ['register-username', 'register-password', 'register-password-confirm'].forEach(id => {
+    $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-register').click(); });
+  });
+  $('link-to-login').addEventListener('click', () => {
+    hideAuthError('login-error');
+    hideAuthError('register-error');
+    showView('view-login');
+  });
+
+  $('btn-logout').addEventListener('click', authLogout);
+  $('btn-manage-users').addEventListener('click', () => {
+    renderAdminUsers();
+    showView('view-admin-users');
+  });
+  $('btn-admin-back').addEventListener('click', () => showView('view-products'));
+
+  // Gate the app behind auth on load: resume an existing session straight to
+  // Product selection, otherwise start at Sign in.
+  renderAuthHeader();
+  showView(authGetSession() ? 'view-products' : 'view-login');
 
   // ---------- LevelPro sidebar nav ----------
   // "Configuration" and "LoRaWAN credentials" both show the same combined
