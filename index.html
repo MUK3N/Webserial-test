@@ -849,7 +849,7 @@
               </div>
             </div>
             <p style="margin:0 0 8px; font-size:12px; color:var(--muted); max-width:70ch;">Factory-fresh gateways answer at <b>115200, None</b>; this client's already-provisioned units answer at <b>19200, Even</b> (both confirmed) — pick whichever matches your unit. See <b>Connection guide</b> for the full connect/AT-mode handshake.</p>
-            <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--muted); max-width:70ch; cursor:pointer;">
+            <label style="display:flex; gap:8px; align-items:flex-start; font-size:11px; color:var(--muted); opacity:.6; max-width:70ch; cursor:pointer;">
               <input type="checkbox" id="fl-rts-toggle" style="margin-top:2px;" />
               <span>Toggle RTS around every send (half-duplex RS485 direction control). Shouldn't be needed now that baud/parity turned out to be the real issue, but leave this available in case your adapter also needs its transmit-enable line driven manually.</span>
             </label>
@@ -889,7 +889,6 @@
           <div class="panel-header">
             <div>
               <h2>Device Info &amp; Status</h2>
-              <p>Read-only values reported by the gateway. Refresh to update signal and connection status.</p>
             </div>
             <span class="help-btn" title="Signal: AT+CSQ. Firmware: AT+VER (unverified — hasn't actually replied yet). MQTT status: AT+MQTTSTA (unverified). IMEI: AT+IMEI (confirmed, replies +IMEI:<number> then OK). SN: AT+SN and ICCID: AT+ICCID (same reply pattern assumed, not yet confirmed). Network/Local IP have no confirmed command yet.">?</span>
           </div>
@@ -923,8 +922,7 @@
               <div class="cred-field"><div class="k">Firmware</div><div class="cred-value"><span class="v" id="fl-v-fw">—</span><button class="copy" data-copy="fl-v-fw">Copy</button></div></div>
             </div>
           </div>
-          <div class="panel-footer">
-            <p>Sends AT+CSQ, AT+VER, AT+MQTTSTA, AT+IMEI, AT+SN and AT+ICCID and shows what comes back in the raw log. AT+IMEI is confirmed on real hardware; AT+SN and AT+ICCID are tried on the same reply pattern but aren't confirmed yet.</p>
+          <div class="panel-footer" style="justify-content:flex-end;">
             <button class="primary" id="fl-btn-refresh" disabled>Refresh</button>
           </div>
         </div>
@@ -942,7 +940,7 @@
 
             <div class="section-box" id="fl-sec-serial">
               <div class="section-hd">
-                <div class="t"><b>Serial port (RS485)</b><span>AT+UART · unverified syntax</span></div>
+                <div class="t"><b>Serial port (RS485)</b></div>
                 <span class="help-btn sm" title="Baud/data/stop/parity for the RS485 link itself. Changing this can disconnect the app if it doesn't match.">?</span>
               </div>
               <div class="section-body field-row">
@@ -994,7 +992,7 @@
 
             <div class="section-box" id="fl-sec-mqtt">
               <div class="section-hd">
-                <div class="t"><b>MQTT broker</b><span>AT+MQTTSVR, MQTTCID, MQTTUSER, MQTTPSW</span></div>
+                <div class="t"><b>MQTT broker</b></div>
                 <span class="help-btn sm" title="Broker host/port, client ID and login. Unverified command syntax.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
@@ -1030,7 +1028,7 @@
 
             <div class="section-box" id="fl-sec-topics">
               <div class="section-hd">
-                <div class="t"><b>Topics &amp; Last Will</b><span>AT+MQTTSUBTP, AT+MQTTPUBTP, AT+MQTTWILL (slot 1 only) · AT+WKMOD sent automatically</span></div>
+                <div class="t"><b>Topics &amp; Last Will</b></div>
                 <span class="help-btn sm" title="Subscribe = sent to the RS485 port. Publish = data read from the RS485 port. Last Will = published by the broker itself if the gateway drops off without a clean disconnect — how FlexIoT/other subscribers notice a gateway went offline. Command syntax for all three, plus the AT+WKMOD=MQTT,NOR mode switch sent ahead of them, comes from the client's own provisioning SOP — it also replaces the earlier AT+MQTTWILLEN/AT+MQTTWILLTP guess, which the gateway rejected with +CME ERROR:58.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
@@ -1100,7 +1098,7 @@
 
             <div class="section-box" id="fl-sec-apn">
               <div class="section-hd">
-                <div class="t"><b>Cellular (APN)</b><span>AT+APN</span></div>
+                <div class="t"><b>Cellular (APN)</b></div>
                 <span class="help-btn sm" title="From your SIM provider. Factory value CMNET only works in China.">?</span>
               </div>
               <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
@@ -1138,8 +1136,7 @@
             </div>
 
           </div>
-          <div class="panel-footer">
-            <p>Only changed fields are sent, each one waits for a reply, then AT+S saves and restarts the gateway.</p>
+          <div class="panel-footer" style="justify-content:flex-end;">
             <div style="display:flex; gap:12px;">
               <button class="secondary" id="fl-btn-read" disabled>Read from Device</button>
               <button class="primary" id="fl-btn-apply" disabled>Save &amp; Restart</button>
