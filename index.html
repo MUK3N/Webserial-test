@@ -1423,6 +1423,9 @@
           <div data-target="ft-sec-reporting">Reporting interval</div>
           <div data-target="ft-sec-motion">Motion</div>
           <div data-target="ft-sec-server">Server</div>
+          <div data-target="ft-sec-apn">APN</div>
+          <div data-target="ft-sec-lowpwr">Low power timeout</div>
+          <div data-target="ft-sec-pnumber">Alarm prompt number</div>
         </div>
       </div>
 
@@ -1436,7 +1439,7 @@
             <div>
               <h2>Device Info &amp; Status</h2>
             </div>
-            <span class="help-btn" title="qry infos replies [QRY]ver:… imsi:… imei:… iccid:… phnum:… — fills Firmware, IMSI, IMEI, ICCID and Phone number in one go. qry ip replies [QRY]ip:… for Local IP; qry sdkver replies [QRY]sdk_ver:… for SDK version. Reply format is confirmed in the device's own instruction manual (USB serial is a listed delivery channel for all three) but not yet independently checked against real hardware.">?</span>
+            <span class="help-btn" title="qry infos replies [QRY]ver:… imsi:… imei:… iccid:… phnum:… — fills Firmware, IMSI, IMEI, ICCID and Phone number in one go. qry ip replies [QRY]ip:… for Local IP; qry sdkver replies [QRY]sdk_ver:… for SDK version. Reply format is confirmed in the device's own instruction manual (USB serial is a listed delivery channel for all three) but not yet independently checked against real hardware. Speed and Location are separate — Locate sends qry location, which replies SPEED:…kph and a Google Maps link, and needs a live GPS fix so it can be slower or fail indoors.">?</span>
           </div>
           <div class="panel-body">
             <div class="cred-grid">
@@ -1447,9 +1450,12 @@
               <div class="cred-field"><div class="k">SDK version</div><div class="cred-value"><span class="v" id="ft-v-sdk">—</span><button class="copy" data-copy="ft-v-sdk">Copy</button></div></div>
               <div class="cred-field"><div class="k">Phone number</div><div class="cred-value"><span class="v" id="ft-v-phone">—</span><button class="copy" data-copy="ft-v-phone">Copy</button></div></div>
               <div class="cred-field"><div class="k">Local IP</div><div class="cred-value"><span class="v" id="ft-v-ip">—</span><button class="copy" data-copy="ft-v-ip">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Speed</div><div class="cred-value"><span class="v" id="ft-v-speed">—</span><button class="copy" data-copy="ft-v-speed">Copy</button></div></div>
+              <div class="cred-field"><div class="k">Location</div><div class="cred-value"><span class="v" id="ft-v-location">—</span><button class="copy" data-copy="ft-v-location">Copy</button></div></div>
             </div>
           </div>
           <div class="panel-footer" style="justify-content:flex-end;">
+            <button class="secondary" id="ft-btn-locate" disabled>Locate</button>
             <button class="primary" id="ft-btn-refresh" disabled>Refresh</button>
           </div>
         </div>
@@ -1460,7 +1466,7 @@
             <div>
               <h2>Configuration</h2>
             </div>
-            <span class="help-btn" title="Commands and reply formats below come from the W03 tracker's own instruction and parameter-configuration manuals, which list USB serial as a supported delivery channel for Wi-Fi, Reporting interval, Motion and Server alike — none of that is this app's own guess anymore, but none of it has been independently checked against real hardware yet either.">?</span>
+            <span class="help-btn" title="Commands and reply formats below come from the W03 tracker's own instruction and parameter-configuration manuals, which list USB serial as a supported delivery channel for Wi-Fi, Reporting interval, Motion, Server, APN, Low power timeout and Alarm prompt number alike — none of that is this app's own guess anymore, but none of it has been independently checked against real hardware yet either.">?</span>
           </div>
           <div class="panel-body">
 
@@ -1646,6 +1652,100 @@
               </div>
             </div>
 
+            <div class="section-box" id="ft-sec-apn">
+              <div class="section-hd">
+                <div class="t"><b>APN</b><span>set apn · get apn · clr apn</span></div>
+                <span class="help-btn sm" title="Only needed if the SIM's carrier requires a non-default access point name. Mode: Auto (0) lets the modem pick its own APN; Manual (1) uses the name/username/password fields below. Auth type: 0 None, 1 PAP, 2 CHAP, 3 PAP or CHAP. Check reads the current setting (get apn) and fills the fields; Set writes them (set apn <is_manu> <auth> <apn> <user> <passwd>); Clear resets to the device's defaults (clr apn) and fills whatever it reports back. APN name/username/password can't contain spaces — same whitespace-splitting rule as Wi-Fi's SSID. Documented in the W0x instruction manual as supported over USB serial, but not yet independently checked against real hardware.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Mode</div>
+                    <div class="input-box select">
+                      <select id="ft-f-apn-manu">
+                        <option value="0">0 (Auto)</option>
+                        <option value="1">1 (Manual)</option>
+                      </select>
+                      <span class="chev">▾</span>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="k">Auth type</div>
+                    <div class="input-box select">
+                      <select id="ft-f-apn-auth">
+                        <option value="0">0 (None)</option>
+                        <option value="1">1 (PAP)</option>
+                        <option value="2">2 (CHAP)</option>
+                        <option value="3">3 (PAP or CHAP)</option>
+                      </select>
+                      <span class="chev">▾</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">APN name</div>
+                    <div class="input-box"><input type="text" id="ft-f-apn-name" placeholder="e.g. internet" /></div>
+                  </div>
+                  <div class="field">
+                    <div class="k">APN username</div>
+                    <div class="input-box"><input type="text" id="ft-f-apn-user" placeholder="Optional" /></div>
+                  </div>
+                  <div class="field">
+                    <div class="k">APN password</div>
+                    <div class="input-box"><input type="password" id="ft-f-apn-passwd" placeholder="Optional" /></div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:12px;">
+                  <button class="secondary" id="ft-btn-apn-check" disabled>Check APN</button>
+                  <button class="secondary" id="ft-btn-apn-clear" disabled>Clear APN</button>
+                  <button class="primary" id="ft-btn-apn-set" disabled>Set APN</button>
+                </div>
+                <div class="hint" style="font-size:11px; opacity:.6;">Only needed if your SIM's carrier requires a non-default APN. APN name, username and password can't contain a space (the command is split on whitespace, same as Wi-Fi's SSID).</div>
+              </div>
+            </div>
+
+            <div class="section-box" id="ft-sec-lowpwr">
+              <div class="section-hd">
+                <div class="t"><b>Low power timeout</b><span>set lowpwr · get lowpwr</span></div>
+                <span class="help-btn sm" title="How long the tracker stays idle before entering low-power mode, in seconds. Check reads the current value (get lowpwr); Set writes it (set lowpwr <timeout>). The manual gives no documented upper bound for this value. No clr instruction is documented for this one. Documented in the W0x instruction manual as supported over USB serial, but not yet independently checked against real hardware.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Timeout</div>
+                    <div class="input-box"><input type="number" id="ft-f-lowpwr" min="0" placeholder="e.g. 60" /><span class="unit">s</span></div>
+                    <div class="hint">Seconds of inactivity before entering low-power mode · no upper bound documented</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:12px;">
+                  <button class="secondary" id="ft-btn-lowpwr-check" disabled>Check Low Power Timeout</button>
+                  <button class="primary" id="ft-btn-lowpwr-set" disabled>Set Low Power Timeout</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-box" id="ft-sec-pnumber">
+              <div class="section-hd">
+                <div class="t"><b>Alarm prompt number</b><span>set pnumber · get pnumber · clr pnumber</span></div>
+                <span class="help-btn sm" title="The phone number the tracker sends SMS alarm notifications to. Check reads it (get pnumber); Set writes it (set pnumber <number>); Clear wipes it (clr pnumber) — the device's own clr reply carries no value back, just a bare acknowledgement, so Clear blanks the field locally once that's seen. The number can't contain a space (the command is split on whitespace). Documented in the W0x instruction manual as supported over USB serial, but not yet independently checked against real hardware.">?</span>
+              </div>
+              <div class="section-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="field-row">
+                  <div class="field">
+                    <div class="k">Phone number</div>
+                    <div class="input-box"><input type="text" id="ft-f-pnumber" placeholder="e.g. +6281234567890" /></div>
+                    <div class="hint">Where the tracker sends SMS alarm notifications · can't contain a space</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:12px;">
+                  <button class="secondary" id="ft-btn-pnumber-check" disabled>Check Alarm Number</button>
+                  <button class="secondary" id="ft-btn-pnumber-clear" disabled>Clear Alarm Number</button>
+                  <button class="primary" id="ft-btn-pnumber-set" disabled>Set Alarm Number</button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -1683,8 +1783,9 @@
               <div><b>Phone number</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The SIM's MSISDN, if the carrier provisions one — from <code>qry infos</code>. Often blank even with a SIM inserted.</p></div>
               <div><b>Local IP</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The tracker's current IP on its cellular/Wi-Fi data connection, via its own <code>qry ip</code> query. Shows "No reply" if the tracker has no active data connection.</p></div>
               <div><b>Refresh</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">All of the above is read automatically as soon as you connect — there's no need to press Refresh first. Press it any time to re-read.</p></div>
+              <div><b>Speed / Location</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Separate from Refresh — press Locate to send <code>qry location</code>, which replies with current speed (<code>SPEED:…kph</code>) and a Google Maps link carrying the live coordinates. This needs an actual GPS fix, so it can take longer than the other fields or fail entirely indoors/without sky view. The Location value is a clickable link to the coordinates; Copy copies the map link, not just the lat/lng text.</p></div>
             </div></div>
-            <div class="panel-footer"><p>qry infos · qry ip · qry sdkver — confirmed on real hardware, including the auto-read on connect and the empty-field parsing fix</p></div>
+            <div class="panel-footer"><p>qry infos · qry ip · qry sdkver — confirmed on real hardware, including the auto-read on connect and the empty-field parsing fix. qry location (Speed / Location) — documented in the W0x instruction manual as supported over USB serial, not yet independently checked against real hardware.</p></div>
           </div>
         </div>
 
@@ -1742,6 +1843,40 @@
         </div>
 
         <div class="panel">
+          <div class="panel-header"><div><h2>APN</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Mode / Auth type</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Mode: 0 Auto (modem picks its own APN) or 1 Manual (uses the fields below). Auth type: 0 None, 1 PAP, 2 CHAP, 3 PAP or CHAP.</p></div>
+              <div><b>APN name / username / password</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Only needed when the SIM's carrier requires a non-default APN. None of the three can contain a space — the command is split on whitespace, the same restriction Wi-Fi's SSID has.</p></div>
+              <div><b>Check / Clear / Set</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Check reads the current setting (<code>get apn</code>) and fills all 5 fields; Set writes them (<code>set apn &lt;is_manu&gt; &lt;auth&gt; &lt;apn&gt; &lt;user&gt; &lt;passwd&gt;</code>); Clear resets to the device's own defaults (<code>clr apn</code>) and fills in whatever it reports back, the same pattern as Motion's Clear.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>get apn · set apn &lt;is_manu&gt; &lt;auth&gt; &lt;apn&gt; &lt;user&gt; &lt;passwd&gt; · clr apn — documented in the W0x instruction manual as supported over USB serial, not yet independently checked against real hardware</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Low power timeout</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Timeout</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Seconds of inactivity before the tracker enters low-power mode. The manual documents a lower bound of 0 but gives no upper bound.</p></div>
+              <div><b>Check / Set</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Check reads the current value (<code>get lowpwr</code>); Set writes it (<code>set lowpwr &lt;timeout&gt;</code>). No <code>clr</code> instruction is documented for this one.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>get lowpwr · set lowpwr &lt;timeout&gt; — documented in the W0x instruction manual as supported over USB serial, not yet independently checked against real hardware</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><div><h2>Alarm prompt number</h2></div></div>
+          <div class="panel-body">
+            <div class="section-box"><div class="section-body" style="display:flex; flex-direction:column; gap:12px;">
+              <div><b>Phone number</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">The number the tracker sends SMS alarm notifications to. Can't contain a space, same whitespace-splitting restriction as Wi-Fi and APN.</p></div>
+              <div><b>Check / Clear / Set</b><p style="margin:2px 0 0; font-size:13px; color:var(--ink-soft);">Check reads it (<code>get pnumber</code>); Set writes it (<code>set pnumber &lt;number&gt;</code>); Clear wipes it (<code>clr pnumber</code>). Unlike APN's clear, the device's own <code>clr pnumber</code> reply carries no value back — just a bare acknowledgement — so Clear blanks the field locally once that acknowledgement is seen.</p></div>
+            </div></div>
+            <div class="panel-footer"><p>get pnumber · set pnumber &lt;number&gt; · clr pnumber — documented in the W0x instruction manual as supported over USB serial, not yet independently checked against real hardware</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
           <div class="panel-header">
             <div>
               <h2>What's confirmed, what isn't</h2>
@@ -1758,7 +1893,7 @@
             <div class="section-box" style="margin-top:14px; border-color:var(--warn-border);">
               <div class="section-hd" style="background:var(--warn-bg);"><div class="t"><b>Documented in the manual, not yet independently checked</b></div></div>
               <div class="section-body">
-                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">Reporting interval (<code>get/set report</code>) and Motion alarm (<code>get/set/clr motion</code>) are both listed in the W0x instruction manual with instruction type "SMS/Platform/USB serial" — USB serial is an explicitly supported delivery channel for them, not a team guess — but neither the commands nor their reply format have been checked against a real W03 tracker yet.</p>
+                <p style="margin:0 0 10px; font-size:13px; color:var(--warn-text);">Reporting interval (<code>get/set report</code>), Motion alarm (<code>get/set/clr motion</code>), APN (<code>get/set/clr apn</code>), Low power timeout (<code>get/set lowpwr</code>), Alarm prompt number (<code>get/set/clr pnumber</code>) and Location (<code>qry location</code>) are all listed in the W0x instruction manual with instruction type "SMS/Platform/USB serial" — USB serial is an explicitly supported delivery channel for them, not a team guess — but none of their commands or reply formats have been checked against a real W03 tracker yet.</p>
                 <p style="margin:0; font-size:13px; color:var(--warn-text);">Send one command at a time and read the raw log, the same way Device info, Wi-Fi and Server went from design preview to confirmed.</p>
               </div>
             </div>
@@ -2246,7 +2381,9 @@
 
   document.querySelectorAll('.copy').forEach(btn => {
     btn.addEventListener('click', () => {
-      const text = $(btn.dataset.copy).textContent;
+      const target = $(btn.dataset.copy);
+      const link = target.querySelector('a'); // e.g. FieldTrack's Location field — copy the map link, not just the lat/lng text
+      const text = link ? link.href : target.textContent;
       navigator.clipboard?.writeText(text).catch(() => {});
       const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => btn.textContent = old, 1000);
     });
@@ -3374,6 +3511,14 @@
   // number input is run through this first to strip a trailing unit.
   function ftNum(v){ const m = String(v ?? '').match(/-?\d+/); return m ? m[0] : ''; }
 
+  // set lowpwr's own reply is inconsistent in the manual's own example —
+  // "SET:timeout 60 S" (no colon after the key) vs. get lowpwr's "GET:timeout:60 S"
+  // (colon present) — so this tolerates either shape instead of assuming one.
+  function ftParseLowpwr(line, cmdPrefix){
+    const m = line.match(new RegExp(`^\\s*${cmdPrefix}:\\s*timeout\\s*:?\\s*(\\d+)`, 'i'));
+    return m ? { timeout: m[1] } : null;
+  }
+
   // Small ok/err status chip, matching the style of ft-conn-chip/fl-conn-chip.
   function ftSetChip(id, text, ok){
     const el = $(id);
@@ -3400,6 +3545,15 @@
     $('ft-btn-motion-set').disabled = !on;
     $('ft-btn-server-check').disabled = !on;
     for (let id = 0; id <= 4; id++) $(`ft-btn-server-set-${id}`).disabled = !on;
+    $('ft-btn-apn-check').disabled = !on;
+    $('ft-btn-apn-clear').disabled = !on;
+    $('ft-btn-apn-set').disabled = !on;
+    $('ft-btn-lowpwr-check').disabled = !on;
+    $('ft-btn-lowpwr-set').disabled = !on;
+    $('ft-btn-pnumber-check').disabled = !on;
+    $('ft-btn-pnumber-clear').disabled = !on;
+    $('ft-btn-pnumber-set').disabled = !on;
+    $('ft-btn-locate').disabled = !on;
   }
 
   $('ft-btn-connect').addEventListener('click', async () => {
@@ -3709,6 +3863,183 @@
       $(`ft-btn-server-set-${id}`).disabled = !ftPort;
     });
   }
+
+  // ---------- APN ----------
+  $('ft-btn-apn-check').addEventListener('click', async () => {
+    $('ft-btn-apn-check').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^GET:/i.test(line) && /manu/i.test(line) ? ftParseKeys(line, ['manu', 'auth', 'apn', 'user', 'passwd']) : null, 2000);
+    await ftSendRaw('get apn');
+    const kv = await replyPromise;
+    if (kv) {
+      $('ft-f-apn-manu').value = ftNum(kv.manu) || '0';
+      $('ft-f-apn-auth').value = ftNum(kv.auth) || '0';
+      $('ft-f-apn-name').value = kv.apn || '';
+      $('ft-f-apn-user').value = kv.user || '';
+      $('ft-f-apn-passwd').value = kv.passwd || '';
+      ftSetOpStatus('APN read — check the raw log for the exact reply.', 'ok');
+    } else {
+      ftSetOpStatus('get apn sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-apn-check').disabled = !ftPort;
+  });
+
+  $('ft-btn-apn-clear').addEventListener('click', async () => {
+    $('ft-btn-apn-clear').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^CLR:/i.test(line) && /manu/i.test(line) ? ftParseKeys(line, ['manu', 'auth', 'apn', 'user', 'passwd']) : null, 2000);
+    await ftSendRaw('clr apn');
+    const kv = await replyPromise;
+    if (kv) {
+      $('ft-f-apn-manu').value = ftNum(kv.manu) || '0';
+      $('ft-f-apn-auth').value = ftNum(kv.auth) || '0';
+      $('ft-f-apn-name').value = kv.apn || '';
+      $('ft-f-apn-user').value = kv.user || '';
+      $('ft-f-apn-passwd').value = kv.passwd || '';
+      ftSetOpStatus('APN cleared — fields updated to what the device reported back.', 'ok');
+    } else {
+      ftSetOpStatus('clr apn sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-apn-clear').disabled = !ftPort;
+  });
+
+  $('ft-btn-apn-set').addEventListener('click', async () => {
+    const manu = $('ft-f-apn-manu').value;
+    const auth = $('ft-f-apn-auth').value;
+    const apn = $('ft-f-apn-name').value.trim();
+    const user = $('ft-f-apn-user').value.trim();
+    const passwd = $('ft-f-apn-passwd').value.trim();
+    if (/\s/.test(apn) || /\s/.test(user) || /\s/.test(passwd)) {
+      ftSetOpStatus("APN name, username and password can't contain a space — the command is split on whitespace.", 'err');
+      return;
+    }
+    $('ft-btn-apn-set').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^SET:/i.test(line) && /manu/i.test(line) ? ftParseKeys(line, ['manu', 'auth', 'apn', 'user', 'passwd']) : null, 2000);
+    await ftSendRaw(`set apn ${manu} ${auth} ${apn} ${user} ${passwd}`);
+    const kv = await replyPromise;
+    if (kv) {
+      ftSetOpStatus(`APN set — mode ${ftNum(kv.manu) || manu}, APN "${kv.apn || apn}".`, 'ok');
+    } else {
+      ftSetOpStatus('set apn sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-apn-set').disabled = !ftPort;
+  });
+
+  // ---------- Low power timeout ----------
+  $('ft-btn-lowpwr-check').addEventListener('click', async () => {
+    $('ft-btn-lowpwr-check').disabled = true;
+    const replyPromise = ftWaitForLine((line) => ftParseLowpwr(line, 'GET'), 2000);
+    await ftSendRaw('get lowpwr');
+    const kv = await replyPromise;
+    if (kv) {
+      $('ft-f-lowpwr').value = kv.timeout;
+      ftSetOpStatus('Low power timeout read — check the raw log for the exact reply.', 'ok');
+    } else {
+      ftSetOpStatus('get lowpwr sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-lowpwr-check').disabled = !ftPort;
+  });
+
+  $('ft-btn-lowpwr-set').addEventListener('click', async () => {
+    const timeout = $('ft-f-lowpwr').value.trim();
+    if (timeout === '') { ftSetOpStatus('Enter a timeout before setting it.', 'err'); return; }
+    $('ft-btn-lowpwr-set').disabled = true;
+    const replyPromise = ftWaitForLine((line) => ftParseLowpwr(line, 'SET'), 2000);
+    await ftSendRaw(`set lowpwr ${timeout}`);
+    const kv = await replyPromise;
+    if (kv) {
+      ftSetOpStatus(`Low power timeout set to ${kv.timeout}s.`, 'ok');
+    } else {
+      ftSetOpStatus('set lowpwr sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-lowpwr-set').disabled = !ftPort;
+  });
+
+  // ---------- Alarm prompt number ----------
+  $('ft-btn-pnumber-check').addEventListener('click', async () => {
+    $('ft-btn-pnumber-check').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^GET:/i.test(line) && /number/i.test(line) ? ftParseKeys(line, ['number']) : null, 2000);
+    await ftSendRaw('get pnumber');
+    const kv = await replyPromise;
+    if (kv && kv.number !== undefined) {
+      $('ft-f-pnumber').value = kv.number || '';
+      ftSetOpStatus('Alarm number read — check the raw log for the exact reply.', 'ok');
+    } else {
+      ftSetOpStatus('get pnumber sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-pnumber-check').disabled = !ftPort;
+  });
+
+  // clr pnumber's own reply carries no value back ("CLR: number" only) — unlike
+  // APN's clear, there's nothing to re-fill the field with, so this just
+  // confirms the acknowledgement arrived and blanks the field locally.
+  $('ft-btn-pnumber-clear').addEventListener('click', async () => {
+    $('ft-btn-pnumber-clear').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^CLR:/i.test(line) && /number/i.test(line) ? true : null, 2000);
+    await ftSendRaw('clr pnumber');
+    const ok = await replyPromise;
+    if (ok) {
+      $('ft-f-pnumber').value = '';
+      ftSetOpStatus('Alarm number cleared.', 'ok');
+    } else {
+      ftSetOpStatus('clr pnumber sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-pnumber-clear').disabled = !ftPort;
+  });
+
+  $('ft-btn-pnumber-set').addEventListener('click', async () => {
+    const number = $('ft-f-pnumber').value.trim();
+    if (!number) { ftSetOpStatus('Enter a phone number before setting it.', 'err'); return; }
+    if (/\s/.test(number)) { ftSetOpStatus("Phone number can't contain a space — the command is split on whitespace.", 'err'); return; }
+    $('ft-btn-pnumber-set').disabled = true;
+    const replyPromise = ftWaitForLine((line) => /^SET:/i.test(line) && /number/i.test(line) ? ftParseKeys(line, ['number']) : null, 2000);
+    await ftSendRaw(`set pnumber ${number}`);
+    const kv = await replyPromise;
+    if (kv && kv.number !== undefined) {
+      ftSetOpStatus(`Alarm number set to ${kv.number || number}.`, 'ok');
+    } else {
+      ftSetOpStatus('set pnumber sent — no reply seen within 2s. Check the raw log.', 'err');
+    }
+    $('ft-btn-pnumber-set').disabled = !ftPort;
+  });
+
+  // ---------- Location (qry location) ----------
+  // Replies with up to 2 lines — "SPEED:xxxkph" and a Google Maps link
+  // carrying the live coordinates — so this collects over a window rather
+  // than stopping at the first line, the same approach as "wifi get". Needs
+  // an actual GPS fix, so it gets a longer timeout than the other queries
+  // and can legitimately come back empty indoors.
+  $('ft-btn-locate').addEventListener('click', async () => {
+    $('ft-btn-locate').disabled = true;
+    ftSetOpStatus('Requesting location — needs a live GPS fix, so this can take longer than other queries or fail indoors…', 'idle');
+    const linesPromise = ftCollectLines((line) => {
+      const speedMatch = line.match(/SPEED\s*:\s*([\d.]+)\s*kph/i);
+      if (speedMatch) return { type: 'speed', value: speedMatch[1] };
+      const urlMatch = line.match(/(https:\/\/maps\.google\.com\/\?q=(-?[\d.]+),(-?[\d.]+))/i);
+      if (urlMatch) return { type: 'coords', url: urlMatch[1], lat: urlMatch[2], lng: urlMatch[3] };
+      return null;
+    }, 5000);
+    await ftSendRaw('qry location');
+    const results = await linesPromise;
+    const speed = results.find(r => r.type === 'speed');
+    const coords = results.find(r => r.type === 'coords');
+    $('ft-v-speed').textContent = speed ? `${speed.value} km/h` : 'No reply';
+    if (coords) {
+      $('ft-v-location').innerHTML = '';
+      const a = document.createElement('a');
+      a.href = coords.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = `${coords.lat}, ${coords.lng}`;
+      $('ft-v-location').appendChild(a);
+    } else {
+      $('ft-v-location').textContent = 'No reply';
+    }
+    if (speed || coords) {
+      ftSetOpStatus('Location read — check the raw log for the exact reply.', 'ok');
+    } else {
+      ftSetOpStatus('qry location sent — no reply seen within 5s. Check the raw log.', 'err');
+    }
+    $('ft-btn-locate').disabled = !ftPort;
+  });
 
 })();
 </script>
